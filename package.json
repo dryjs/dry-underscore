@@ -1,0 +1,27 @@
+{
+	"name":"dry-underscore",
+	"version":"0.2.0",
+    "main": "./lib/index.js",
+    "description": "The DRY Undescore Library",
+    "author": {
+        "name": "Kendrick Taylor",
+        "email": "sktayloriii@gmail.com"
+    },
+    "homepage": "http://dryjs.com/",
+	"repository": {
+        "type": "git",
+        "url": "git://github.com/dryjs/dry-underscore.git"
+    },
+    "bugs": {
+        "url": "http://github.com/dryjs/dry-underscore/issues"
+    },
+    "directories": {
+        "lib": "./lib"
+    },
+    "engines": {
+        "node": "0.4 || 0.5 || 0.6 || 0.7 || 0.8",
+        "npm": "1"
+    },
+    "dependencies":{
+	}
+}
