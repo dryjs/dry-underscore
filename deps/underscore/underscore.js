@@ -657,7 +657,7 @@
 
   // Create a (shallow-cloned) duplicate of an object.
   _.clone = function(obj) {
-    if (!_.isObject(obj)) return obj;
+    if (!_isObject(obj)) return obj;
     return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
   };
 
@@ -783,7 +783,7 @@
   };
 
   // Is a given variable an object?
-  _.isObject = function(obj) {
+  var _isObject = function(obj) {
     return obj === Object(obj);
   };
 

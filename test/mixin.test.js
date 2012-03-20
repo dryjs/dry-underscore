@@ -1,6 +1,17 @@
 var assert = require('assert');
 var _ = require('../');
 
+exports.testIsObject = function(){
+    
+    assert.ok(!_.isObject(null));
+    assert.ok(!_.isObject([]));
+
+    function f(){}
+    assert.ok(_.isObject(new f()));
+    assert.ok(_.isObject({}));
+    assert.eql(['a'], _.clone(['a']));
+};
+
 exports.testWalk = function(){
 
     var o = {
