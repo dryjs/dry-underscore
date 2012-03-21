@@ -12,6 +12,50 @@ exports.testIsObject = function(){
     assert.eql(['a'], _.clone(['a']));
 };
 
+exports.keysTest = function(){
+    var a = ['a', 'b', 'c'];
+    assert.eql(['0', '1', '2'], _.keys(a));
+}
+
+exports.eachAsyncTest = function(beforeExit){
+    var called = 0;
+    var calledFinished = 0;
+    
+    var expectedResultsArray = ['a', 'b', 'c', 'd'];
+    var expectedResultsObject = {'a' : true, 'b' : true, 'c' : true, 'd' : true};
+    
+    var t1ResultsArray = [];
+    var t2ResultsArray = [];
+    var t1ResultsObject = [];
+    var t2ResultsObject = [];
+    
+    function test(o, results, finished){
+        _.eachAsync(o, function(val, key, next){
+            called++;
+            setTimeout(function(){ results[key] = val; next(); }, 10);
+        }, finished);
+    }
+
+    test(expectedResultsArray, t1ResultsArray, function(){ calledFinished++ });
+    test(expectedResultsArray, t2ResultsArray, null);
+    test(expectedResultsObject, t1ResultsObject, function(){ calledFinished++ });
+    test(expectedResultsObject, t2ResultsObject, null);
+
+    beforeExit(function(){assert.eql(called, 16); assert.eql(calledFinished, 2);});
+}
+
+exports.eachTest = function(){
+    
+    var a = [{}, {}];
+    
+    _.each(a, function(val){
+        val.test = true;
+    });
+    
+    assert.eql(a, [{test: true}, {test: true}]);
+};
+
+
 exports.testWalk = function(){
 
     var o = {
