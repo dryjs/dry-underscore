@@ -1104,6 +1104,15 @@ function (_){
             }else{
                 return(_.any(col, function(a){ return(a === target); }));
             }
+        },
+        join : function(){
+            var a = _.toArray(arguments);
+            _.each(a, function(part, index){ a[index] = part.split('/'); });
+            a = _.flatten(a);
+            var result = a.filter(function(a){ return(a !== ""); }).join('/');
+            if(a[0] === ''){ result = "/" + result; }
+            if(a.length > 2 && a[a.length-1] === ""){ result += "/"; }
+            return(result);
         }
     });
 }
