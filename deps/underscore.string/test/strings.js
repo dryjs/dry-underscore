@@ -63,6 +63,7 @@ $(document).ready(function() {
   test("Strings: capitalize", function() {
     equals(_("fabio").capitalize(), "Fabio", 'First letter is upper case');
     equals(_.capitalize("fabio"), "Fabio", 'First letter is upper case');
+    equals(_.capitalize('FOO'), 'FOO', 'Other letters unchanged');
     equals(_(123).capitalize(), "123", "Non string");
   });
 
@@ -141,11 +142,17 @@ $(document).ready(function() {
     ok(_('whitespace').chop()[0].length === 10, "output ['whitespace']");
     ok(_(12345).chop(1).length === 5, "output ['1','2','3','4','5']");
   });
+  
+  test('String: clean', function(){
+    equals(_.clean(' foo     bar   '), 'foo bar');
+    equals(_.clean(1), '1');
+  });
 
   test('String: count', function(){
     equals(_('Hello world').count('l'), 3);
     equals(_('Hello world').count('Hello'), 1);
     equals(_('Hello world').count('foo'), 0);
+    equals(_('x.xx....x.x').count('x'), 5);
     equals(_(12345).count(1), 1);
     equals(_(11345).count(1), 2);
   });
@@ -205,6 +212,23 @@ $(document).ready(function() {
     equals(_('foo$bar').dasherize(), 'foo$bar');
     equals(_(123).dasherize(), '123');
   });
+  
+  test('String: camelize', function(){
+    equals(_.camelize('-moz-transform'), 'MozTransform');
+    equals(_.camelize('webkit-transform'), 'webkitTransform');
+    equals(_.camelize('under_scored'), 'underScored');
+    equals(_.camelize(' with   spaces'), 'withSpaces');
+  });
+  
+  test('String: join', function(){
+    equals(_.join(1, 2, 3, 4), '21314');
+    equals(_.join('|', 'foo', 'bar', 'baz'), 'foo|bar|baz');
+  });
+
+  test('String: classify', function(){
+    equals(_.classify(1), '1');
+    equals(_('some_class_name').classify(), 'SomeClassName');
+  });
 
   test('String: humanize', function(){
     equals(_('the_humanize_string_method').humanize(), 'The humanize string method');
@@ -261,12 +285,22 @@ $(document).ready(function() {
     equals(_('&lt;div&gt;Blah &amp; &quot;blah&quot; &amp; &apos;blah&apos;&lt;/div&gt;').unescapeHTML(),
              '<div>Blah & "blah" & \'blah\'</div>');
     equals(_('&amp;lt;').unescapeHTML(), '&lt;');
+    equals(_('&#39;').unescapeHTML(), "'");
+    equals(_('&#0039;').unescapeHTML(), "'");
+    equals(_('&#x4a;').unescapeHTML(), "J");
+    equals(_('&#x04A;').unescapeHTML(), "J");
+    equals(_('&#X4A;').unescapeHTML(), "&#X4A;");
+    equals(_('&_#39;').unescapeHTML(), "&_#39;");
+    equals(_('&#39_;').unescapeHTML(), "&#39_;");
+    equals(_('&amp;#38;').unescapeHTML(), "&#38;");
+    equals(_('&#38;amp;').unescapeHTML(), "&amp;");
     equals(_(5).unescapeHTML(), '5');
     // equals(_(undefined).unescapeHTML(), '');
   });
 
   test('String: words', function() {
     equals(_("I love you!").words().length, 3);
+    equals(_(" I    love   you!  ").words().length, 3);
     equals(_("I_love_you!").words('_').length, 3);
     equals(_("I-love-you!").words(/-/).length, 3);
     equals(_(123).words().length, 1);
@@ -321,8 +355,9 @@ $(document).ready(function() {
 
   test('String: toNumber', function() {
     deepEqual(_("not a number").toNumber(), Number.NaN);
-	equals(_(0).toNumber(), 0);
-	equals(_("0").toNumber(), 0);
+    equals(_(0).toNumber(), 0);
+    equals(_("0").toNumber(), 0);
+    equals(_("0000").toNumber(), 0);
     equals(_("2.345").toNumber(), 2);
     equals(_("2.345").toNumber(NaN), 2);
     equals(_("2.345").toNumber(2), 2.35);
@@ -387,9 +422,20 @@ $(document).ready(function() {
   test('Strings: slugify', function() {
       equals(_("Jack & Jill like numbers 1,2,3 and 4 and silly characters ?%.$!/").slugify(), "jack-jill-like-numbers-123-and-4-and-silly-characters");
       equals(_("Un éléphant à l'orée du bois").slugify(), "un-elephant-a-loree-du-bois");
+      equals(_("I know latin characters: á í ó ú ç ã õ ñ ü").slugify(), "i-know-latin-characters-a-i-o-u-c-a-o-n-u");
       equals(_("I am a word too, even though I am but a single letter: i!").slugify(), "i-am-a-word-too-even-though-i-am-but-a-single-letter-i");
   });
-  
+ 
+  test('Strings: quote', function(){
+      equals(_.quote("foo"), '"foo"');
+      equals(_.quote('"foo"'), '""foo""');
+  });
+    
+  test('Strings: surround', function(){
+      equals(_.surround("foo", "ab"), 'abfooab');
+  });
+
+
   test('Strings: repeat', function() {
       equals(_.repeat('foo'), '');
       equals(_.repeat('foo', 3), 'foofoofoo');

@@ -73,8 +73,8 @@ _.str.capitalize('epeli')
 Converts first letter of the string to uppercase.
 
 ```javascript
-_.capitalize("epeli")
-=> "Epeli"
+_.capitalize("foo Bar")
+=> "Foo Bar"
 ```
 
 **chop** _.chop(string, step)
@@ -255,6 +255,15 @@ Converts underscored or dasherized string to a camelized one
 ```javascript
 _('-moz-transform').camelize()
 => 'MozTransform'
+```
+
+**classify** _.classify(string)
+
+Converts string to camelized class name
+
+```javascript
+_('some_class_name').classify()
+=> 'SomeClassName'
 ```
 
 **underscored** _.underscored(string)
@@ -507,6 +516,25 @@ _.repeat("foo", 3, "bar")
 => 'foobarfoobarfoo'
 ```
 
+**surround** _.surround(string, wrap)
+
+Surround a string with another string.
+
+```javascript
+_.surround("foo", "ab")
+=> 'abfooab';
+```
+
+**quote** _.quote(string)
+
+Quotes a string.
+
+```javascript
+_.quote('foo')
+=> '"foo"';
+```
+
+
 **slugify** _.slugify(string)
 
 Transform text into a URL slug. Replaces whitespaces, accentuated, and special characters with a dash.
@@ -557,8 +585,24 @@ But of course you can just reassign `_` variable with `_.string`
 ```javascript
 _ = _.string
 ```
+### 2.2.0 ###
 
-#### Upgrade
+* Capitalize method behavior changed
+* Various perfomance tweaks
+
+### 2.1.1###
+
+* Fixed words method bug
+* Added classify method
+
+### 2.1.0 ###
+
+* AMD support
+* Added toSentence method
+* Added slugify method
+* Lots of speed optimizations
+
+### 2.0.0 ###
 
 For upgrading to this version you need to mix in Underscore.string library to Underscore object:
 
