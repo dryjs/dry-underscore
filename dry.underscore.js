@@ -1127,8 +1127,13 @@ function (_){
             if(endSlash){ result += "/"; }
 
             return(result);
+        },
+        removeElements: function(array, from, to) {
+            var rest = array.slice((to || from) + 1 || array.length);
+            array.length = from < 0 ? array.length + from : from;
+            return array.push.apply(array, rest);
         }
-    });
+   });
 }
 )(_);
 _.mixin(_.string.exports());
