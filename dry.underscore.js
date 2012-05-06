@@ -1083,13 +1083,12 @@ function (_){
                 if(i >= keys.length){
                     if(complete){ complete(); }
                 }else{
-                    /*
-                    if(((i + 1) % 50) === 0){
-                        process.nextTick(function(){ iterator.call(context, o[keys[i]], keys[i], function(){ doWork(i+1); })});    
+                    
+                    if(((i + 1) % 30) === 0){
+                        process.nextTick(function(){ iterator.call(context, o[keys[i]], keys[i], function(){ doWork(i+1); }); });
                     }else{
-                    */
                         iterator.call(context, o[keys[i]], keys[i], function(){ doWork(i+1); });
-                    //}
+                    }
                 }
             })(0);
         },
