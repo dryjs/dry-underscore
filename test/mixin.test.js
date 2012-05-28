@@ -1,6 +1,58 @@
 var assert = require('assert');
 var _ = require('../');
 
+exports.testAsyncLockSimple = function(beforeExit){
+    
+    var runs = 0;
+   
+    function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
+    var f = _.asyncLock(inc);
+    f();
+    f();
+    process.nextTick(f);
+
+    beforeExit(function(){ assert.eql(runs, 2); });
+}
+  
+exports.testAsyncLockExtraTest = function(beforeExit){
+    
+    var runs = 0;
+   
+    function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
+    var disabled = false;
+
+    var f = _.asyncLock(inc, function(def){ return(def || disabled); });
+    f();
+    f();
+    disabled = true;
+    process.nextTick(f);
+    process.nextTick(f);
+    disabled = false;
+    process.nextTick(f);
+
+    beforeExit(function(){ assert.eql(runs, 2); });
+}
+
+exports.testAsyncLockComplex = function(beforeExit){
+    
+    var runs = 0;
+   
+    function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
+    var disabled = false;
+    var locked = false;
+
+    var f = _.asyncLock(inc, function(){ return(disabled || locked); }, function(){ locked = true; }, function(){ locked = false; } );
+    f();
+    f();
+    disabled = true;
+    process.nextTick(f);
+    process.nextTick(f);
+    disabled = false;
+    process.nextTick(f);
+
+    beforeExit(function(){ assert.eql(runs, 2); });
+}
+
 exports.testJoin = function(){
     assert.eql(_.join_path('a'), "a");
     assert.eql(_.join_path('a', ""), "a");

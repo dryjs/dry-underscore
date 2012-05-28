@@ -1034,6 +1034,30 @@ function (_){
         },
         isObject : function(o){ return(o !== null && typeof(o) === 'object' && !_.isArray(o)); },
         stripLineBreaks : function(str) { return(str.replace(/[\r\n]/gi ,"")); },
+        asyncLock : function(f, lockTest, lockModify, lockRelease){
+            var running = false;
+            var stockTest = function(){ return(running); };
+
+            if(lockTest !== undefined && lockModify === undefined && lockRelease === undefined){
+                var userTest = lockTest;
+                lockTest = function(){ return(userTest(stockTest())); };
+            }
+
+            lockTest = lockTest || stockTest
+            lockModify = lockModify || function(){ running = true; }
+            lockRelease = lockRelease || function(){ running = false; };
+               
+            function lock(){
+                if(lockTest()){ return; }
+                lockModify(); 
+                var args = _.toArray(arguments);
+                args.push(lockRelease);
+                f.apply(null, args);
+            }
+            
+            return(lock);
+
+        },
         recursionLock : function(f){
             var running = false;
             
