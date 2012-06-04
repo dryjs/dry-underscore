@@ -1064,7 +1064,7 @@ function (_){
             return(lock);
 
         },
-        recursionLock : function(f){
+        lock : function(f){
             var running = false;
             
             function lock(){
