@@ -1161,6 +1161,35 @@ function (_){
             var rest = array.slice((to || from) + 1 || array.length);
             array.length = from < 0 ? array.length + from : from;
             return array.push.apply(array, rest);
+        },
+        fieldStack : function(obj){
+            var workingStack = [];
+            var resultStack = [];
+            var currentItem = obj;
+
+            if(_.isIterable(currentItem)){
+                _.each(currentItem, function(val, key){
+                    workingStack.push({ object: currentItem, fieldName: key });
+                    resultStack.push({ object: currentItem, fieldName: key });
+                });
+            }
+
+            var stackItem = workingStack.pop(); 
+
+            while(stackItem){
+                currentItem = stackItem.object[stackItem.fieldName];
+
+                if(_.isIterable(currentItem)){
+                    _.each(currentItem, function(val, key){
+                        workingStack.push({ object: currentItem, fieldName: key });
+                        resultStack.push({ object: currentItem, fieldName: key });
+                    });
+                }
+
+                stackItem = workingStack.pop(); 
+            } 
+
+            return(resultStack);
         }
    });
 }

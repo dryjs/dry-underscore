@@ -1,10 +1,50 @@
+var fs = require('fs');
 var assert = require('assert');
 var _ = require('../');
 
-exports.testAsyncLockSimple = function(beforeExit){
+exports.testFieldStack = function(){
+
+    var testHash = { 
+        Type: 'BaseModel',
+        Id: '123',
+        InstanceId: 10, 
+        View: {
+            Type: 'BaseModel',
+            Id: 'Test',
+            View: {
+                Type: 'BaseModel',
+                Id: 'Test2',
+                View: [
+                    "zero",
+                    1,  
+                    {Type: 'BaseModel', Id: 'Test3' },
+                    { Type: 'BaseModel',
+                        Id: 'Test4',
+                        View: {
+                            'a' : { 
+                                'b' : { 
+                                    Type: 'BaseModel',
+                                    Id: 'deep'
+                                }   
+                            }   
+                        }   
+                    },  
+                    "four"
+                ]   
+            }   
+        }                                                                                                                                                                         
+    };  
     
+    stack = _.fieldStack(testHash);
+    //console.dir(stack);
+
+    //_.each(stack, function(val){ console.log(val.fieldName); });
+};
+
+exports.testAsyncLockSimple = function(beforeExit){
+
     var runs = 0;
-   
+
     function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
     var f = _.asyncLock(inc);
     f();
@@ -13,11 +53,11 @@ exports.testAsyncLockSimple = function(beforeExit){
 
     beforeExit(function(){ assert.eql(runs, 2); });
 }
-  
+
 exports.testAsyncLockExtraTest = function(beforeExit){
-    
+
     var runs = 0;
-   
+
     function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
     var disabled = false;
 
@@ -34,9 +74,9 @@ exports.testAsyncLockExtraTest = function(beforeExit){
 }
 
 exports.testAsyncLockComplex = function(beforeExit){
-    
+
     var runs = 0;
-   
+
     function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
     var disabled = false;
     var locked = false;
@@ -68,7 +108,7 @@ exports.testJoin = function(){
 };
 
 exports.testIsObject = function(){
-    
+
     assert.ok(!_.isObject(null));
     assert.ok(!_.isObject([]));
 
@@ -86,15 +126,15 @@ exports.keysTest = function(){
 exports.eachAsyncTest = function(beforeExit){
     var called = 0;
     var calledFinished = 0;
-    
+
     var expectedResultsArray = ['a', 'b', 'c', 'd'];
     var expectedResultsObject = {'a' : true, 'b' : true, 'c' : true, 'd' : true};
-    
+
     var t1ResultsArray = [];
     var t2ResultsArray = [];
     var t1ResultsObject = [];
     var t2ResultsObject = [];
-    
+
     function test(o, results, finished){
         _.eachAsync(o, function(val, key, next){
             called++;
@@ -111,13 +151,13 @@ exports.eachAsyncTest = function(beforeExit){
 }
 
 exports.eachTest = function(){
-    
+
     var a = [{}, {}];
-    
+
     _.each(a, function(val){
         val.test = true;
     });
-    
+
     assert.eql(a, [{test: true}, {test: true}]);
 };
 
@@ -129,13 +169,13 @@ exports.testWalk = function(){
         "b" : { "c" : "c", "d" : { "e" : "e" } },
         "f" : "f"
     };
-    
+
     var expectedKeyOrder = ['a', 'b', 'c', 'd', 'e', 'f'];
     var actualKeyOrder = [];
-    
+
     var expectedValueOrder = ['a', { "c" : "c", "d" : { "e" : "e" } }, "c", { "e" : "e" }, "e", "f"];
     var actualValueOrder = [];
-    
+
     _.walk(o, function(val, key, o){
         actualKeyOrder.push(key);
         actualValueOrder.push(val);
@@ -152,14 +192,14 @@ exports.testSubstitute = function(){
         "f" : "f",
         "z" : "z"
     };
-    
+
     var end = {
         "a" : "A",
         "b" : { 'B' : { "D" : "D"}},
         "f" : "C",
         "z" : "z"
     }
-    
+
     _.substitute(start, function(val, key){
         if(key === 'a'){
             return("A");
