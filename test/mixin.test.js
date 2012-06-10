@@ -2,6 +2,18 @@ var fs = require('fs');
 var assert = require('assert');
 var _ = require('../');
 
+exports.testUnionize = function(){
+    var o = { x : 0 };
+
+    function a(b){ b.x++; }
+    function b(b){ b.x++; }
+    function c(b){ b.x++; }
+
+    _.unionize(a, b, c)(o);
+
+    assert.eql(o.x, 3);
+};
+
 exports.testFieldStack = function(){
 
     var testHash = { 
