@@ -1190,6 +1190,17 @@ function (_){
             } 
 
             return(resultStack);
+        },
+        unionize : function(){
+            var args = arguments;
+            return(function(){
+                var uargs = arguments;
+                _.each(args, function(f){
+                    if(_.isFunction(f)){
+                        f.apply(undefined, uargs);
+                    }
+                });
+            });
         }
    });
 }
