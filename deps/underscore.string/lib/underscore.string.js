@@ -244,7 +244,7 @@
     },
 
     include: function(str, needle){
-      return !!~(''+str).indexOf(needle);
+      return !!~(_.indexOf(''+str, needle));
     },
 
     join: function() {
