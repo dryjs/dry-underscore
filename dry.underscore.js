@@ -1579,7 +1579,8 @@ EventEmitter.prototype.emit = function (name) {
     this.method = method;
     this.url = url;
     this.header = {};
-    this.set('X-Requested-With', 'XMLHttpRequest');
+    // this is an error when it's a cross domain request
+    //this.set('X-Requested-With', 'XMLHttpRequest');
     this.on('end', function(){
       self.callback(new Response(self.xhr));
     });
@@ -2127,6 +2128,9 @@ function (_){
                 while (ws.test(str.charAt(--i)));
                 return str.slice(0, i + 1);
             }
+        },
+        toNumber : function(n){
+            return(n - 0);
         }
    });
 }

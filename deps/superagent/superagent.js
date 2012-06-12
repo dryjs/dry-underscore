@@ -562,7 +562,8 @@ EventEmitter.prototype.emit = function (name) {
     this.method = method;
     this.url = url;
     this.header = {};
-    this.set('X-Requested-With', 'XMLHttpRequest');
+    // this is an error when it's a cross domain request
+    //this.set('X-Requested-With', 'XMLHttpRequest');
     this.on('end', function(){
       self.callback(new Response(self.xhr));
     });
