@@ -1,6 +1,6 @@
 {
-	"name":"dry-underscore",
-	"version":"0.2.0",
+    "name":"dry-underscore",
+    "version":"0.2.0",
     "main": "./lib/index.js",
     "description": "The DRY Undescore Library",
     "author": {
@@ -8,7 +8,7 @@
         "email": "sktayloriii@gmail.com"
     },
     "homepage": "http://dryjs.com/",
-	"repository": {
+    "repository": {
         "type": "git",
         "url": "git://github.com/dryjs/dry-underscore.git"
     },
@@ -22,6 +22,11 @@
         "node": "0.4 || 0.5 || 0.6 || 0.7 || 0.8",
         "npm": "1"
     },
-    "dependencies":{
-	}
+    "dependencies":{ 
+        "qs": "0.4.2"
+        , "formidable": "1.0.9"
+        , "mime": "1.2.5"
+        , "emitter-component": "0.0.1"
+
+    }
 }
