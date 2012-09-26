@@ -2,6 +2,11 @@ var fs = require('fs');
 var assert = require('assert');
 var _ = require('../');
 
+exports.testTrimAndStripQuotes = function(){
+    assert.eql(_.trimAndStripQuotes("'asdf'"), "asdf");
+    assert.eql(_.trimAndStripQuotes('"asdf"'), "asdf");
+};
+
 exports.testUnionize = function(){
     var o = { x : 0 };
 
