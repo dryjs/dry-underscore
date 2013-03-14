@@ -19,6 +19,27 @@ exports.testUnionize = function(){
     assert.eql(o.x, 3);
 };
 
+exports.testEmptySimpleObject = function(){
+    function a(){}
+    function b(){}
+    b.prototype.testFunction = function(){};
+    function c(){ this.prop = true; }
+
+    var a1 = new a();
+    var b1 = new b();
+    var c1 = new c();
+    var d1 = {};
+    var d2 = {"prop" : true};
+
+    assert.eql(_.isEmptyObjectWithNoPrototype(a1), true);
+    a.prototype.test = function(){};
+    assert.eql(_.isEmptyObjectWithNoPrototype(a1), false);
+    assert.eql(_.isEmptyObjectWithNoPrototype(b1), false);
+    assert.eql(_.isEmptyObjectWithNoPrototype(c1), false);
+    assert.eql(_.isEmptyObjectWithNoPrototype(d1), true);
+    assert.eql(_.isEmptyObjectWithNoPrototype(d2), false);
+};
+
 exports.testFieldStack = function(){
 
     var testHash = { 
