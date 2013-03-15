@@ -27,6 +27,7 @@
         , "formidable": "1.0.9"
         , "mime": "1.2.5"
         , "emitter-component": "0.0.1"
+        , "tosource" : ""
         , "mustache" : ""
         , "tamejs" : ""
 

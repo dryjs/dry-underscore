@@ -30,7 +30,7 @@ exports.testMTime = testMTime;
 var testDir = path.normalize(__dirname + "/data/");
 
 function testMTime(){
-    _.fs.mtime(testDir + '/parent/parent.file', function(mtimeDate){
+    _.fs.modificationTime(testDir + '/parent/parent.file', function(mtimeDate){
         console.log(mtimeDate.getTime());
     });
 }
