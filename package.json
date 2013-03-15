@@ -1,6 +1,6 @@
 {
     "name":"dry-underscore",
-    "version":"0.2.0",
+    "version":"0.3.0",
     "main": "./lib/index.js",
     "description": "The DRY Undescore Library",
     "author": {
@@ -16,17 +16,17 @@
         "url": "http://github.com/dryjs/dry-underscore/issues"
     },
     "directories": {
-        "lib": "./lib"
+        "lib": "./lib",
+        "bin": "./bin"
     },
     "engines": {
         "node": "0.4 || 0.5 || 0.6 || 0.7 || 0.8",
         "npm": "1"
     },
     "dependencies":{ 
-        "qs": "0.4.2"
-        , "formidable": "1.0.9"
-        , "mime": "1.2.5"
-        , "emitter-component": "0.0.1"
+        "winston":""
+        ,"winston-mongodb":""
+        ,"formidable":""
         , "tosource" : ""
         , "mustache" : ""
         , "tamejs" : ""

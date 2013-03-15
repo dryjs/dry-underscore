@@ -7,5 +7,8 @@ cat ./deps/superagent/superagent.js >> dry.underscore.js
 echo "(" >> dry.underscore.js
 node -e "console.log(require('./lib/common.js').mixin.toString())" >> dry.underscore.js
 echo ")(_);" >> dry.underscore.js
+echo "_.dry = (" >> dry.underscore.js
+node -e "console.log(require('./lib/dry.tjs').mixin.toString())" >> dry.underscore.js
+echo ")(_);" >> dry.underscore.js
 #echo "_.mixin(_.string.exports());" >> dry.underscore.js
 echo "})();" >> dry.underscore.js
