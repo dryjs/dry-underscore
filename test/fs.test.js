@@ -30,13 +30,13 @@ exports.globTest = globTest;
 
 function globTest(){
 
-    assert.ok(_.fs.glob.matchFile("/test.js/test.js/asdf.js", "*.js"));
-    assert.ok(!_.fs.glob.matchFile("/test.js/test.js/asdf.ms", "*.js"));
+    assert.ok(_.fs.glob.match("/test.js/test.js/asdf.js", "*.js"));
+    assert.ok(!_.fs.glob.match("/test.js/test.js/asdf.ms", "*.js"));
 
-    assert.ok(_.fs.glob.matchFile("/test/test/!asdf.js", "!*.js"));
-    assert.ok(_.fs.glob.matchFile("/test/test/asdf.ms", "as*"));
-    assert.ok(_.fs.glob.matchFile("/test/test/asdf.ms", "as*.ms"));
-    assert.ok(!_.fs.glob.matchFile("/test/test/adf.ms", "as*.ms"));
+    assert.ok(_.fs.glob.match("/test/test/!asdf.js", "!*.js"));
+    assert.ok(_.fs.glob.match("/test/test/asdf.ms", "as*"));
+    assert.ok(_.fs.glob.match("/test/test/asdf.ms", "as*.ms"));
+    assert.ok(!_.fs.glob.match("/test/test/adf.ms", "as*.ms"));
 };
 
 
