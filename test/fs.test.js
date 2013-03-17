@@ -25,13 +25,26 @@ exports.testRemoveSlash = testRemoveSlash;
 exports.testGetFileName = testGetFileName;
 exports.testMoveFiles = testMoveFiles;
 exports.testMTime = testMTime;
+exports.globTest = globTest;
+
+
+function globTest(){
+
+    assert.ok(_.fs.glob.matchFile("/test.js/test.js/asdf.js", "*.js"));
+    assert.ok(!_.fs.glob.matchFile("/test.js/test.js/asdf.ms", "*.js"));
+
+    assert.ok(_.fs.glob.matchFile("/test/test/!asdf.js", "!*.js"));
+    assert.ok(_.fs.glob.matchFile("/test/test/asdf.ms", "as*"));
+    assert.ok(_.fs.glob.matchFile("/test/test/asdf.ms", "as*.ms"));
+    assert.ok(!_.fs.glob.matchFile("/test/test/adf.ms", "as*.ms"));
+};
 
 
 var testDir = path.normalize(__dirname + "/data/");
 
 function testMTime(){
-    _.fs.modificationTime(testDir + '/parent/parent.file', function(mtimeDate){
-        console.log(mtimeDate.getTime());
+    _.fs.modificationTime(testDir + '/parent/parent.file', function(mtime){
+        console.log(mtime);
     });
 }
 
@@ -387,12 +400,9 @@ function testGetFilesAndFolders(beforeExit){
 function testMakeRemoveTree(beforeExit){
     var n = 0;
 
-    try{
-        _.fs.removeTree(testDir + 'sync');
-        _.fs.removeTree(testDir + 'async');
-    }catch(e){
-        n++;
-    }
+    _.fs.removeTree(testDir + 'sync');
+    _.fs.removeTree(testDir + 'async');
+    n++;
 
     _.fs.makeTree(testDir + 'sync/make/tree/');
     assert.strictEqual(true, _.fs.exists(testDir + 'sync/make/tree/'));

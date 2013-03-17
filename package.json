@@ -30,6 +30,7 @@
         , "tosource" : ""
         , "mustache" : ""
         , "tamejs" : ""
+        , "minimatch" : ""
 
     }
 }
