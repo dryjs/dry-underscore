@@ -26,7 +26,16 @@ exports.testGetFileName = testGetFileName;
 exports.testMoveFiles = testMoveFiles;
 exports.testMTime = testMTime;
 exports.globTest = globTest;
+exports.hiddenTest = hiddenTest;
 
+function hiddenTest(){
+    assert.ok(!_.fs.isHidden("/test.js/test.js/asdf.js"));
+    assert.ok(_.fs.isHidden("/test.js/test.js/.asdf.js"));
+    assert.ok(!_.fs.isHidden("/test.js/.test.js/asdf.js"));
+    assert.ok(_.fs.isHidden("/test.js/.test.js/.asdf.js"));
+    assert.ok(!_.fs.isHidden("asdf.js"));
+    assert.ok(_.fs.isHidden(".asdf.js"));
+}
 
 function globTest(){
 

@@ -6,12 +6,21 @@ var _ = require('../');
 
 exports.testHasType = testHasType;
 exports.testHasTypes = testHasTypes;
-// exports.testIterateAsync = testIterateAsync;
+//exports.testIterateAsync = testIterateAsync;
+exports.testEmptyIterate = testEmptyIterate;
 
+function testEmptyIterate(beforeExit){
+
+    var called = 0;
+
+    _.eachAsync([], function(){ }, function(){ called++; });
+
+    beforeExit(function(){ assert.eql(called, 1); });
+}
 
 function testIterateAsync(){
     // stack buster test
-    
+
     var a = [0];
     var start = a;
     var stackSize = 10000;
@@ -35,30 +44,31 @@ function testIterateAsync(){
 function recursiveIterate(a, callback){
     // iterate and recreate array
     var z = [];
-    process.nextTick(function() { _.iterateAsync(a, function(index, val, next){
-        if(Array.isArray(val)){
-            recursiveIterate(val, function(r){
-                z.push(r);
+    process.nextTick(function() { 
+        _.eachAsync(a, function(index, val, next){
+            if(Array.isArray(val)){
+                recursiveIterate(val, function(r){
+                    z.push(r);
+                    next();
+                });
+            }else{
+                z.push(val);
+                // console.log(val);
                 next();
-            });
-        }else{
-            z.push(val);
-            // console.log(val);
-            next();
-        }
-    }, function(){ callback(z) } );
-                     });
+            }
+        }, function(){ callback(z) } );
+    });
 }
 
 function testHasType(){
-    
+
     var t = {Type : 'T'};
     var x = {Type : 'X'};
     var at = [t, t];
     var ax = [x, x];
     var atx = [t, x];
-    
-    
+
+
     assert.strictEqual(0, _.dry.hasType("a", 'string').length);
     assert.strictEqual(0, _.dry.hasType(0, 'number').length);
     assert.strictEqual(1, _.dry.hasType(0, 'string').length);
@@ -73,18 +83,18 @@ function testHasType(){
     assert.strictEqual(1, _.dry.hasType(x, 'T').length);
     assert.strictEqual(0, _.dry.hasType(t, ['T', 'X']).length);
     assert.strictEqual(0, _.dry.hasType(x, ['X', 'T']).length);
-    
+
 }
 
 function testHasTypes(){
-    
+
     var t = {Type : 'T'};
     var x = {Type : 'X'};
     var at = [t, t];
     var ax = [x, x];
     var atx = [t, x];
-    
-    
+
+
     assert.strictEqual(1, _.dry.hasTypes("a", 'string').length);
     assert.strictEqual(1, _.dry.hasTypes(0, 'number').length);
     assert.strictEqual(1, _.dry.hasTypes(0, 'string').length);
@@ -107,7 +117,7 @@ function testHasTypes(){
     assert.strictEqual(1, _.dry.hasTypes(ax, 'T').length);
     assert.strictEqual(1, _.dry.hasTypes(at, 'X').length);
     assert.strictEqual(1, _.dry.hasTypes(atx, ['T']).length);
-    
+
 }
 
 
