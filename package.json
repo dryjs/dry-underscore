@@ -31,6 +31,7 @@
         , "mustache" : ""
         , "tamejs" : ""
         , "minimatch" : ""
+        , "superagent" : ""
 
     }
 }
