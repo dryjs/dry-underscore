@@ -1,7 +1,7 @@
 (function(){
-//     Underscore.js 1.4.4
+//     Underscore.js 1.6.0
 //     http://underscorejs.org
-//     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.
+//     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
 
 (function() {
@@ -9,7 +9,7 @@
   // Baseline setup
   // --------------
 
-  // Establish the root object, `window` in the browser, or `global` on the server.
+  // Establish the root object, `window` in the browser, or `exports` on the server.
   var root = this;
 
   // Save the previous value of the `_` variable.
@@ -22,11 +22,12 @@
   var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
 
   // Create quick reference variables for speed access to core prototypes.
-  var push             = ArrayProto.push,
-      slice            = ArrayProto.slice,
-      concat           = ArrayProto.concat,
-      toString         = ObjProto.toString,
-      hasOwnProperty   = ObjProto.hasOwnProperty;
+  var
+    push             = ArrayProto.push,
+    slice            = ArrayProto.slice,
+    concat           = ArrayProto.concat,
+    toString         = ObjProto.toString,
+    hasOwnProperty   = ObjProto.hasOwnProperty;
 
   // All **ECMAScript 5** native function implementations that we hope to use
   // are declared here.
@@ -65,7 +66,7 @@
   }
 
   // Current version.
-  _.VERSION = '1.4.4';
+  _.VERSION = '1.6.0';
 
   // Collection Functions
   // --------------------
@@ -74,7 +75,7 @@
   // Handles objects with the built-in `forEach`, arrays, and raw objects.
   // Delegates to **ECMAScript 5**'s native `forEach` if available.
   var each = _.each = _.forEach = function(obj, iterator, context) {
-    if (obj == null) return;
+    if (obj == null) return obj;
     if (nativeForEach && obj.forEach === nativeForEach) {
       obj.forEach(iterator, context);
     } else if (!_.isFunction(obj) && obj.length === +obj.length) {
@@ -82,12 +83,12 @@
         if (iterator.call(context, obj[i], i, obj) === breaker) return;
       }
     } else {
-      for (var key in obj) {
-        if (_.has(obj, key)) {
-          if (iterator.call(context, obj[key], key, obj) === breaker) return;
-        }
+      var keys = _.keys(obj);
+      for (var i = 0, length = keys.length; i < length; i++) {
+        if (iterator.call(context, obj[keys[i]], keys[i], obj) === breaker) return;
       }
     }
+    return obj;
   };
 
   // Return the results of applying the iterator to each element.
@@ -97,7 +98,7 @@
     if (obj == null) return results;
     if (nativeMap && obj.map === nativeMap) return obj.map(iterator, context);
     each(obj, function(value, index, list) {
-      results[results.length] = iterator.call(context, value, index, list);
+      results.push(iterator.call(context, value, index, list));
     });
     return results;
   };
@@ -153,10 +154,10 @@
   };
 
   // Return the first value which passes a truth test. Aliased as `detect`.
-  _.find = _.detect = function(obj, iterator, context) {
+  _.find = _.detect = function(obj, predicate, context) {
     var result;
     any(obj, function(value, index, list) {
-      if (iterator.call(context, value, index, list)) {
+      if (predicate.call(context, value, index, list)) {
         result = value;
         return true;
       }
@@ -167,33 +168,33 @@
   // Return all the elements that pass a truth test.
   // Delegates to **ECMAScript 5**'s native `filter` if available.
   // Aliased as `select`.
-  _.filter = _.select = function(obj, iterator, context) {
+  _.filter = _.select = function(obj, predicate, context) {
     var results = [];
     if (obj == null) return results;
-    if (nativeFilter && obj.filter === nativeFilter) return obj.filter(iterator, context);
+    if (nativeFilter && obj.filter === nativeFilter) return obj.filter(predicate, context);
     each(obj, function(value, index, list) {
-      if (iterator.call(context, value, index, list)) results[results.length] = value;
+      if (predicate.call(context, value, index, list)) results.push(value);
     });
     return results;
   };
 
   // Return all the elements for which a truth test fails.
-  _.reject = function(obj, iterator, context) {
+  _.reject = function(obj, predicate, context) {
     return _.filter(obj, function(value, index, list) {
-      return !iterator.call(context, value, index, list);
+      return !predicate.call(context, value, index, list);
     }, context);
   };
 
   // Determine whether all of the elements match a truth test.
   // Delegates to **ECMAScript 5**'s native `every` if available.
   // Aliased as `all`.
-  _.every = _.all = function(obj, iterator, context) {
-    iterator || (iterator = _.identity);
+  _.every = _.all = function(obj, predicate, context) {
+    predicate || (predicate = _.identity);
     var result = true;
     if (obj == null) return result;
-    if (nativeEvery && obj.every === nativeEvery) return obj.every(iterator, context);
+    if (nativeEvery && obj.every === nativeEvery) return obj.every(predicate, context);
     each(obj, function(value, index, list) {
-      if (!(result = result && iterator.call(context, value, index, list))) return breaker;
+      if (!(result = result && predicate.call(context, value, index, list))) return breaker;
     });
     return !!result;
   };
@@ -201,13 +202,13 @@
   // Determine if at least one element in the object matches a truth test.
   // Delegates to **ECMAScript 5**'s native `some` if available.
   // Aliased as `any`.
-  var any = _.some = _.any = function(obj, iterator, context) {
-    iterator || (iterator = _.identity);
+  var any = _.some = _.any = function(obj, predicate, context) {
+    predicate || (predicate = _.identity);
     var result = false;
     if (obj == null) return result;
-    if (nativeSome && obj.some === nativeSome) return obj.some(iterator, context);
+    if (nativeSome && obj.some === nativeSome) return obj.some(predicate, context);
     each(obj, function(value, index, list) {
-      if (result || (result = iterator.call(context, value, index, list))) return breaker;
+      if (result || (result = predicate.call(context, value, index, list))) return breaker;
     });
     return !!result;
   };
@@ -233,41 +234,37 @@
 
   // Convenience version of a common use case of `map`: fetching a property.
   _.pluck = function(obj, key) {
-    return _.map(obj, function(value){ return value[key]; });
+    return _.map(obj, _.property(key));
   };
 
   // Convenience version of a common use case of `filter`: selecting only objects
   // containing specific `key:value` pairs.
-  _.where = function(obj, attrs, first) {
-    if (_.isEmpty(attrs)) return first ? void 0 : [];
-    return _[first ? 'find' : 'filter'](obj, function(value) {
-      for (var key in attrs) {
-        if (attrs[key] !== value[key]) return false;
-      }
-      return true;
-    });
+  _.where = function(obj, attrs) {
+    return _.filter(obj, _.matches(attrs));
   };
 
   // Convenience version of a common use case of `find`: getting the first object
   // containing specific `key:value` pairs.
   _.findWhere = function(obj, attrs) {
-    return _.where(obj, attrs, true);
+    return _.find(obj, _.matches(attrs));
   };
 
   // Return the maximum element or (element-based computation).
   // Can't optimize arrays of integers longer than 65,535 elements.
-  // See: https://bugs.webkit.org/show_bug.cgi?id=80797
+  // See [WebKit Bug 80797](https://bugs.webkit.org/show_bug.cgi?id=80797)
   _.max = function(obj, iterator, context) {
     if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
       return Math.max.apply(Math, obj);
     }
-    if (!iterator && _.isEmpty(obj)) return -Infinity;
-    var result = {computed : -Infinity, value: -Infinity};
+    var result = -Infinity, lastComputed = -Infinity;
     each(obj, function(value, index, list) {
       var computed = iterator ? iterator.call(context, value, index, list) : value;
-      computed >= result.computed && (result = {value : value, computed : computed});
+      if (computed > lastComputed) {
+        result = value;
+        lastComputed = computed;
+      }
     });
-    return result.value;
+    return result;
   };
 
   // Return the minimum element (or element-based computation).
@@ -275,16 +272,19 @@
     if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
       return Math.min.apply(Math, obj);
     }
-    if (!iterator && _.isEmpty(obj)) return Infinity;
-    var result = {computed : Infinity, value: Infinity};
+    var result = Infinity, lastComputed = Infinity;
     each(obj, function(value, index, list) {
       var computed = iterator ? iterator.call(context, value, index, list) : value;
-      computed < result.computed && (result = {value : value, computed : computed});
+      if (computed < lastComputed) {
+        result = value;
+        lastComputed = computed;
+      }
     });
-    return result.value;
+    return result;
   };
 
-  // Shuffle an array.
+  // Shuffle an array, using the modern version of the
+  // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
   _.shuffle = function(obj) {
     var rand;
     var index = 0;
@@ -297,19 +297,32 @@
     return shuffled;
   };
 
+  // Sample **n** random values from a collection.
+  // If **n** is not specified, returns a single random element.
+  // The internal `guard` argument allows it to work with `map`.
+  _.sample = function(obj, n, guard) {
+    if (n == null || guard) {
+      if (obj.length !== +obj.length) obj = _.values(obj);
+      return obj[_.random(obj.length - 1)];
+    }
+    return _.shuffle(obj).slice(0, Math.max(0, n));
+  };
+
   // An internal function to generate lookup iterators.
   var lookupIterator = function(value) {
-    return _.isFunction(value) ? value : function(obj){ return obj[value]; };
+    if (value == null) return _.identity;
+    if (_.isFunction(value)) return value;
+    return _.property(value);
   };
 
   // Sort the object's values by a criterion produced by an iterator.
-  _.sortBy = function(obj, value, context) {
-    var iterator = lookupIterator(value);
+  _.sortBy = function(obj, iterator, context) {
+    iterator = lookupIterator(iterator);
     return _.pluck(_.map(obj, function(value, index, list) {
       return {
-        value : value,
-        index : index,
-        criteria : iterator.call(context, value, index, list)
+        value: value,
+        index: index,
+        criteria: iterator.call(context, value, index, list)
       };
     }).sort(function(left, right) {
       var a = left.criteria;
@@ -318,43 +331,46 @@
         if (a > b || a === void 0) return 1;
         if (a < b || b === void 0) return -1;
       }
-      return left.index < right.index ? -1 : 1;
+      return left.index - right.index;
     }), 'value');
   };
 
   // An internal function used for aggregate "group by" operations.
-  var group = function(obj, value, context, behavior) {
-    var result = {};
-    var iterator = lookupIterator(value == null ? _.identity : value);
-    each(obj, function(value, index) {
-      var key = iterator.call(context, value, index, obj);
-      behavior(result, key, value);
-    });
-    return result;
+  var group = function(behavior) {
+    return function(obj, iterator, context) {
+      var result = {};
+      iterator = lookupIterator(iterator);
+      each(obj, function(value, index) {
+        var key = iterator.call(context, value, index, obj);
+        behavior(result, key, value);
+      });
+      return result;
+    };
   };
 
   // Groups the object's values by a criterion. Pass either a string attribute
   // to group by, or a function that returns the criterion.
-  _.groupBy = function(obj, value, context) {
-    return group(obj, value, context, function(result, key, value) {
-      (_.has(result, key) ? result[key] : (result[key] = [])).push(value);
-    });
-  };
+  _.groupBy = group(function(result, key, value) {
+    _.has(result, key) ? result[key].push(value) : result[key] = [value];
+  });
+
+  // Indexes the object's values by a criterion, similar to `groupBy`, but for
+  // when you know that your index values will be unique.
+  _.indexBy = group(function(result, key, value) {
+    result[key] = value;
+  });
 
   // Counts instances of an object that group by a certain criterion. Pass
   // either a string attribute to count by, or a function that returns the
   // criterion.
-  _.countBy = function(obj, value, context) {
-    return group(obj, value, context, function(result, key) {
-      if (!_.has(result, key)) result[key] = 0;
-      result[key]++;
-    });
-  };
+  _.countBy = group(function(result, key) {
+    _.has(result, key) ? result[key]++ : result[key] = 1;
+  });
 
   // Use a comparator function to figure out the smallest index at which
   // an object should be inserted so as to maintain order. Uses binary search.
   _.sortedIndex = function(array, obj, iterator, context) {
-    iterator = iterator == null ? _.identity : lookupIterator(iterator);
+    iterator = lookupIterator(iterator);
     var value = iterator.call(context, obj);
     var low = 0, high = array.length;
     while (low < high) {
@@ -364,7 +380,7 @@
     return low;
   };
 
-  // Safely convert anything iterable into a real, live array.
+  // Safely create a real, live array from anything iterable.
   _.toArray = function(obj) {
     if (!obj) return [];
     if (_.isArray(obj)) return slice.call(obj);
@@ -386,7 +402,9 @@
   // allows it to work with `_.map`.
   _.first = _.head = _.take = function(array, n, guard) {
     if (array == null) return void 0;
-    return (n != null) && !guard ? slice.call(array, 0, n) : array[0];
+    if ((n == null) || guard) return array[0];
+    if (n < 0) return [];
+    return slice.call(array, 0, n);
   };
 
   // Returns everything but the last entry of the array. Especially useful on
@@ -401,11 +419,8 @@
   // values in the array. The **guard** check allows it to work with `_.map`.
   _.last = function(array, n, guard) {
     if (array == null) return void 0;
-    if ((n != null) && !guard) {
-      return slice.call(array, Math.max(array.length - n, 0));
-    } else {
-      return array[array.length - 1];
-    }
+    if ((n == null) || guard) return array[array.length - 1];
+    return slice.call(array, Math.max(array.length - n, 0));
   };
 
   // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.
@@ -422,20 +437,26 @@
   };
 
   // Internal implementation of a recursive `flatten` function.
-  var flatten = function(input, shallow, output) {
-    each(input, function(value) {
-      if (_.isArray(value)) {
-        shallow ? push.apply(output, value) : flatten(value, shallow, output);
+  var flatten = function(input, shallow, strict, output) {
+    if (shallow && _.every(input, _.isArray)) {
+      return concat.apply(output, input);
+    }
+    for (var i = 0, length = input.length; i < length; i++) {
+      var value = input[i];
+      if (!_.isArray(value) && !_.isArguments(value)) {
+        if (!strict) output.push(value);
+      } else if (shallow) {
+        push.apply(output, value);
       } else {
-        output.push(value);
+        flatten(value, shallow, strict, output);
       }
-    });
+    }
     return output;
   };
 
-  // Return a completely flattened version of an array.
+  // Flatten out an array, either recursively (by default), or just one level.
   _.flatten = function(array, shallow) {
-    return flatten(array, shallow, []);
+    return flatten(array, shallow, false, []);
   };
 
   // Return a version of the array that does not contain the specified value(s).
@@ -443,31 +464,45 @@
     return _.difference(array, slice.call(arguments, 1));
   };
 
+  // Split an array into two arrays: one whose elements all satisfy the given
+  // predicate, and one whose elements all do not satisfy the predicate.
+  _.partition = function(obj, predicate, context) {
+    predicate = lookupIterator(predicate);
+    var pass = [], fail = [];
+    each(obj, function(elem) {
+      (predicate.call(context, elem) ? pass : fail).push(elem);
+    });
+    return [pass, fail];
+  };
+
   // Produce a duplicate-free version of the array. If the array has already
   // been sorted, you have the option of using a faster algorithm.
   // Aliased as `unique`.
   _.uniq = _.unique = function(array, isSorted, iterator, context) {
+    if (array == null) return [];
     if (_.isFunction(isSorted)) {
       context = iterator;
       iterator = isSorted;
       isSorted = false;
     }
-    var initial = iterator ? _.map(array, iterator, context) : array;
-    var results = [];
+    var result = [];
     var seen = [];
-    each(initial, function(value, index) {
-      if (isSorted ? (!index || seen[seen.length - 1] !== value) : !_.contains(seen, value)) {
-        seen.push(value);
-        results.push(array[index]);
+    for (var i = 0, length = array.length; i < length; i++) {
+      var value = array[i];
+      if (iterator) value = iterator.call(context, value, i, array);
+      if (isSorted ? (!i || seen !== value) : !_.contains(seen, value)) {
+        if (isSorted) seen = value;
+        else seen.push(value);
+        result.push(array[i]);
       }
-    });
-    return results;
+    }
+    return result;
   };
 
   // Produce an array that contains the union: each distinct element from all of
   // the passed-in arrays.
   _.union = function() {
-    return _.uniq(concat.apply(ArrayProto, arguments));
+    return _.uniq(flatten(arguments, true, true, []));
   };
 
   // Produce an array that contains every item shared between all the
@@ -476,7 +511,7 @@
     var rest = slice.call(arguments, 1);
     return _.filter(_.uniq(array), function(item) {
       return _.every(rest, function(other) {
-        return _.indexOf(other, item) >= 0;
+        return _.contains(other, item);
       });
     });
   };
@@ -484,18 +519,17 @@
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
-    var rest = concat.apply(ArrayProto, slice.call(arguments, 1));
+    var rest = flatten(slice.call(arguments, 1), true, true, []);
     return _.filter(array, function(value){ return !_.contains(rest, value); });
   };
 
   // Zip together multiple lists into a single array -- elements that share
   // an index go together.
   _.zip = function() {
-    var args = slice.call(arguments);
-    var length = _.max(_.pluck(args, 'length'));
+    var length = _.max(_.pluck(arguments, 'length').concat(0));
     var results = new Array(length);
     for (var i = 0; i < length; i++) {
-      results[i] = _.pluck(args, "" + i);
+      results[i] = _.pluck(arguments, '' + i);
     }
     return results;
   };
@@ -506,7 +540,7 @@
   _.object = function(list, values) {
     if (list == null) return {};
     var result = {};
-    for (var i = 0, l = list.length; i < l; i++) {
+    for (var i = 0, length = list.length; i < length; i++) {
       if (values) {
         result[list[i]] = values[i];
       } else {
@@ -524,17 +558,17 @@
   // for **isSorted** to use binary search.
   _.indexOf = function(array, item, isSorted) {
     if (array == null) return -1;
-    var i = 0, l = array.length;
+    var i = 0, length = array.length;
     if (isSorted) {
       if (typeof isSorted == 'number') {
-        i = (isSorted < 0 ? Math.max(0, l + isSorted) : isSorted);
+        i = (isSorted < 0 ? Math.max(0, length + isSorted) : isSorted);
       } else {
         i = _.sortedIndex(array, item);
         return array[i] === item ? i : -1;
       }
     }
     if (nativeIndexOf && array.indexOf === nativeIndexOf) return array.indexOf(item, isSorted);
-    for (; i < l; i++) if (array[i] === item) return i;
+    for (; i < length; i++) if (array[i] === item) return i;
     return -1;
   };
 
@@ -560,11 +594,11 @@
     }
     step = arguments[2] || 1;
 
-    var len = Math.max(Math.ceil((stop - start) / step), 0);
+    var length = Math.max(Math.ceil((stop - start) / step), 0);
     var idx = 0;
-    var range = new Array(len);
+    var range = new Array(length);
 
-    while(idx < len) {
+    while(idx < length) {
       range[idx++] = start;
       start += step;
     }
@@ -583,7 +617,7 @@
   // available.
   _.bind = function(func, context) {
     var args, bound;
-    if (func.bind === nativeBind && nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
+    if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
     if (!_.isFunction(func)) throw new TypeError;
     args = slice.call(arguments, 2);
     return bound = function() {
@@ -598,19 +632,27 @@
   };
 
   // Partially apply a function by creating a version that has had some of its
-  // arguments pre-filled, without changing its dynamic `this` context.
+  // arguments pre-filled, without changing its dynamic `this` context. _ acts
+  // as a placeholder, allowing any combination of arguments to be pre-filled.
   _.partial = function(func) {
-    var args = slice.call(arguments, 1);
+    var boundArgs = slice.call(arguments, 1);
     return function() {
-      return func.apply(this, args.concat(slice.call(arguments)));
+      var position = 0;
+      var args = boundArgs.slice();
+      for (var i = 0, length = args.length; i < length; i++) {
+        if (args[i] === _) args[i] = arguments[position++];
+      }
+      while (position < arguments.length) args.push(arguments[position++]);
+      return func.apply(this, args);
     };
   };
 
-  // Bind all of an object's methods to that object. Useful for ensuring that
-  // all callbacks defined on an object belong to it.
+  // Bind a number of an object's methods to that object. Remaining arguments
+  // are the method names to be bound. Useful for ensuring that all callbacks
+  // defined on an object belong to it.
   _.bindAll = function(obj) {
     var funcs = slice.call(arguments, 1);
-    if (funcs.length === 0) throw new Error("bindAll must be passed function names");
+    if (funcs.length === 0) throw new Error('bindAll must be passed function names');
     each(funcs, function(f) { obj[f] = _.bind(obj[f], obj); });
     return obj;
   };
@@ -639,17 +681,24 @@
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
-  // during a given window of time.
-  _.throttle = function(func, wait) {
-    var context, args, timeout, result;
+  // during a given window of time. Normally, the throttled function will run
+  // as much as it can, without ever going more than once per `wait` duration;
+  // but if you'd like to disable the execution on the leading edge, pass
+  // `{leading: false}`. To disable execution on the trailing edge, ditto.
+  _.throttle = function(func, wait, options) {
+    var context, args, result;
+    var timeout = null;
     var previous = 0;
+    options || (options = {});
     var later = function() {
-      previous = new Date;
+      previous = options.leading === false ? 0 : _.now();
       timeout = null;
       result = func.apply(context, args);
+      context = args = null;
     };
     return function() {
-      var now = new Date;
+      var now = _.now();
+      if (!previous && options.leading === false) previous = now;
       var remaining = wait - (now - previous);
       context = this;
       args = arguments;
@@ -658,7 +707,8 @@
         timeout = null;
         previous = now;
         result = func.apply(context, args);
-      } else if (!timeout) {
+        context = args = null;
+      } else if (!timeout && options.trailing !== false) {
         timeout = setTimeout(later, remaining);
       }
       return result;
@@ -670,17 +720,34 @@
   // N milliseconds. If `immediate` is passed, trigger the function on the
   // leading edge, instead of the trailing.
   _.debounce = function(func, wait, immediate) {
-    var timeout, result;
-    return function() {
-      var context = this, args = arguments;
-      var later = function() {
+    var timeout, args, context, timestamp, result;
+
+    var later = function() {
+      var last = _.now() - timestamp;
+      if (last < wait) {
+        timeout = setTimeout(later, wait - last);
+      } else {
         timeout = null;
-        if (!immediate) result = func.apply(context, args);
-      };
+        if (!immediate) {
+          result = func.apply(context, args);
+          context = args = null;
+        }
+      }
+    };
+
+    return function() {
+      context = this;
+      args = arguments;
+      timestamp = _.now();
       var callNow = immediate && !timeout;
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-      if (callNow) result = func.apply(context, args);
+      if (!timeout) {
+        timeout = setTimeout(later, wait);
+      }
+      if (callNow) {
+        result = func.apply(context, args);
+        context = args = null;
+      }
+
       return result;
     };
   };
@@ -702,11 +769,7 @@
   // allowing you to adjust arguments, run code before and after, and
   // conditionally execute the original function.
   _.wrap = function(func, wrapper) {
-    return function() {
-      var args = [func];
-      push.apply(args, arguments);
-      return wrapper.apply(this, args);
-    };
+    return _.partial(wrapper, func);
   };
 
   // Returns a function that is the composition of a list of functions, each
@@ -724,7 +787,6 @@
 
   // Returns a function that will only be executed after being called N times.
   _.after = function(times, func) {
-    if (times <= 0) return func();
     return function() {
       if (--times < 1) {
         return func.apply(this, arguments);
@@ -737,31 +799,43 @@
 
   // Retrieve the names of an object's properties.
   // Delegates to **ECMAScript 5**'s native `Object.keys`
-  _.keys = nativeKeys || function(obj) {
-    if (obj !== Object(obj)) throw new TypeError('Invalid object');
+  _.keys = function(obj) {
+    if (!_.isObject(obj)) return [];
+    if (nativeKeys) return nativeKeys(obj);
     var keys = [];
-    for (var key in obj) if (_.has(obj, key)) keys[keys.length] = key;
+    for (var key in obj) if (_.has(obj, key)) keys.push(key);
     return keys;
   };
 
   // Retrieve the values of an object's properties.
   _.values = function(obj) {
-    var values = [];
-    for (var key in obj) if (_.has(obj, key)) values.push(obj[key]);
+    var keys = _.keys(obj);
+    var length = keys.length;
+    var values = new Array(length);
+    for (var i = 0; i < length; i++) {
+      values[i] = obj[keys[i]];
+    }
     return values;
   };
 
   // Convert an object into a list of `[key, value]` pairs.
   _.pairs = function(obj) {
-    var pairs = [];
-    for (var key in obj) if (_.has(obj, key)) pairs.push([key, obj[key]]);
+    var keys = _.keys(obj);
+    var length = keys.length;
+    var pairs = new Array(length);
+    for (var i = 0; i < length; i++) {
+      pairs[i] = [keys[i], obj[keys[i]]];
+    }
     return pairs;
   };
 
   // Invert the keys and values of an object. The values must be serializable.
   _.invert = function(obj) {
     var result = {};
-    for (var key in obj) if (_.has(obj, key)) result[obj[key]] = key;
+    var keys = _.keys(obj);
+    for (var i = 0, length = keys.length; i < length; i++) {
+      result[obj[keys[i]]] = keys[i];
+    }
     return result;
   };
 
@@ -836,7 +910,7 @@
   // Internal recursive comparison function for `isEqual`.
   var eq = function(a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
-    // See the Harmony `egal` proposal: http://wiki.ecmascript.org/doku.php?id=harmony:egal.
+    // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
     if (a === b) return a !== 0 || 1 / a == 1 / b;
     // A strict comparison is necessary because `null == undefined`.
     if (a == null || b == null) return a === b;
@@ -878,6 +952,14 @@
       // unique nested structures.
       if (aStack[length] == a) return bStack[length] == b;
     }
+    // Objects with different constructors are not equivalent, but `Object`s
+    // from different frames are.
+    var aCtor = a.constructor, bCtor = b.constructor;
+    if (aCtor !== bCtor && !(_.isFunction(aCtor) && (aCtor instanceof aCtor) &&
+                             _.isFunction(bCtor) && (bCtor instanceof bCtor))
+                        && ('constructor' in a && 'constructor' in b)) {
+      return false;
+    }
     // Add the first object to the stack of traversed objects.
     aStack.push(a);
     bStack.push(b);
@@ -894,13 +976,6 @@
         }
       }
     } else {
-      // Objects with different constructors are not equivalent, but `Object`s
-      // from different frames are.
-      var aCtor = a.constructor, bCtor = b.constructor;
-      if (aCtor !== bCtor && !(_.isFunction(aCtor) && (aCtor instanceof aCtor) &&
-                               _.isFunction(bCtor) && (bCtor instanceof bCtor))) {
-        return false;
-      }
       // Deep compare objects.
       for (var key in a) {
         if (_.has(a, key)) {
@@ -1022,9 +1097,33 @@
     return value;
   };
 
+  _.constant = function(value) {
+    return function () {
+      return value;
+    };
+  };
+
+  _.property = function(key) {
+    return function(obj) {
+      return obj[key];
+    };
+  };
+
+  // Returns a predicate for checking whether an object has a given set of `key:value` pairs.
+  _.matches = function(attrs) {
+    return function(obj) {
+      if (obj === attrs) return true;
+      for (var key in attrs) {
+        if (attrs[key] !== obj[key])
+          return false;
+      }
+      return true;
+    }
+  };
+
   // Run a function **n** times.
   _.times = function(n, iterator, context) {
-    var accum = Array(n);
+    var accum = Array(Math.max(0, n));
     for (var i = 0; i < n; i++) accum[i] = iterator.call(context, i);
     return accum;
   };
@@ -1038,6 +1137,9 @@
     return min + Math.floor(Math.random() * (max - min + 1));
   };
 
+  // A (possibly faster) way to get the current timestamp as an integer.
+  _.now = Date.now || function() { return new Date().getTime(); };
+
   // List of HTML entities for escaping.
   var entityMap = {
     escape: {
@@ -1045,8 +1147,7 @@
       '<': '&lt;',
       '>': '&gt;',
       '"': '&quot;',
-      "'": '&#x27;',
-      '/': '&#x2F;'
+      "'": '&#x27;'
     }
   };
   entityMap.unescape = _.invert(entityMap.escape);
@@ -1077,7 +1178,7 @@
 
   // Add your own custom functions to the Underscore object.
   _.mixin = function(obj) {
-    each(_.functions(obj), function(name){
+    each(_.functions(obj), function(name) {
       var func = _[name] = obj[name];
       _.prototype[name] = function() {
         var args = [this._wrapped];
@@ -1235,927 +1336,1416 @@
 
   });
 
+  // AMD registration happens at the end for compatibility with AMD loaders
+  // that may not enforce next-turn semantics on modules. Even though general
+  // practice for AMD registration is to be anonymous, underscore registers
+  // as a named module because, like jQuery, it is a base library that is
+  // popular enough to be bundled in a third party lib, but not be part of
+  // an AMD load request. Those cases could generate an error when an
+  // anonymous define() is called outside of a loader request.
+  if (typeof define === 'function' && define.amd) {
+    define('underscore', [], function() {
+      return _;
+    });
+  }
 }).call(this);
-(function(root){
-/**
- * Module exports.
- */
+;(function(){
 
 /**
- * Check if `obj` is an array.
+ * Require the given path.
+ *
+ * @param {String} path
+ * @return {Object} exports
+ * @api public
  */
 
-function isArray(obj) {
-  return '[object Array]' == {}.toString.call(obj);
+function require(path, parent, orig) {
+  var resolved = require.resolve(path);
+
+  // lookup failed
+  if (null == resolved) {
+    orig = orig || path;
+    parent = parent || 'root';
+    var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
+    err.path = orig;
+    err.parent = parent;
+    err.require = true;
+    throw err;
+  }
+
+  var module = require.modules[resolved];
+
+  // perform real require()
+  // by invoking the module's
+  // registered function
+  if (!module.exports) {
+    module.exports = {};
+    module.client = module.component = true;
+    module.call(this, module.exports, require.relative(resolved), module);
+  }
+
+  return module.exports;
 }
 
 /**
- * Event emitter constructor.
- *
- * @api public.
+ * Registered modules.
  */
 
-function EventEmitter(){};
+require.modules = {};
 
 /**
- * Adds a listener.
- *
- * @api public
+ * Registered aliases.
  */
 
-EventEmitter.prototype.on = function (name, fn) {
-  if (!this.$events) {
-    this.$events = {};
-  }
-
-  if (!this.$events[name]) {
-    this.$events[name] = fn;
-  } else if (isArray(this.$events[name])) {
-    this.$events[name].push(fn);
-  } else {
-    this.$events[name] = [this.$events[name], fn];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.addListener = EventEmitter.prototype.on;
+require.aliases = {};
 
 /**
- * Adds a volatile listener.
+ * Resolve `path`.
  *
- * @api public
+ * Lookup:
+ *
+ *   - PATH/index.js
+ *   - PATH.js
+ *   - PATH
+ *
+ * @param {String} path
+ * @return {String} path or null
+ * @api private
  */
 
-EventEmitter.prototype.once = function (name, fn) {
-  var self = this;
+require.resolve = function(path) {
+  if (path.charAt(0) === '/') path = path.slice(1);
+  var index = path + '/index.js';
 
-  function on () {
-    self.removeListener(name, on);
-    fn.apply(this, arguments);
-  };
+  var paths = [
+    path,
+    path + '.js',
+    path + '.json',
+    path + '/index.js',
+    path + '/index.json'
+  ];
 
-  on.listener = fn;
-  this.on(name, on);
+  for (var i = 0; i < paths.length; i++) {
+    var path = paths[i];
+    if (require.modules.hasOwnProperty(path)) return path;
+  }
 
-  return this;
+  if (require.aliases.hasOwnProperty(index)) {
+    return require.aliases[index];
+  }
 };
 
 /**
- * Removes a listener.
+ * Normalize `path` relative to the current path.
  *
- * @api public
+ * @param {String} curr
+ * @param {String} path
+ * @return {String}
+ * @api private
  */
 
-EventEmitter.prototype.removeListener = function (name, fn) {
-  if (this.$events && this.$events[name]) {
-    var list = this.$events[name];
+require.normalize = function(curr, path) {
+  var segs = [];
 
-    if (isArray(list)) {
-      var pos = -1;
+  if ('.' != path.charAt(0)) return path;
 
-      for (var i = 0, l = list.length; i < l; i++) {
-        if (list[i] === fn || (list[i].listener && list[i].listener === fn)) {
-          pos = i;
-          break;
-        }
-      }
+  curr = curr.split('/');
+  path = path.split('/');
 
-      if (pos < 0) {
-        return this;
-      }
-
-      list.splice(pos, 1);
-
-      if (!list.length) {
-        delete this.$events[name];
-      }
-    } else if (list === fn || (list.listener && list.listener === fn)) {
-      delete this.$events[name];
+  for (var i = 0; i < path.length; ++i) {
+    if ('..' == path[i]) {
+      curr.pop();
+    } else if ('.' != path[i] && '' != path[i]) {
+      segs.push(path[i]);
     }
   }
 
-  return this;
+  return curr.concat(segs).join('/');
 };
 
 /**
- * Removes all listeners for an event.
+ * Register module at `path` with callback `definition`.
+ *
+ * @param {String} path
+ * @param {Function} definition
+ * @api private
+ */
+
+require.register = function(path, definition) {
+  require.modules[path] = definition;
+};
+
+/**
+ * Alias a module definition.
+ *
+ * @param {String} from
+ * @param {String} to
+ * @api private
+ */
+
+require.alias = function(from, to) {
+  if (!require.modules.hasOwnProperty(from)) {
+    throw new Error('Failed to alias "' + from + '", it does not exist');
+  }
+  require.aliases[to] = from;
+};
+
+/**
+ * Return a require function relative to the `parent` path.
+ *
+ * @param {String} parent
+ * @return {Function}
+ * @api private
+ */
+
+require.relative = function(parent) {
+  var p = require.normalize(parent, '..');
+
+  /**
+   * lastIndexOf helper.
+   */
+
+  function lastIndexOf(arr, obj) {
+    var i = arr.length;
+    while (i--) {
+      if (arr[i] === obj) return i;
+    }
+    return -1;
+  }
+
+  /**
+   * The relative require() itself.
+   */
+
+  function localRequire(path) {
+    var resolved = localRequire.resolve(path);
+    return require(resolved, parent, path);
+  }
+
+  /**
+   * Resolve relative to the parent.
+   */
+
+  localRequire.resolve = function(path) {
+    var c = path.charAt(0);
+    if ('/' == c) return path.slice(1);
+    if ('.' == c) return require.normalize(p, path);
+
+    // resolve deps by returning
+    // the dep in the nearest "deps"
+    // directory
+    var segs = parent.split('/');
+    var i = lastIndexOf(segs, 'deps') + 1;
+    if (!i) i = 0;
+    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
+    return path;
+  };
+
+  /**
+   * Check if module is defined at `path`.
+   */
+
+  localRequire.exists = function(path) {
+    return require.modules.hasOwnProperty(localRequire.resolve(path));
+  };
+
+  return localRequire;
+};
+require.register("component-indexof/index.js", function(exports, require, module){
+
+var indexOf = [].indexOf;
+
+module.exports = function(arr, obj){
+  if (indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+});
+require.register("component-emitter/index.js", function(exports, require, module){
+
+/**
+ * Module dependencies.
+ */
+
+var index = require('indexof');
+
+/**
+ * Expose `Emitter`.
+ */
+
+module.exports = Emitter;
+
+/**
+ * Initialize a new `Emitter`.
  *
  * @api public
  */
 
-EventEmitter.prototype.removeAllListeners = function (name) {
-  if (name === undefined) {
-    this.$events = {};
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks[event] = this._callbacks[event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  var self = this;
+  this._callbacks = this._callbacks || {};
+
+  function on() {
+    self.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  fn._off = on;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
     return this;
   }
 
-  if (this.$events && this.$events[name]) {
-    this.$events[name] = null;
+  // specific event
+  var callbacks = this._callbacks[event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks[event];
+    return this;
+  }
+
+  // remove specific handler
+  var i = index(callbacks, fn._off || fn);
+  if (~i) callbacks.splice(i, 1);
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks[event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
   }
 
   return this;
 };
 
 /**
- * Gets all listeners for a certain event.
+ * Return array of callbacks for `event`.
  *
- * @api publci
- */
-
-EventEmitter.prototype.listeners = function (name) {
-  if (!this.$events) {
-    this.$events = {};
-  }
-
-  if (!this.$events[name]) {
-    this.$events[name] = [];
-  }
-
-  if (!isArray(this.$events[name])) {
-    this.$events[name] = [this.$events[name]];
-  }
-
-  return this.$events[name];
-};
-
-/**
- * Emits an event.
- *
+ * @param {String} event
+ * @return {Array}
  * @api public
  */
 
-EventEmitter.prototype.emit = function (name) {
-  if (!this.$events) {
-    return false;
-  }
-
-  var handler = this.$events[name];
-
-  if (!handler) {
-    return false;
-  }
-
-  var args = [].slice.call(arguments, 1);
-
-  if ('function' == typeof handler) {
-    handler.apply(this, args);
-  } else if (isArray(handler)) {
-    var listeners = handler.slice();
-
-    for (var i = 0, l = listeners.length; i < l; i++) {
-      listeners[i].apply(this, args);
-    }
-  } else {
-    return false;
-  }
-
-  return true;
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks[event] || [];
 };
-/*!
- * superagent
- * Copyright (c) 2012 TJ Holowaychuk <tj@vision-media.ca>
- * MIT Licensed
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
  */
 
-;(function(){
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
 
-  var Emitter = 'undefined' == typeof exports
-    ? EventEmitter
-    : require('emitter');
-  
-  /**
-   * Noop.
-   */
+});
+require.register("RedVentures-reduce/index.js", function(exports, require, module){
 
-  function noop(){};
+/**
+ * Reduce `arr` with `fn`.
+ *
+ * @param {Array} arr
+ * @param {Function} fn
+ * @param {Mixed} initial
+ *
+ * TODO: combatible error handling?
+ */
 
-  /**
-   * Determine XHR.
-   */
+module.exports = function(arr, fn, initial){  
+  var idx = 0;
+  var len = arr.length;
+  var curr = arguments.length == 3
+    ? initial
+    : arr[idx++];
 
-  function getXHR() {
-    if (window.XMLHttpRequest
-      && ('file:' != window.location.protocol || !window.ActiveXObject)) {
-      return new XMLHttpRequest;
-    } else {
-      try { return new ActiveXObject('Microsoft.XMLHTTP'); } catch(e) {}
-      try { return new ActiveXObject('Msxml2.XMLHTTP.6.0'); } catch(e) {}
-      try { return new ActiveXObject('Msxml2.XMLHTTP.3.0'); } catch(e) {}
-      try { return new ActiveXObject('Msxml2.XMLHTTP'); } catch(e) {}
-    }
-    return false;
+  while (idx < len) {
+    curr = fn.call(null, curr, arr[idx], ++idx, arr);
   }
+  
+  return curr;
+};
+});
+require.register("superagent/lib/client.js", function(exports, require, module){
 
-  /**
-   * Removes leading and trailing whitespace, added to support IE.
-   *
-   * @param {String} s
-   * @return {String}
-   * @api private
-   */
+/**
+ * Module dependencies.
+ */
 
-  var trim = ''.trim
-    ? function(s) { return s.trim(); }
-    : function(s) { return s.replace(/(^\s*|\s*$)/g, ''); };
+var Emitter = require('emitter');
+var reduce = require('reduce');
+
+/**
+ * Root reference for iframes.
+ */
+
+var root = 'undefined' == typeof window
+  ? this
+  : window;
+
+/**
+ * Noop.
+ */
+
+function noop(){};
+
+/**
+ * Check if `obj` is a host object,
+ * we don't want to serialize these :)
+ *
+ * TODO: future proof, move to compoent land
+ *
+ * @param {Object} obj
+ * @return {Boolean}
+ * @api private
+ */
+
+function isHost(obj) {
+  var str = {}.toString.call(obj);
+
+  switch (str) {
+    case '[object File]':
+    case '[object Blob]':
+    case '[object FormData]':
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Determine XHR.
+ */
+
+function getXHR() {
+  if (root.XMLHttpRequest
+    && ('file:' != root.location.protocol || !root.ActiveXObject)) {
+    return new XMLHttpRequest;
+  } else {
+    try { return new ActiveXObject('Microsoft.XMLHTTP'); } catch(e) {}
+    try { return new ActiveXObject('Msxml2.XMLHTTP.6.0'); } catch(e) {}
+    try { return new ActiveXObject('Msxml2.XMLHTTP.3.0'); } catch(e) {}
+    try { return new ActiveXObject('Msxml2.XMLHTTP'); } catch(e) {}
+  }
+  return false;
+}
+
+/**
+ * Removes leading and trailing whitespace, added to support IE.
+ *
+ * @param {String} s
+ * @return {String}
+ * @api private
+ */
+
+var trim = ''.trim
+  ? function(s) { return s.trim(); }
+  : function(s) { return s.replace(/(^\s*|\s*$)/g, ''); };
+
+/**
+ * Check if `obj` is an object.
+ *
+ * @param {Object} obj
+ * @return {Boolean}
+ * @api private
+ */
+
+function isObject(obj) {
+  return obj === Object(obj);
+}
+
+/**
+ * Serialize the given `obj`.
+ *
+ * @param {Object} obj
+ * @return {String}
+ * @api private
+ */
+
+function serialize(obj) {
+  if (!isObject(obj)) return obj;
+  var pairs = [];
+  for (var key in obj) {
+    pairs.push(encodeURIComponent(key)
+      + '=' + encodeURIComponent(obj[key]));
+  }
+  return pairs.join('&');
+}
+
+/**
+ * Expose serialization method.
+ */
+
+ request.serializeObject = serialize;
 
  /**
-  * Check if `obj` is a function.
+  * Parse the given x-www-form-urlencoded `str`.
   *
-  * @param {Mixed} obj
-  * @return {Boolean}
+  * @param {String} str
+  * @return {Object}
   * @api private
   */
-  
-  function isFunction(obj) {
-    return 'function' == typeof obj;
+
+function parseString(str) {
+  var obj = {};
+  var pairs = str.split('&');
+  var parts;
+  var pair;
+
+  for (var i = 0, len = pairs.length; i < len; ++i) {
+    pair = pairs[i];
+    parts = pair.split('=');
+    obj[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
   }
 
-  /**
-   * Check if `obj` is an object.
-   *
-   * @param {Object} obj
-   * @return {Boolean}
-   * @api private
-   */
+  return obj;
+}
 
-  function isObject(obj) {
-    return null != obj && 'object' == typeof obj;
+/**
+ * Expose parser.
+ */
+
+request.parseString = parseString;
+
+/**
+ * Default MIME type map.
+ *
+ *     superagent.types.xml = 'application/xml';
+ *
+ */
+
+request.types = {
+  html: 'text/html',
+  json: 'application/json',
+  urlencoded: 'application/x-www-form-urlencoded',
+  'form': 'application/x-www-form-urlencoded',
+  'form-data': 'application/x-www-form-urlencoded'
+};
+
+/**
+ * Default serialization map.
+ *
+ *     superagent.serialize['application/xml'] = function(obj){
+ *       return 'generated xml here';
+ *     };
+ *
+ */
+
+ request.serialize = {
+   'application/x-www-form-urlencoded': serialize,
+   'application/json': JSON.stringify
+ };
+
+ /**
+  * Default parsers.
+  *
+  *     superagent.parse['application/xml'] = function(str){
+  *       return { object parsed from str };
+  *     };
+  *
+  */
+
+request.parse = {
+  'application/x-www-form-urlencoded': parseString,
+  'application/json': JSON.parse
+};
+
+/**
+ * Parse the given header `str` into
+ * an object containing the mapped fields.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api private
+ */
+
+function parseHeader(str) {
+  var lines = str.split(/\r?\n/);
+  var fields = {};
+  var index;
+  var line;
+  var field;
+  var val;
+
+  lines.pop(); // trailing CRLF
+
+  for (var i = 0, len = lines.length; i < len; ++i) {
+    line = lines[i];
+    index = line.indexOf(':');
+    field = line.slice(0, index).toLowerCase();
+    val = trim(line.slice(index + 1));
+    fields[field] = val;
   }
 
-  /**
-   * Serialize the given `obj`.
-   *
-   * @param {Object} obj
-   * @return {String}
-   * @api private
-   */
+  return fields;
+}
 
-  function serialize(obj) {
-    if (!isObject(obj)) return obj;
-    var pairs = [];
-    for (var key in obj) {
-      pairs.push(encodeURIComponent(key)
-        + '=' + encodeURIComponent(obj[key]));
-    }
-    return pairs.join('&');
-  }
+/**
+ * Return the mime type for the given `str`.
+ *
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
 
-  /**
-   * Expose serialization method.
-   */
+function type(str){
+  return str.split(/ *; */).shift();
+};
 
-   request.serializeObject = serialize;
+/**
+ * Return header field parameters.
+ *
+ * @param {String} str
+ * @return {Object}
+ * @api private
+ */
 
-   /**
-    * Parse the given x-www-form-urlencoded `str`.
-    *
-    * @param {String} str
-    * @return {Object}
-    * @api private
-    */
+function params(str){
+  return reduce(str.split(/ *; */), function(obj, str){
+    var parts = str.split(/ *= */)
+      , key = parts.shift()
+      , val = parts.shift();
 
-  function parseString(str) {
-    var obj = {}
-      , pairs = str.split('&')
-      , parts
-      , pair;
-
-    for (var i = 0, len = pairs.length; i < len; ++i) {
-      pair = pairs[i];
-      parts = pair.split('=');
-      obj[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
-    }
-
+    if (key && val) obj[key] = val;
     return obj;
-  }
+  }, {});
+};
 
-  /**
-   * Expose parser.
-   */
+/**
+ * Initialize a new `Response` with the given `xhr`.
+ *
+ *  - set flags (.ok, .error, etc)
+ *  - parse header
+ *
+ * Examples:
+ *
+ *  Aliasing `superagent` as `request` is nice:
+ *
+ *      request = superagent;
+ *
+ *  We can use the promise-like API, or pass callbacks:
+ *
+ *      request.get('/').end(function(res){});
+ *      request.get('/', function(res){});
+ *
+ *  Sending data can be chained:
+ *
+ *      request
+ *        .post('/user')
+ *        .send({ name: 'tj' })
+ *        .end(function(res){});
+ *
+ *  Or passed to `.send()`:
+ *
+ *      request
+ *        .post('/user')
+ *        .send({ name: 'tj' }, function(res){});
+ *
+ *  Or passed to `.post()`:
+ *
+ *      request
+ *        .post('/user', { name: 'tj' })
+ *        .end(function(res){});
+ *
+ * Or further reduced to a single call for simple cases:
+ *
+ *      request
+ *        .post('/user', { name: 'tj' }, function(res){});
+ *
+ * @param {XMLHTTPRequest} xhr
+ * @param {Object} options
+ * @api private
+ */
 
-  request.parseString = parseString;
+function Response(xhr, options) {
+  options = options || {};
+  this.xhr = xhr;
+  this.text = xhr.responseText;
+  this.setStatusProperties(xhr.status);
+  this.header = this.headers = parseHeader(xhr.getAllResponseHeaders());
+  // getAllResponseHeaders sometimes falsely returns "" for CORS requests, but
+  // getResponseHeader still works. so we get content-type even if getting
+  // other headers fails.
+  this.header['content-type'] = xhr.getResponseHeader('content-type');
+  this.setHeaderProperties(this.header);
+  this.body = this.parseBody(this.text);
+}
 
-  /**
-   * Default MIME type map.
-   * 
-   *     superagent.types.xml = 'application/xml';
-   * 
-   */
+/**
+ * Get case-insensitive `field` value.
+ *
+ * @param {String} field
+ * @return {String}
+ * @api public
+ */
 
-  request.types = {
-      html: 'text/html'
-    , json: 'application/json'
-    , urlencoded: 'application/x-www-form-urlencoded'
-    , 'form': 'application/x-www-form-urlencoded'
-    , 'form-data': 'application/x-www-form-urlencoded'
-  };
+Response.prototype.get = function(field){
+  return this.header[field.toLowerCase()];
+};
 
-  /**
-   * Default serialization map.
-   * 
-   *     superagent.serialize['application/xml'] = function(obj){
-   *       return 'generated xml here';
-   *     };
-   * 
-   */
+/**
+ * Set header related properties:
+ *
+ *   - `.type` the content type without params
+ *
+ * A response of "Content-Type: text/plain; charset=utf-8"
+ * will provide you with a `.type` of "text/plain".
+ *
+ * @param {Object} header
+ * @api private
+ */
 
-   request.serialize = {
-       'application/x-www-form-urlencoded': serialize
-     , 'application/json': JSON.stringify
-   };
+Response.prototype.setHeaderProperties = function(header){
+  // content-type
+  var ct = this.header['content-type'] || '';
+  this.type = type(ct);
 
-   /**
-    * Default parsers.
-    * 
-    *     superagent.parse['application/xml'] = function(str){
-    *       return { object parsed from str };
-    *     };
-    * 
-    */
+  // params
+  var obj = params(ct);
+  for (var key in obj) this[key] = obj[key];
+};
 
-  request.parse = {
-      'application/x-www-form-urlencoded': parseString
-    , 'application/json': JSON.parse
-  };
+/**
+ * Parse the given body `str`.
+ *
+ * Used for auto-parsing of bodies. Parsers
+ * are defined on the `superagent.parse` object.
+ *
+ * @param {String} str
+ * @return {Mixed}
+ * @api private
+ */
 
-  /**
-   * Parse the given header `str` into
-   * an object containing the mapped fields.
-   *
-   * @param {String} str
-   * @return {Object}
-   * @api private
-   */
+Response.prototype.parseBody = function(str){
+  var parse = request.parse[this.type];
+  return parse
+    ? parse(str)
+    : null;
+};
 
-  function parseHeader(str) {
-    var lines = str.split(/\r?\n/)
-      , fields = {}
-      , index
-      , line
-      , field
-      , val;
+/**
+ * Set flags such as `.ok` based on `status`.
+ *
+ * For example a 2xx response will give you a `.ok` of __true__
+ * whereas 5xx will be __false__ and `.error` will be __true__. The
+ * `.clientError` and `.serverError` are also available to be more
+ * specific, and `.statusType` is the class of error ranging from 1..5
+ * sometimes useful for mapping respond colors etc.
+ *
+ * "sugar" properties are also defined for common cases. Currently providing:
+ *
+ *   - .noContent
+ *   - .badRequest
+ *   - .unauthorized
+ *   - .notAcceptable
+ *   - .notFound
+ *
+ * @param {Number} status
+ * @api private
+ */
 
-    lines.pop(); // trailing CRLF
+Response.prototype.setStatusProperties = function(status){
+  var type = status / 100 | 0;
 
-    for (var i = 0, len = lines.length; i < len; ++i) {
-      line = lines[i];
-      index = line.indexOf(':');
-      field = line.slice(0, index).toLowerCase();
-      val = trim(line.slice(index + 1));
-      fields[field] = val;
-    }
+  // status / class
+  this.status = status;
+  this.statusType = type;
 
-    return fields;
-  }
+  // basics
+  this.info = 1 == type;
+  this.ok = 2 == type;
+  this.clientError = 4 == type;
+  this.serverError = 5 == type;
+  this.error = (4 == type || 5 == type)
+    ? this.toError()
+    : false;
 
-  /**
-   * Return the mime type for the given `str`.
-   *
-   * @param {String} str
-   * @return {String}
-   * @api private
-   */
+  // sugar
+  this.accepted = 202 == status;
+  this.noContent = 204 == status || 1223 == status;
+  this.badRequest = 400 == status;
+  this.unauthorized = 401 == status;
+  this.notAcceptable = 406 == status;
+  this.notFound = 404 == status;
+  this.forbidden = 403 == status;
+};
 
-  function type(str){
-    return str.split(/ *; */).shift();
-  };
+/**
+ * Return an `Error` representative of this response.
+ *
+ * @return {Error}
+ * @api public
+ */
 
-  /**
-   * Return header field parameters.
-   *
-   * @param {String} str
-   * @return {Object}
-   * @api private
-   */
+Response.prototype.toError = function(){
+  var msg = 'got ' + this.status + ' response';
+  var err = new Error(msg);
+  err.status = this.status;
+  return err;
+};
 
-  function params(str){
-    return str.split(/ *; */).reduce(function(obj, str){
-      var parts = str.split(/ *= */)
-        , key = parts.shift()
-        , val = parts.shift();
+/**
+ * Expose `Response`.
+ */
 
-      if (key && val) obj[key] = val;
-      return obj;
-    }, {});
-  };
+request.Response = Response;
 
-  /**
-   * Initialize a new `Response` with the given `xhr`.
-   *
-   *  - set flags (.ok, .error, etc)
-   *  - parse header
-   *
-   * Examples:
-   *
-   *  Aliasing `superagent` as `request` is nice:
-   *
-   *      request = superagent;
-   *
-   *  We can use the promise-like API, or pass callbacks:
-   *
-   *      request.get('/').end(function(res){});
-   *      request.get('/', function(res){});
-   *
-   *  Sending data can be chained:
-   *
-   *      request
-   *        .post('/user')
-   *        .send({ name: 'tj' })
-   *        .end(function(res){});
-   *
-   *  Or passed to `.send()`:
-   *
-   *      request
-   *        .post('/user')
-   *        .send({ name: 'tj' }, function(res){});
-   *
-   *  Or passed to `.post()`:
-   *
-   *      request
-   *        .post('/user', { name: 'tj' })
-   *        .end(function(res){});
-   *
-   * Or further reduced to a single call for simple cases:
-   *
-   *      request
-   *        .post('/user', { name: 'tj' }, function(res){});
-   *
-   * @param {XMLHTTPRequest} xhr
-   * @param {Object} options
-   * @api private
-   */
+/**
+ * Initialize a new `Request` with the given `method` and `url`.
+ *
+ * @param {String} method
+ * @param {String} url
+ * @api public
+ */
 
-  function Response(xhr, options) {
-    options = options || {};
-    this.xhr = xhr;
-    this.text = xhr.responseText;
-    this.setStatusProperties(xhr.status);
-    this.header = parseHeader(xhr.getAllResponseHeaders());
-    this.setHeaderProperties(this.header);
-    this.body = this.parseBody(this.text);
-  }
+function Request(method, url) {
+  var self = this;
+  Emitter.call(this);
+  this._query = this._query || [];
+  this.method = method;
+  this.url = url;
+  this.header = {};
+  this._header = {};
+  this.set('X-Requested-With', 'XMLHttpRequest');
+  this.on('end', function(){
+    var res = new Response(self.xhr);
+    if ('HEAD' == method) res.text = null;
+    self.callback(null, res);
+  });
+}
 
-  /**
-   * Set header related properties:
-   *
-   *   - `.type` the content type without params
-   *
-   * A response of "Content-Type: text/plain; charset=utf-8"
-   * will provide you with a `.type` of "text/plain".
-   *
-   * @param {Object} header
-   * @api private
-   */
+/**
+ * Inherit from `Emitter.prototype`.
+ */
 
-  Response.prototype.setHeaderProperties = function(header){
-    // content-type
-    var ct = this.header['content-type'] || '';
-    this.type = type(ct);
+Request.prototype = new Emitter;
+Request.prototype.constructor = Request;
 
-    // params
-    var obj = params(ct);
-    for (var key in obj) this[key] = obj[key];
-  };
+/**
+ * Set timeout to `ms`.
+ *
+ * @param {Number} ms
+ * @return {Request} for chaining
+ * @api public
+ */
 
-  /**
-   * Parse the given body `str`.
-   *
-   * Used for auto-parsing of bodies. Parsers
-   * are defined on the `superagent.parse` object.
-   *
-   * @param {String} str
-   * @return {Mixed}
-   * @api private
-   */
+Request.prototype.timeout = function(ms){
+  this._timeout = ms;
+  return this;
+};
 
-  Response.prototype.parseBody = function(str){
-    var parse = request.parse[this.type];
-    return parse
-      ? parse(str)
-      : null;
-  };
+/**
+ * Clear previous timeout.
+ *
+ * @return {Request} for chaining
+ * @api public
+ */
 
-  /**
-   * Set flags such as `.ok` based on `status`.
-   *
-   * For example a 2xx response will give you a `.ok` of __true__
-   * whereas 5xx will be __false__ and `.error` will be __true__. The
-   * `.clientError` and `.serverError` are also available to be more
-   * specific, and `.statusType` is the class of error ranging from 1..5
-   * sometimes useful for mapping respond colors etc.
-   *
-   * "sugar" properties are also defined for common cases. Currently providing:
-   *
-   *   - .noContent
-   *   - .badRequest
-   *   - .unauthorized
-   *   - .notAcceptable
-   *   - .notFound
-   *
-   * @param {Number} status
-   * @api private
-   */
+Request.prototype.clearTimeout = function(){
+  this._timeout = 0;
+  clearTimeout(this._timer);
+  return this;
+};
 
-  Response.prototype.setStatusProperties = function(status){
-    var type = status / 100 | 0;
+/**
+ * Abort the request, and clear potential timeout.
+ *
+ * @return {Request}
+ * @api public
+ */
 
-    // status / class
-    this.status = status;
-    this.statusType = type;
+Request.prototype.abort = function(){
+  if (this.aborted) return;
+  this.aborted = true;
+  this.xhr.abort();
+  this.clearTimeout();
+  this.emit('abort');
+  return this;
+};
 
-    // basics
-    this.info = 1 == type;
-    this.ok = 2 == type;
-    this.clientError = 4 == type;
-    this.serverError = 5 == type;
-    this.error = 4 == type || 5 == type;
+/**
+ * Set header `field` to `val`, or multiple fields with one object.
+ *
+ * Examples:
+ *
+ *      req.get('/')
+ *        .set('Accept', 'application/json')
+ *        .set('X-API-Key', 'foobar')
+ *        .end(callback);
+ *
+ *      req.get('/')
+ *        .set({ Accept: 'application/json', 'X-API-Key': 'foobar' })
+ *        .end(callback);
+ *
+ * @param {String|Object} field
+ * @param {String} val
+ * @return {Request} for chaining
+ * @api public
+ */
 
-    // sugar
-    this.accepted = 202 == status;
-    this.noContent = 204 == status || 1223 == status;
-    this.badRequest = 400 == status;
-    this.unauthorized = 401 == status;
-    this.notAcceptable = 406 == status;
-    this.notFound = 404 == status;
-  };
-
-  /**
-   * Expose `Response`.
-   */
-
-  request.Response = Response;
-
-  /**
-   * Initialize a new `Request` with the given `method` and `url`.
-   *
-   * @param {String} method
-   * @param {String} url
-   * @api public
-   */
-  
-  function Request(method, url) {
-    var self = this;
-    Emitter.call(this);
-    this.method = method;
-    this.url = url;
-    this.header = {};
-    // this is an error when it's a cross domain request
-    //this.set('X-Requested-With', 'XMLHttpRequest');
-    this.on('end', function(){
-      self.callback(new Response(self.xhr));
-    });
-  }
-
-  /**
-   * Inherit from `Emitter.prototype`.
-   */
-
-  Request.prototype = new Emitter;
-  Request.prototype.constructor = Request;
-
-  /**
-   * Set header `field` to `val`, or multiple fields with one object.
-   *
-   * Examples:
-   *
-   *      req.get('/')
-   *        .set('Accept', 'application/json')
-   *        .set('X-API-Key', 'foobar')
-   *        .end(callback);
-   *
-   *      req.get('/')
-   *        .set({ Accept: 'application/json', 'X-API-Key': 'foobar' })
-   *        .end(callback);
-   *
-   * @param {String|Object} field
-   * @param {String} val
-   * @return {Request} for chaining
-   * @api public
-   */
-
-  Request.prototype.set = function(field, val){
-    if (isObject(field)) {
-      for (var key in field) {
-        this.set(key, field[key]);
-      }
-      return this;
-    }
-    this.header[field.toLowerCase()] = val;
-    return this;
-  };
-
-  /**
-   * Set Content-Type to `type`, mapping values from `request.types`.
-   *
-   * Examples:
-   *
-   *      superagent.types.xml = 'application/xml';
-   *
-   *      request.post('/')
-   *        .type('xml')
-   *        .send(xmlstring)
-   *        .end(callback);
-   *      
-   *      request.post('/')
-   *        .type('application/xml')
-   *        .send(xmlstring)
-   *        .end(callback);
-   *
-   * @param {String} type
-   * @return {Request} for chaining
-   * @api public
-   */
-
-  Request.prototype.type = function(type){
-    this.set('Content-Type', request.types[type] || type);
-    return this;
-  };
-
-  /**
-   * Add `obj` to the query-string, later formatted
-   * in `.end()`.
-   *
-   * @param {Object} obj
-   * @return {Request} for chaining
-   * @api public
-   */
-
-  Request.prototype.query = function(obj){
-    this._query = this._query || {};
-    for (var key in obj) {
-      this._query[key] = obj[key];
+Request.prototype.set = function(field, val){
+  if (isObject(field)) {
+    for (var key in field) {
+      this.set(key, field[key]);
     }
     return this;
-  };
+  }
+  this._header[field.toLowerCase()] = val;
+  this.header[field] = val;
+  return this;
+};
 
-  /**
-   * Send `data`, defaulting the `.type()` to "json" when
-   * an object is given.
-   *
-   * Examples:
-   *
-   *       // querystring
-   *       request.get('/search')
-   *         .send({ search: 'query' })
-   *         .end(callback)
-   *
-   *       // multiple data "writes"
-   *       request.get('/search')
-   *         .send({ search: 'query' })
-   *         .send({ range: '1..5' })
-   *         .send({ order: 'desc' })
-   *         .end(callback)
-   *
-   *       // manual json
-   *       request.post('/user')
-   *         .type('json')
-   *         .send('{"name":"tj"})
-   *         .end(callback)
-   *       
-   *       // auto json
-   *       request.post('/user')
-   *         .send({ name: 'tj' })
-   *         .end(callback)
-   *       
-   *       // manual x-www-form-urlencoded
-   *       request.post('/user')
-   *         .type('form')
-   *         .send('name=tj')
-   *         .end(callback)
-   *       
-   *       // auto x-www-form-urlencoded
-   *       request.post('/user')
-   *         .type('form')
-   *         .send({ name: 'tj' })
-   *         .end(callback)
-   *
-   * @param {String|Object} data
-   * @return {Request} for chaining
-   * @api public
-   */
+/**
+ * Get case-insensitive header `field` value.
+ *
+ * @param {String} field
+ * @return {String}
+ * @api private
+ */
 
-  Request.prototype.send = function(data){
-    if ('GET' == this.method) return this.query(data);
-    var obj = isObject(data);
+Request.prototype.getHeader = function(field){
+  return this._header[field.toLowerCase()];
+};
 
-    // merge
-    if (obj && isObject(this._data)) {
-      for (var key in data) {
-        this._data[key] = data[key];
-      }
+/**
+ * Set Content-Type to `type`, mapping values from `request.types`.
+ *
+ * Examples:
+ *
+ *      superagent.types.xml = 'application/xml';
+ *
+ *      request.post('/')
+ *        .type('xml')
+ *        .send(xmlstring)
+ *        .end(callback);
+ *
+ *      request.post('/')
+ *        .type('application/xml')
+ *        .send(xmlstring)
+ *        .end(callback);
+ *
+ * @param {String} type
+ * @return {Request} for chaining
+ * @api public
+ */
+
+Request.prototype.type = function(type){
+  this.set('Content-Type', request.types[type] || type);
+  return this;
+};
+
+/**
+ * Set Authorization field value with `user` and `pass`.
+ *
+ * @param {String} user
+ * @param {String} pass
+ * @return {Request} for chaining
+ * @api public
+ */
+
+Request.prototype.auth = function(user, pass){
+  var str = btoa(user + ':' + pass);
+  this.set('Authorization', 'Basic ' + str);
+  return this;
+};
+
+/**
+* Add query-string `val`.
+*
+* Examples:
+*
+*   request.get('/shoes')
+*     .query('size=10')
+*     .query({ color: 'blue' })
+*
+* @param {Object|String} val
+* @return {Request} for chaining
+* @api public
+*/
+
+Request.prototype.query = function(val){
+  if ('string' != typeof val) val = serialize(val);
+  if (val) this._query.push(val);
+  return this;
+};
+
+/**
+ * Send `data`, defaulting the `.type()` to "json" when
+ * an object is given.
+ *
+ * Examples:
+ *
+ *       // querystring
+ *       request.get('/search')
+ *         .end(callback)
+ *
+ *       // multiple data "writes"
+ *       request.get('/search')
+ *         .send({ search: 'query' })
+ *         .send({ range: '1..5' })
+ *         .send({ order: 'desc' })
+ *         .end(callback)
+ *
+ *       // manual json
+ *       request.post('/user')
+ *         .type('json')
+ *         .send('{"name":"tj"})
+ *         .end(callback)
+ *
+ *       // auto json
+ *       request.post('/user')
+ *         .send({ name: 'tj' })
+ *         .end(callback)
+ *
+ *       // manual x-www-form-urlencoded
+ *       request.post('/user')
+ *         .type('form')
+ *         .send('name=tj')
+ *         .end(callback)
+ *
+ *       // auto x-www-form-urlencoded
+ *       request.post('/user')
+ *         .type('form')
+ *         .send({ name: 'tj' })
+ *         .end(callback)
+ *
+ *       // defaults to x-www-form-urlencoded
+  *      request.post('/user')
+  *        .send('name=tobi')
+  *        .send('species=ferret')
+  *        .end(callback)
+ *
+ * @param {String|Object} data
+ * @return {Request} for chaining
+ * @api public
+ */
+
+Request.prototype.send = function(data){
+  var obj = isObject(data);
+  var type = this.getHeader('Content-Type');
+
+  // merge
+  if (obj && isObject(this._data)) {
+    for (var key in data) {
+      this._data[key] = data[key];
+    }
+  } else if ('string' == typeof data) {
+    if (!type) this.type('form');
+    type = this.getHeader('Content-Type');
+    if ('application/x-www-form-urlencoded' == type) {
+      this._data = this._data
+        ? this._data + '&' + data
+        : data;
     } else {
-      this._data = data;
+      this._data = (this._data || '') + data;
     }
-
-    if (!obj) return this;
-    if (this.header['content-type']) return this;
-    this.type('json');
-    return this;
-  };
-
-  /**
-   * Initiate request, invoking callback `fn(res)`
-   * with an instanceof `Response`.
-   *
-   * @param {Function} fn
-   * @return {Request} for chaining
-   * @api public
-   */
-
-  Request.prototype.end = function(fn){
-    var self = this
-      , xhr = this.xhr = getXHR()
-      , query = this._query
-      , data = this._data;
-
-    // store callback
-    this.callback = fn || noop;
-
-    // state change
-    xhr.onreadystatechange = function(){
-      if (4 == xhr.readyState) self.emit('end');
-    };
-
-    // querystring
-    if (query) {
-      query = request.serializeObject(query);
-      this.url += ~this.url.indexOf('?')
-        ? '&' + query
-        : '?' + query;
-    }
-
-    // initiate request
-    xhr.open(this.method, this.url, true);
-
-    // body
-    if ('GET' != this.method && 'HEAD' != this.method) {
-      // serialize stuff
-      var serialize = request.serialize[this.header['content-type']];
-      if (serialize) data = serialize(data);
-    }
-
-    // set header fields
-    for (var field in this.header) {
-      xhr.setRequestHeader(field, this.header[field]);
-    }
-
-    // send stuff
-    xhr.send(data);
-    return this;
-  };
-  
-  /**
-   * Expose `Request`.
-   */
-  
-  request.Request = Request;
-
-  /**
-   * Issue a request:
-   *
-   * Examples:
-   *
-   *    request('GET', '/users').end(callback)
-   *    request('/users').end(callback)
-   *    request('/users', callback)
-   *
-   * @param {String} method
-   * @param {String|Function} url or callback
-   * @return {Request}
-   * @api public
-   */
-
-  function request(method, url) {
-    // callback
-    if ('function' == typeof url) {
-      return new Request('GET', method).end(url);
-    }
-
-    // url first
-    if (1 == arguments.length) {
-      return new Request('GET', method);
-    }
-
-    return new Request(method, url);
-  }
-
-  /**
-   * GET `url` with optional callback `fn(res)`.
-   *
-   * @param {String} url
-   * @param {Mixed} data
-   * @param {Function} fn
-   * @return {Request}
-   * @api public
-   */
-
-  request.get = function(url, data, fn){
-    var req = request('GET', url);
-    if (isFunction(data)) fn = data, data = null;
-    if (data) req.send(data);
-    if (fn) req.end(fn);
-    return req;
-  };
-
-  /**
-   * GET `url` with optional callback `fn(res)`.
-   *
-   * @param {String} url
-   * @param {Mixed} data
-   * @param {Function} fn
-   * @return {Request}
-   * @api public
-   */
-
-  request.head = function(url, data, fn){
-    var req = request('HEAD', url);
-    if (isFunction(data)) fn = data, data = null;
-    if (data) req.send(data);
-    if (fn) req.end(fn);
-    return req;
-  };
-
-  /**
-   * DELETE `url` with optional callback `fn(res)`.
-   *
-   * @param {String} url
-   * @param {Function} fn
-   * @return {Request}
-   * @api public
-   */
-
-  request.del = function(url, fn){
-    var req = request('DELETE', url);
-    if (fn) req.end(fn);
-    return req;
-  };
-
-  /**
-   * PATCH `url` with optional `data` and callback `fn(res)`.
-   *
-   * @param {String} url
-   * @param {Mixed} data
-   * @param {Function} fn
-   * @return {Request}
-   * @api public
-   */
-
-  request.patch = function(url, data, fn){
-    var req = request('PATCH', url);
-    if (data) req.send(data);
-    if (fn) req.end(fn);
-    return req;
-  };
-
-  /**
-   * POST `url` with optional `data` and callback `fn(res)`.
-   *
-   * @param {String} url
-   * @param {Mixed} data
-   * @param {Function} fn
-   * @return {Request}
-   * @api public
-   */
-
-  request.post = function(url, data, fn){
-    var req = request('POST', url);
-    if (data) req.send(data);
-    if (fn) req.end(fn);
-    return req;
-  };
-
-  /**
-   * PUT `url` with optional `data` and callback `fn(res)`.
-   *
-   * @param {String} url
-   * @param {Mixed} data
-   * @param {Function} fn
-   * @return {Request}
-   * @api public
-   */
-
-  request.put = function(url, data, fn){
-    var req = request('PUT', url);
-    if (data) req.send(data);
-    if (fn) req.end(fn);
-    return req;
-  };
-
-  // expose
-
-  if ('undefined' == typeof exports) {
-    root.request = root.superagent = request;
   } else {
-    module.exports = request;
+    this._data = data;
   }
 
-})();
-})(_);
-(
+  if (!obj) return this;
+  if (!type) this.type('json');
+  return this;
+};
+
+/**
+ * Invoke the callback with `err` and `res`
+ * and handle arity check.
+ *
+ * @param {Error} err
+ * @param {Response} res
+ * @api private
+ */
+
+Request.prototype.callback = function(err, res){
+  var fn = this._callback;
+  if (2 == fn.length) return fn(err, res);
+  if (err) return this.emit('error', err);
+  fn(res);
+};
+
+/**
+ * Invoke callback with x-domain error.
+ *
+ * @api private
+ */
+
+Request.prototype.crossDomainError = function(){
+  var err = new Error('Origin is not allowed by Access-Control-Allow-Origin');
+  err.crossDomain = true;
+  this.callback(err);
+};
+
+/**
+ * Invoke callback with timeout error.
+ *
+ * @api private
+ */
+
+Request.prototype.timeoutError = function(){
+  var timeout = this._timeout;
+  var err = new Error('timeout of ' + timeout + 'ms exceeded');
+  err.timeout = timeout;
+  this.callback(err);
+};
+
+/**
+ * Enable transmission of cookies with x-domain requests.
+ *
+ * Note that for this to work the origin must not be
+ * using "Access-Control-Allow-Origin" with a wildcard,
+ * and also must set "Access-Control-Allow-Credentials"
+ * to "true".
+ *
+ * @api public
+ */
+
+Request.prototype.withCredentials = function(){
+  this._withCredentials = true;
+  return this;
+};
+
+/**
+ * Initiate request, invoking callback `fn(res)`
+ * with an instanceof `Response`.
+ *
+ * @param {Function} fn
+ * @return {Request} for chaining
+ * @api public
+ */
+
+Request.prototype.end = function(fn){
+  var self = this;
+  var xhr = this.xhr = getXHR();
+  var query = this._query.join('&');
+  var timeout = this._timeout;
+  var data = this._data;
+
+  // store callback
+  this._callback = fn || noop;
+
+  // CORS
+  if (this._withCredentials) xhr.withCredentials = true;
+
+  // state change
+  xhr.onreadystatechange = function(){
+    if (4 != xhr.readyState) return;
+    if (0 == xhr.status) {
+      if (self.aborted) return self.timeoutError();
+      return self.crossDomainError();
+    }
+    self.emit('end');
+  };
+
+  // progress
+  if (xhr.upload) {
+    xhr.upload.onprogress = function(e){
+      e.percent = e.loaded / e.total * 100;
+      self.emit('progress', e);
+    };
+  }
+
+  // timeout
+  if (timeout && !this._timer) {
+    this._timer = setTimeout(function(){
+      self.abort();
+    }, timeout);
+  }
+
+  // querystring
+  if (query) {
+    query = request.serializeObject(query);
+    this.url += ~this.url.indexOf('?')
+      ? '&' + query
+      : '?' + query;
+  }
+
+  // initiate request
+  xhr.open(this.method, this.url, true);
+
+  // body
+  if ('GET' != this.method && 'HEAD' != this.method && 'string' != typeof data && !isHost(data)) {
+    // serialize stuff
+    var serialize = request.serialize[this.getHeader('Content-Type')];
+    if (serialize) data = serialize(data);
+  }
+
+  // set header fields
+  for (var field in this.header) {
+    if (null == this.header[field]) continue;
+    xhr.setRequestHeader(field, this.header[field]);
+  }
+
+  // send stuff
+  xhr.send(data);
+  return this;
+};
+
+/**
+ * Expose `Request`.
+ */
+
+request.Request = Request;
+
+/**
+ * Issue a request:
+ *
+ * Examples:
+ *
+ *    request('GET', '/users').end(callback)
+ *    request('/users').end(callback)
+ *    request('/users', callback)
+ *
+ * @param {String} method
+ * @param {String|Function} url or callback
+ * @return {Request}
+ * @api public
+ */
+
+function request(method, url) {
+  // callback
+  if ('function' == typeof url) {
+    return new Request('GET', method).end(url);
+  }
+
+  // url first
+  if (1 == arguments.length) {
+    return new Request('GET', method);
+  }
+
+  return new Request(method, url);
+}
+
+/**
+ * GET `url` with optional callback `fn(res)`.
+ *
+ * @param {String} url
+ * @param {Mixed|Function} data or fn
+ * @param {Function} fn
+ * @return {Request}
+ * @api public
+ */
+
+request.get = function(url, data, fn){
+  var req = request('GET', url);
+  if ('function' == typeof data) fn = data, data = null;
+  if (data) req.query(data);
+  if (fn) req.end(fn);
+  return req;
+};
+
+/**
+ * GET `url` with optional callback `fn(res)`.
+ *
+ * @param {String} url
+ * @param {Mixed|Function} data or fn
+ * @param {Function} fn
+ * @return {Request}
+ * @api public
+ */
+
+request.head = function(url, data, fn){
+  var req = request('HEAD', url);
+  if ('function' == typeof data) fn = data, data = null;
+  if (data) req.send(data);
+  if (fn) req.end(fn);
+  return req;
+};
+
+/**
+ * DELETE `url` with optional callback `fn(res)`.
+ *
+ * @param {String} url
+ * @param {Function} fn
+ * @return {Request}
+ * @api public
+ */
+
+request.del = function(url, fn){
+  var req = request('DELETE', url);
+  if (fn) req.end(fn);
+  return req;
+};
+
+/**
+ * PATCH `url` with optional `data` and callback `fn(res)`.
+ *
+ * @param {String} url
+ * @param {Mixed} data
+ * @param {Function} fn
+ * @return {Request}
+ * @api public
+ */
+
+request.patch = function(url, data, fn){
+  var req = request('PATCH', url);
+  if ('function' == typeof data) fn = data, data = null;
+  if (data) req.send(data);
+  if (fn) req.end(fn);
+  return req;
+};
+
+/**
+ * POST `url` with optional `data` and callback `fn(res)`.
+ *
+ * @param {String} url
+ * @param {Mixed} data
+ * @param {Function} fn
+ * @return {Request}
+ * @api public
+ */
+
+request.post = function(url, data, fn){
+  var req = request('POST', url);
+  if ('function' == typeof data) fn = data, data = null;
+  if (data) req.send(data);
+  if (fn) req.end(fn);
+  return req;
+};
+
+/**
+ * PUT `url` with optional `data` and callback `fn(res)`.
+ *
+ * @param {String} url
+ * @param {Mixed|Function} data or fn
+ * @param {Function} fn
+ * @return {Request}
+ * @api public
+ */
+
+request.put = function(url, data, fn){
+  var req = request('PUT', url);
+  if ('function' == typeof data) fn = data, data = null;
+  if (data) req.send(data);
+  if (fn) req.end(fn);
+  return req;
+};
+
+/**
+ * Expose `request`.
+ */
+
+module.exports = request;
+
+});
+require.alias("component-emitter/index.js", "superagent/deps/emitter/index.js");
+require.alias("component-emitter/index.js", "emitter/index.js");
+require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
+
+require.alias("RedVentures-reduce/index.js", "superagent/deps/reduce/index.js");
+require.alias("RedVentures-reduce/index.js", "reduce/index.js");
+
+require.alias("superagent/lib/client.js", "superagent/index.js");
+
+if (typeof exports == "object") {
+  module.exports = require("superagent");
+} else if (typeof define == "function" && define.amd) {
+  define(function(){ return require("superagent"); });
+} else {
+  this["superagent"] = require("superagent");
+}})();(
 function (_){
     _.mixin({
         noop: function(){},
+        stringify : function(){ return(JSON.stringify.apply(null, arguments)); },
+        parse : function(){ return(JSON.parse.apply(null, arguments)); },
+        call: function(callback){
+            if(!_.isFunction(callback)){ return(false); }
+            if(arguments.length > 1){
+                var args = _.toArray(arguments);
+                args.shift();
+                callback.apply(null, args);
+                return(true);
+            }else{ callback(); return(true); }
+        },
         get: function(obj, key){
             if(obj[key] !== undefined){
                 if(_.isFunction(obj[key])){ return(obj[key]()); }
@@ -2170,6 +2760,8 @@ function (_){
             }
         },
         time: function(str){
+            if(str === undefined){ return(new Date().getTime()); }
+
             if(!_.time.hash){ _.time.hash = {}; }
             var time = new Date().getTime();
             if(_.time.hash[str]){
@@ -2378,6 +2970,15 @@ function (_){
                 while (ws.test(str.charAt(--i)));
                 return str.slice(0, i + 1);
             }
+        },
+        getterSetter : function (variableName){
+            return(function(val){
+                if(val === undefined){ return(this[variableName]); }
+                else{
+                    this[variableName] = val;
+                    return(this);
+                }
+            });
         },
         toNumber : function(n){
             return(n - 0);
@@ -2703,6 +3304,32 @@ function hasTypes(val, types, nullOk){
     return(messages);
 };
 
+dry.fakeLogger = function(working){
+    if(working){
+        return({
+            debug: function(msg, data){ console.log(msg); if(data) { console.dir(data); } },
+            info: function(msg, data){ console.log(msg); if(data) { console.dir(data); } },
+            notice: function(msg, data){ console.log(msg); if(data) { console.dir(data); } },
+            warning: function(msg, data){ console.log(msg); if(data) { console.dir(data); } },
+            error: function(msg, data){ console.log(msg); if(data) { console.dir(data); } },
+            crit: function(msg, data){ console.log(msg); if(data) { console.dir(data); } },
+            alert: function(msg, data){ console.log(msg); if(data) { console.dir(data); } },
+            emerg: function(msg, data){ console.log(msg); if(data) { console.dir(data); } }
+        });
+    }else{
+        return({
+            debug: function(msg, data){},
+            info: function(msg, data){},
+            notice: function(msg, data){},
+            warning: function(msg, data){},
+            error: function(msg, data){},
+            crit: function(msg, data){},
+            alert: function(msg, data){},
+            emerg: function(msg, data){}
+        });
+    }
+};
+ 
 return(dry);
 
 }
