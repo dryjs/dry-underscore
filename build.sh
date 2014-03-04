@@ -17,5 +17,6 @@ echo ")(_);" >> dry.underscore.js
 echo "_.eventEmitter = (" >> dry.underscore.js
 node -e "console.log(require('./lib/eventEmitter.js').mixin.toString())" >> dry.underscore.js
 echo ")(_);" >> dry.underscore.js
-echo "_.eventEmitter(_);" >> dry.underscore.js
+echo "_.events = {};" >> dry.underscore.js
+echo "_.eventEmitter(_.events);" >> dry.underscore.js
 echo "})();" >> dry.underscore.js

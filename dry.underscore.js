@@ -2733,6 +2733,43 @@ if (typeof exports == "object") {
   this["superagent"] = require("superagent");
 }})();(
 function (_){
+    _.date = function(ts){
+        if(_.isNumber(ts)){
+            return(new Date(ts));
+        }else{
+            return(new Date());
+        }
+    };
+
+    _.timestamp = function(d){
+        if(_.isNumber(d)){ return(_.timestamp() + d); }
+
+        if(d === undefined){ d = _.date(); }
+        return(d.getTime());
+    };
+
+    _.ms = {};
+    _.ms.second = function(n){
+        if(n === undefined){ n = 1; }
+        return(n * 1000); 
+    };
+    _.ms.minute = function(n){ 
+        if(n === undefined){ n = 1; }
+        return(n * _.ms.second(60));
+    };
+    _.ms.hour = function(n){ 
+        if(n === undefined){ n = 1; }
+        return(n * _.ms.minute(60));
+    };
+    _.ms.day = function(n){ 
+        if(n === undefined){ n = 1; }
+        return(n * _.ms.hour(24));
+    };
+    _.ms.week = function(n){ 
+        if(n === undefined){ n = 1; }
+        return(n * _.ms.day(7));
+    };
+
     _.mixin({
         noop: function(){},
         stringify : function(){ return(JSON.stringify.apply(null, arguments)); },
@@ -3461,5 +3498,6 @@ return(eventEmitter);
 
 }
 )(_);
-_.eventEmitter(_);
+_.events = {};
+_.eventEmitter(_.events);
 })();

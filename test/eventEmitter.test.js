@@ -19,7 +19,7 @@ exports.testDefault = function(){
         assert.eql(calls, expectedCalls);
     }
     
-    test(_);
+    test(_.events);
 };
 
 exports.testOn = function(){
