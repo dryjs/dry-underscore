@@ -28,6 +28,7 @@ exports.testMTime = testMTime;
 exports.globTest = globTest;
 exports.hiddenTest = hiddenTest;
 exports.walkTest = walkTest;
+exports.findTest = findTest;
 
 function hiddenTest(){
     assert.ok(!_.fs.isHidden("/test.js/test.js/asdf.js"));
@@ -651,6 +652,63 @@ function walkTest(beforeExit){
         });
 
         assert.equal(foundPaths.length, 0);
+    });
+
+    beforeExit(function(){ assert.equal(1, n); });
+}
+
+function findTest(beforeExit){
+
+    /*
+    ./parent
+    ./parent/child
+    ./parent/child/child.directory
+    ./parent/child/child.directory/child.directory.file
+    ./parent/child/child.directory/parent
+    ./parent/child/child.directory/parent/.keep
+    ./parent/child/child.file
+    ./parent/empty
+    ./parent/parent.file
+    */
+    
+    var n = 0;
+
+    var relativePaths = [
+        //'./parent',
+        //'./parent/child',
+        //'./parent/child/child.directory',
+        './parent/child/child.directory/child.directory.file',
+        //'./parent/child/child.directory/parent',
+        //'./parent/child/child.directory/parent/.keep',
+        './parent/child/child.file',
+        //'./parent/empty',
+        './parent/parent.file'
+    ];
+
+    var expectedPaths = _.map(relativePaths, function(val){ return(_.fs.path.normalize(testDir + val)); });
+    var foundPaths = []; 
+
+    var foundPaths = _.fs.find(testDir, "*.file");
+
+    _.each(expectedPaths, function(val){
+        assert.deepEqual([val], _.filter(foundPaths, function(found){ return(found === val); }));
+        foundPaths = _.reject(foundPaths, function(found){ return(found === val); });
+    });
+
+    assert.equal(foundPaths.length, 0);
+
+    _.time('fs.find');
+    _.fs.find(testDir, "*.file", function(foundFiles){
+        n++;
+
+        console.log("fs.find: ", _.time('fs.find'), "ms");
+
+        _.each(expectedPaths, function(val){
+            assert.deepEqual([val], _.filter(foundFiles, function(found){ return(found === val); }));
+            foundFiles = _.reject(foundFiles, function(found){ return(found === val); });
+        });
+
+        assert.equal(foundFiles.length, 0);
     });
 
     beforeExit(function(){ assert.equal(1, n); });
