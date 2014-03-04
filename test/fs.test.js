@@ -27,6 +27,7 @@ exports.testMoveFiles = testMoveFiles;
 exports.testMTime = testMTime;
 exports.globTest = globTest;
 exports.hiddenTest = hiddenTest;
+exports.walkTest = walkTest;
 
 function hiddenTest(){
     assert.ok(!_.fs.isHidden("/test.js/test.js/asdf.js"));
@@ -576,6 +577,83 @@ function testGetFiles(beforeExit){
     
     beforeExit(function(){ assert.equal(5, n); });
     
+}
+
+function walkTest(beforeExit){
+
+    /*
+    ./parent
+    ./parent/child
+    ./parent/child/child.directory
+    ./parent/child/child.directory/child.directory.file
+    ./parent/child/child.directory/parent
+    ./parent/child/child.directory/parent/.keep
+    ./parent/child/child.file
+    ./parent/empty
+    ./parent/parent.file
+    */
+    
+    var n = 0;
+
+    var relativePaths = [
+        './parent',
+        './parent/child',
+        './parent/child/child.directory',
+        './parent/child/child.directory/child.directory.file',
+        './parent/child/child.directory/parent',
+        './parent/child/child.directory/parent/.keep',
+        './parent/child/child.file',
+        './parent/empty',
+        './parent/parent.file'
+    ];
+
+    var expectedPaths = _.map(relativePaths, function(val){ return(_.fs.path.normalize(testDir + val)); });
+    var foundPaths = []; 
+
+    _.fs.walk(testDir, function onFile(fileName, filePath){
+        //console.log("file name: '" + fileName + "'");
+        //console.log("file path: '" + filePath + "'");
+        foundPaths.push(filePath);
+    }, function onDir(dirName, dirPath){
+        if(dirName == "mvtest" || dirName == "async"){ return(false); }
+        //console.log("dir name: '" + dirName + "'");
+        //console.log("dir path: '" + dirPath + "'");
+        foundPaths.push(dirPath);
+    });
+
+    _.each(expectedPaths, function(val){
+        assert.deepEqual([val], _.filter(foundPaths, function(found){ return(found === val); }));
+        foundPaths = _.reject(foundPaths, function(found){ return(found === val); });
+    });
+
+    assert.equal(foundPaths.length, 0);
+
+
+    //_.time('fs.walk');
+    _.fs.walk(testDir, function onFile(fileName, filePath, next){
+        //console.log("file name: '" + fileName + "'");
+        //console.log("file path: '" + filePath + "'");
+        foundPaths.push(filePath);
+        next();
+    }, function onDir(dirName, dirPath, next){
+        if(dirName == "mvtest" || dirName == "async"){ return next(false); }
+        //console.log("dir name: '" + dirName + "'");
+        //console.log("dir path: '" + dirPath + "'");
+        foundPaths.push(dirPath);
+        next();
+    }, function(){
+        n++;
+
+        //console.log("fs.walk: ", _.time('fs.walk'), "ms");
+        _.each(expectedPaths, function(val){
+            assert.deepEqual([val], _.filter(foundPaths, function(found){ return(found === val); }));
+            foundPaths = _.reject(foundPaths, function(found){ return(found === val); });
+        });
+
+        assert.equal(foundPaths.length, 0);
+    });
+
+    beforeExit(function(){ assert.equal(1, n); });
 }
 
 function testAddSlash(){
