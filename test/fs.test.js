@@ -29,6 +29,18 @@ exports.globTest = globTest;
 exports.hiddenTest = hiddenTest;
 exports.walkTest = walkTest;
 exports.findTest = findTest;
+exports.pathTest = pathTest;
+
+function pathTest(){
+    assert.eql(_.fs.path.changeFile('/a/b/c/file', 'newName'), '/a/b/c/newName');
+    assert.eql(_.fs.path.changeFile('a', 'newName'), 'newName');
+
+    assert.eql(_.fs.path.changeExtension('a/b/c/d.ext', 'js'), 'a/b/c/d.js');
+    assert.eql(_.fs.path.changeExtension('d.ext', 'js'), 'd.js');
+
+    assert.eql(_.fs.path.hideFile('a/b/c/d.ext'), 'a/b/c/.d.ext');
+    assert.eql(_.fs.path.hideFile('d.ext'), '.d.ext');
+}
 
 function hiddenTest(){
     assert.ok(!_.fs.isHidden("/test.js/test.js/asdf.js"));
@@ -41,6 +53,8 @@ function hiddenTest(){
 
 function globTest(){
 
+    assert.ok(!_.fs.glob.matchFile("/test.js/test.js/.asdf.js", "*.js"));
+    assert.ok(_.fs.glob.matchFile("/test.js/test.js/.asdf.js", "*.js", true));
     assert.ok(_.fs.glob.matchFile("/test.js/test.js/asdf.js", "*.js"));
     assert.ok(!_.fs.glob.matchFile("/test.js/test.js/asdf.ms", "*.js"));
 
@@ -697,11 +711,23 @@ function findTest(beforeExit){
 
     assert.equal(foundPaths.length, 0);
 
-    _.time('fs.find');
+    foundPaths = _.fs.find(testDir, { pattern: "*.file", prune: function(dirName){ return(dirName === 'child'); } });
+
+    var prunedExpected = [_.fs.path.normalize(testDir + './parent/parent.file')];
+
+    _.each(prunedExpected, function(val){
+        assert.deepEqual([val], _.filter(foundPaths, function(found){ return(found === val); }));
+        foundPaths = _.reject(foundPaths, function(found){ return(found === val); });
+    });
+
+    assert.equal(foundPaths.length, 0);
+
+
+    //_.time('fs.find');
     _.fs.find(testDir, "*.file", function(foundFiles){
         n++;
 
-        console.log("fs.find: ", _.time('fs.find'), "ms");
+        //console.log("fs.find: ", _.time('fs.find'), "ms");
 
         _.each(expectedPaths, function(val){
             assert.deepEqual([val], _.filter(foundFiles, function(found){ return(found === val); }));
