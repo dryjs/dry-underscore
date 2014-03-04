@@ -800,7 +800,7 @@
   // Retrieve the names of an object's properties.
   // Delegates to **ECMAScript 5**'s native `Object.keys`
   _.keys = function(obj) {
-    if (!_.isObject(obj)) return [];
+    if (!_isObject(obj)) return [];
     if (nativeKeys) return nativeKeys(obj);
     var keys = [];
     for (var key in obj) if (_.has(obj, key)) keys.push(key);
@@ -2759,7 +2759,7 @@ function (_){
                 return undefined;
             }
         },
-        time: function(str){
+        time: function(str, log){
             if(str === undefined){ return(new Date().getTime()); }
 
             if(!_.time.hash){ _.time.hash = {}; }
@@ -2767,7 +2767,9 @@ function (_){
             if(_.time.hash[str]){
                 var t2 = _.time.hash[str];
                 _.time.hash[str] = undefined;
-                return(time - t2);
+                var val = time - t2;
+                if(log){ _.log(str + ":", val + "ms"); }
+                return(val);
             }else{ _.time.hash[str] = time; }
         },
         isEmptyObjectWithNoPrototype : function(o){
@@ -2977,6 +2979,18 @@ function (_){
                 else{
                     this[variableName] = val;
                     return(this);
+                }
+            });
+        },
+        // makeClass - By John Resig (MIT Licensed)
+        makeClass : function (){
+            return(function(args){
+                if ( this instanceof arguments.callee ) {
+                    if ( typeof this.init == "function" ){
+                        this.init.apply( this, args.callee ? args : arguments );
+                    }
+                } else{
+                    return new arguments.callee( arguments );
                 }
             });
         },
@@ -3334,4 +3348,118 @@ return(dry);
 
 }
 )(_);
+_.log = (
+function (_){
+
+var log = function(){
+    if(arguments.length && _.isObject(arguments[0])){
+        var args = _.toArray(arguments);
+        var options = args.unshift();
+    }else{
+        console.log.apply(console, arguments);
+    }
+    
+    return({
+        debug: log, 
+        info: log,
+        notice: log,
+        warning: log,
+        error: log,
+        crit: log,
+        alert: log,
+        emerg: log,
+    });
+};
+
+
+return(log);
+
+}
+)(_);
+_.eventEmitter = (
+function (_){
+
+var eventEmitter = function(f){
+
+    if(f === undefined){ f = {}; }
+        
+    f.on = function(event, tag, callback){
+        var that = this;
+        if(typeof(tag) === 'function'){
+            callback = tag;
+            tag = "";
+        }
+        if(!event || !callback){
+            throw(new Error("You must provide an event name and a function."));
+        }
+        event = event.toLowerCase();
+        if(that._events === undefined){ that._events = {}; }
+        if(that._events[event] === undefined){ that._events[event] = []; }
+
+        that._events[event].push({handler: callback, tag: tag});
+    };
+
+    f.addListener = f.on;
+
+    f.off = function(event, callback){
+        var that = this;
+        
+        if(!that._events){ return; }
+        
+        if(event){ event = event.toLowerCase(); }
+        if(arguments.length === 0){
+            that._events = {};
+        }else if(arguments.length === 1){
+            that._events[event] = [];
+        }else{
+            var handlers = that._events[event];
+    
+            if(that._events && that._events[event]){
+                that._events[event] = _.filter(that._events[event], function(val){
+                    if(typeof(callback) === 'function'){
+                        return(val.handler !== callback);                    
+                    }else if(typeof(callback) === 'string'){
+                        return(val.tag.toLowerCase() !== callback.toLowerCase());
+                    }
+                });
+            }
+        }
+    };
+
+    f.removeListener = f.off;
+
+    f.once = function(event, callback){
+        var that = this;
+         
+        function wrap() {
+            that.off(event, wrap);
+            callback.apply(this, arguments);
+        };
+
+        that.on(event, wrap);
+    };
+
+    f.emit = function(event){
+        var that = this;
+        var args = _.toArray(arguments);
+        args.shift();
+        
+        if(!event){ throw(new Error("You must provide an event name.")); }
+        event = event.toLowerCase();
+        
+        if(that._events && that._events[event]){
+            _.each(that._events[event], function(val){
+                val.handler.apply(null, args);
+            });
+        }
+    };
+    
+    return(f);
+};
+
+return(eventEmitter);
+
+}
+)(_);
+_.eventEmitter(_);
 })();

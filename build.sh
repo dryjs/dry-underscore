@@ -11,4 +11,11 @@ echo "_.dry = (" >> dry.underscore.js
 node -e "console.log(require('./lib/dry.js').mixin.toString())" >> dry.underscore.js
 echo ")(_);" >> dry.underscore.js
 #echo "_.mixin(_.string.exports());" >> dry.underscore.js
+echo "_.log = (" >> dry.underscore.js
+node -e "console.log(require('./lib/log.js').mixin.toString())" >> dry.underscore.js
+echo ")(_);" >> dry.underscore.js
+echo "_.eventEmitter = (" >> dry.underscore.js
+node -e "console.log(require('./lib/eventEmitter.js').mixin.toString())" >> dry.underscore.js
+echo ")(_);" >> dry.underscore.js
+echo "_.eventEmitter(_);" >> dry.underscore.js
 echo "})();" >> dry.underscore.js
