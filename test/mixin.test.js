@@ -2,6 +2,15 @@ var fs = require('fs');
 var assert = require('assert');
 var _ = require('../');
 
+exports.testEcho = function(beforeExit){
+    var n = 0;
+    _.shell("echo 'shell is working.'", function(code){
+        assert.eql(code, 0);
+        n++;
+    });
+    beforeExit(function(){ assert.eql(n, 1); });
+}
+
 exports.testTrimAndStripQuotes = function(){
     assert.eql(_.trimAndStripQuotes("'asdf'"), "asdf");
     assert.eql(_.trimAndStripQuotes('"asdf"'), "asdf");
