@@ -9,6 +9,20 @@ exports.testHasTypes = testHasTypes;
 //exports.testIterateAsync = testIterateAsync;
 exports.testEmptyIterate = testEmptyIterate;
 exports.testGet = testGet;
+exports.testTest = testTest;
+
+function testTest(){
+    var n = 0;
+
+    _.test.eq(['a', 'b', 'c'], ['a', 'b', 'c']);
+    _.test.eq(['a', 'b', 'c'], ['a', 'b', 'c']);
+    try{ _.test.eq(['c', 'c', 'c'], ['a', 'b', 'c']); }catch(e){ n++; }
+    _.test.eq([null], [null]);
+    try{ _.test.eq([0], [false]); }catch(e){ n++; }
+    try{ _.test.eq([0], [null]); }catch(e){ n++; }
+    _.test.equal(n, 3);
+}
+
 
 function testGet(){
 

@@ -2816,6 +2816,8 @@ function (_){
             }else{ callback(); return(true); }
         },
         get: function(obj, key){
+            if(_.isFunction(obj)){ return(obj()); }
+            if(key === undefined){ return(obj); }
             if(obj[key] !== undefined){
                 if(_.isFunction(obj[key])){ return(obj[key]()); }
                 else{ return(obj[key]); }
