@@ -2748,10 +2748,13 @@ function (_){
         return(d.getTime());
     };
 
-    _.ms = {};
+    _.ms = function(n){
+        if(n === undefined){ return(0); }
+        else{ return(n); }
+    };
     _.ms.second = function(n){
         if(n === undefined){ n = 1; }
-        return(n * 1000); 
+        return(n * _.ms(1000));
     };
     _.ms.minute = function(n){ 
         if(n === undefined){ n = 1; }
@@ -2769,6 +2772,24 @@ function (_){
         if(n === undefined){ n = 1; }
         return(n * _.ms.day(7));
     };
+
+    _.minutes = function(n){
+        if(n === undefined){ return(0); }
+        else{ return(n); }
+    }
+    _.minutes.hour = function(n){ 
+        if(n === undefined){ n = 1; }
+        return(n * _.minutes(60));
+    };
+    _.minutes.day = function(n){ 
+        if(n === undefined){ n = 1; }
+        return(n * _.minutes.hour(24));
+    };
+    _.minutes.week = function(n){ 
+        if(n === undefined){ n = 1; }
+        return(n * _.minutes.day(7));
+    };
+ 
 
     _.mixin({
         noop: function(){},
