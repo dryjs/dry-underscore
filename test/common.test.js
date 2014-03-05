@@ -10,6 +10,16 @@ exports.testHasTypes = testHasTypes;
 exports.testEmptyIterate = testEmptyIterate;
 exports.testGet = testGet;
 exports.testTest = testTest;
+exports.testFormat = testFormat;
+//exports.testFatal = testFatal;
+
+function testFatal(){
+    _.fatal("should be pretty: a b c", {'a':'b','c':'d'}, ['a', 'b', 'c', 'd']);
+}
+
+function testFormat(){
+    assert.eql("should be pretty: a b c { a: 'b', c: 'd' } [ 'a', 'b', 'c', 'd' ]", _.format("should be pretty: a b c", {'a':'b','c':'d'}, ['a', 'b', 'c', 'd']));
+}
 
 function testTest(){
     var n = 0;
