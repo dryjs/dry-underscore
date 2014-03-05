@@ -11,6 +11,7 @@ exports.testEmptyIterate = testEmptyIterate;
 exports.testGet = testGet;
 exports.testTest = testTest;
 exports.testFormat = testFormat;
+exports.testConcat = testConcat;
 //exports.testFatal = testFatal;
 
 function testFatal(){
@@ -19,6 +20,10 @@ function testFatal(){
 
 function testFormat(){
     assert.eql("should be pretty: a b c { a: 'b', c: 'd' } [ 'a', 'b', 'c', 'd' ]", _.format("should be pretty: a b c", {'a':'b','c':'d'}, ['a', 'b', 'c', 'd']));
+}
+
+function testConcat(){
+    assert.deepEqual(_.concat(['a'], 'b', 'c', ['d', 'e']), ['a', 'b', 'c', 'd', 'e']);
 }
 
 function testTest(){
