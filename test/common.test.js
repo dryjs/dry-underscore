@@ -8,6 +8,19 @@ exports.testHasType = testHasType;
 exports.testHasTypes = testHasTypes;
 //exports.testIterateAsync = testIterateAsync;
 exports.testEmptyIterate = testEmptyIterate;
+exports.testGet = testGet;
+
+function testGet(){
+
+    assert.strictEqual(_.get(function(){ return('a'); }), 'a');
+    assert.strictEqual(_.get('a'), 'a');
+    assert.strictEqual(_.get({ 'a': 'b'}, 'a'), 'b');
+    assert.strictEqual(_.get({ 'A': 'b'}, 'a'), 'b');
+    assert.strictEqual(_.get(['a', 'b'], 1), 'b');
+    assert.strictEqual(_.get(['a', 'b'], 1), 'b');
+    assert.strictEqual(_.get({ 'A': 'b'}, 'c'), undefined);
+    assert.strictEqual(_.get(function(){ return('a'); }), 'a');
+}
 
 function testEmptyIterate(beforeExit){
 
