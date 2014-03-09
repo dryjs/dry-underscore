@@ -2804,6 +2804,10 @@ function (_){
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
     _.fatal = function(){ throw(new Error("Fatal Error: " + _.format.apply(null, arguments))); };
 
+    _.jsonClone = function(o){ 
+        return(_.parse(_.stringify(o)));
+    };
+
     _.mixin({
         noop: function(){},
         stringify : function(){ return(JSON.stringify.apply(null, arguments)); },
@@ -2817,9 +2821,17 @@ function (_){
                 return(true);
             }else{ callback(); return(true); }
         },
-        get: function(obj, key){
+        get: function(obj, key, defaultValue){
             if(_.isFunction(obj)){ return(obj()); }
             if(key === undefined){ return(obj); }
+            if(defaultValue !== undefined){
+                if(!obj[key]){
+                    obj[key] = defaultValue;
+                    return(obj[key]);
+                }else{
+                    return(obj[key]);
+                }
+            }
             if(obj[key] !== undefined){
                 if(_.isFunction(obj[key])){ return(obj[key]()); }
                 else{ return(obj[key]); }
@@ -3068,8 +3080,12 @@ function (_){
             });
         },
         toNumber : function(n){
-            return(n - 0);
+            n = n - 0; 
+            if(isNaN(n)){ return(null); }
+            else{ return(n); }
         },
+        n : function(n){ return(_.toNumber(n)); },
+        s : function(n){ return(n + ""); },
         formatNumber: function(nStr){
             nStr += '';
             var x = nStr.split('.');
@@ -4031,9 +4047,82 @@ function (_){
 
     })();
 
+    _.client = {};
+
+    _.client.labelOverInput = function(inputSelector, labelSelector){
+
+        if(inputSelector === undefined){ _.fatal("need at least one selector for this to work."); }
+
+        var parentSelector = "";
+        if(labelSelector === undefined){
+            parentSelector = inputSelector;
+            inputSelector = "";
+        }
+
+        labelSelector = labelSelector || (parentSelector + " label");
+
+        if(parentSelector){
+            if($(parentSelector + " textarea").first()){
+                inputSelector = parentSelector + " textarea";
+            }
+
+            if($(parentSelector + " input").first()){
+                inputSelector = parentSelector + " input";
+            }
+        }
+
+        $(labelSelector).click(function(e){
+            $(inputSelector).focus();
+        });
+
+        $(inputSelector).focus(function(){
+            $(labelSelector).hide();
+        });
+
+        $(inputSelector).blur(function(){
+            if(!$(this).val()){ 
+                $(labelSelector).show();
+            }
+        });
+    };
+
 
     return(_);
 
+}
+)(_);
+_.ns = (
+function mixin(_){
+
+    var ns = function(f){
+
+        if(!f){ f = {}; }
+
+        f.child = function(ns, val, cursor){ 
+
+            if(_.isString(ns)){ ns = ns.split("."); }
+
+            if(!cursor){ cursor = this; }
+            if(!this._children){ this._children = {}; }
+
+            var name = ns.shift();
+
+            if(!ns.length){
+                if(val !== undefined){ cursor[name] = val; }
+                return(cursor[name]);
+            }else{
+                if(cursor[name] === undefined){
+                    if(val === undefined){ return(cursor[name]); }
+                    else{ cursor[name] = {}; }
+                }
+                return(f.child.call(this, ns, val, cursor[name]));
+            }
+        };
+
+        return(f);
+    };
+
+    return(ns);
 }
 )(_);
 _.eventEmitter = (
