@@ -118,6 +118,8 @@ exports.testAppendToObject = function(done){
 
         hooker.hook('test', handler);
         hooker.hook('test', handler);
+        hooker.hook('test', function(next){ calls++; next(false); });
+        hooker.hook('test', function(next){ calls++; next(); });
         hooker.hook('test', function(next){ calls++; next(); });
         
         hooker.bite('test', e, f, function(){
