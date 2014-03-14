@@ -2759,6 +2759,11 @@ function (_){
         return(d.getTime());
     };
 
+    _.isoDate = function(d){ 
+        if(d === undefined){ d = _.date(); }
+        return(_.moment(d).format("YYYY-MM-DD"));
+    };
+
     _.ms = function(n){
         if(n === undefined){ return(0); }
         else{ return(n); }
@@ -4094,11 +4099,13 @@ function (_){
 _.ns = (
 function mixin(_){
 
-    var ns = function(f){
+    var ns = function(f, fname){
+
+        fname = fname || "child";
 
         if(!f){ f = {}; }
 
-        f.child = function(ns, val, cursor){ 
+        f[fname] = function(ns, val, cursor){ 
 
             if(_.isString(ns)){ ns = ns.split("."); }
 
@@ -4125,6 +4132,72 @@ function mixin(_){
     return(ns);
 }
 )(_);
+_.hook = (
+function (_){
+
+var hooker = function(f){
+
+    if(f === undefined){ f = {}; }
+        
+    f.hook = function(event, callback){
+        var that = this;
+        if(!event || !callback){ _.fatal("You must provide an event name and a function."); }
+        event = event.toLowerCase();
+        if(that._events === undefined){ that._events = {}; }
+        if(that._events[event] === undefined){ that._events[event] = []; }
+
+        that._events[event].push({handler: callback});
+    };
+
+    f.unhook = function(event, callback){
+        var that = this;
+        
+        if(!that._events){ return; }
+        
+        if(!event || !callback){ _.fatal("You must provide an event name and a function."); }
+        event = event.toLowerCase();
+
+        if(that._events && that._events[event]){
+            that._events[event] = _.filter(that._events[event], function(val){
+                if(_.isFunction(callback)){
+                    return(val.handler !== callback);                    
+                }
+            });
+        }
+    };
+
+    f.bite = function(event){ // ..., callback
+        var that = this;
+        var args = _.toArray(arguments);
+
+        var event = args.shift();
+        var callback = args.pop();
+
+        if(!_.isString(event) || !_.isFunction(callback)){
+            _.fatal("You must provide an event name and a function.");
+        }
+        event = event.toLowerCase();
+        
+        if(that._events && that._events[event]){
+            var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.");
+            _.eachAsync(that._events[event], function(val, key, next, end){
+                val.handler.apply(null, _.concat(next, args));
+            }, function(){
+                to.back();
+                callback();
+            });
+        }else{
+            callback();
+        }
+    };
+    
+    return(f);
+};
+
+return(hooker);
+
+}
+)(_);
 _.eventEmitter = (
 function (_){
 
@@ -4134,7 +4207,7 @@ var eventEmitter = function(f){
         
     f.on = function(event, tag, callback){
         var that = this;
-        if(typeof(tag) === 'function'){
+        if(_.isFunction(tag)){
             callback = tag;
             tag = "";
         }
@@ -4161,13 +4234,11 @@ var eventEmitter = function(f){
         }else if(arguments.length === 1){
             that._events[event] = [];
         }else{
-            var handlers = that._events[event];
-    
             if(that._events && that._events[event]){
                 that._events[event] = _.filter(that._events[event], function(val){
-                    if(typeof(callback) === 'function'){
+                    if(_.isFunction(callback)){
                         return(val.handler !== callback);                    
-                    }else if(typeof(callback) === 'string'){
+                    }else if(_.isString(callback)){
                         return(val.tag.toLowerCase() !== callback.toLowerCase());
                     }
                 });
