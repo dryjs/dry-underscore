@@ -13,6 +13,12 @@ cat ./deps/moment/min/moment.min.js
 echo "_.moment = moment;" 
 echo "delete this.moment;" 
 
+echo "(function(){"
+cat ./deps/handlebars/dist/handlebars.min.js
+echo "_.hb = Handlebars;" 
+echo "delete this.Handlebars;" 
+echo "})();"
+
 #cat ./deps/underscore.string/dist/underscore.string.min.js 
 echo "(" 
 node -e "console.log(require('./lib/common.js').mixin.toString())" 

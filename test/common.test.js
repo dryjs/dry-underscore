@@ -3,6 +3,7 @@ var path = require('path');
 var assert = require('assert');
 
 var _ = require('../');
+var eq = _.test.eq;
 
 exports.testHasType = testHasType;
 exports.testHasTypes = testHasTypes;
@@ -13,6 +14,8 @@ exports.testTest = testTest;
 exports.testFormat = testFormat;
 exports.testConcat = testConcat;
 exports.testMoment = testMoment;
+exports.testHandleBars = testHandleBars;
+//exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.log(_.sha256(_.uuid())); };
 /*
@@ -22,10 +25,43 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testHandleBars(){
+    var data = {"person": { "name": "Alan" }, "company": {"name": "Rad, Inc." } };
+    var template = "{{person.name}} - {{company.name}}";
+    _.time("pre");
+    eq("Alan - Rad, Inc.", _.render("hello")(template, data));
+    _.time("pre", true);
+
+    _.time("post");
+    eq("Alan - Rad, Inc.", _.render("hello")(template, data));
+    _.time("post", true);
+};
+
 function testMoment(){
     _.log(_.moment().format("YYYY-MM-DD"));
 }
 
+function hashTest(){
+    var iterations = 100 * 1000;
+    var iterations = 10000;
+
+    function testHash(key){
+        var h = {};
+        _.time("key length: " + _.byteUnits(key.length));
+        for(var i = 0; i < iterations; i++){
+            h[key] = i + (i-1);
+        }
+        _.time("key length: " + _.byteUnits(key.length), true);
+    }
+
+    testHash(Array(10).join('a'));
+    testHash(Array(100).join('a'));
+    testHash(Array(1000).join('a'));
+    testHash(Array(10000).join('a'));
+    testHash(Array(100000).join('a'));
+    testHash(Array(1000000).join('a'));
+}
 
 function testFatal(){
     _.fatal("should be pretty: a b c", {'a':'b','c':'d'}, ['a', 'b', 'c', 'd']);
