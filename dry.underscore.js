@@ -3994,12 +3994,12 @@ var log = function(){
         var args = _.toArray(arguments);
         var options = args.unshift();
         console.log(_.format.apply(null, args));
-    }else{
+    }else if(arguments.length){
         console.log(_.format.apply(null, arguments));
     }
     
     return({
-        debug: log, 
+        debug: _.noop, 
         info: log,
         notice: log,
         warning: log,
@@ -4179,14 +4179,14 @@ var hooker = function(f){
         event = event.toLowerCase();
         
         if(that._hooks && that._hooks[event]){
-            var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.");
             _.eachAsync(that._hooks[event], function(val, key, next, end){
-                val.handler.apply(null, _.concat(function(keepRunning){
+                var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.");
+                val.handler.apply(that, _.concat(function(keepRunning){
+                    to.back();
                     if(keepRunning === false){ end(); }
                     else{ next(); }
                 }, args));
             }, function(){
-                to.back();
                 callback();
             });
         }else{

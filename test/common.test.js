@@ -12,7 +12,20 @@ exports.testGet = testGet;
 exports.testTest = testTest;
 exports.testFormat = testFormat;
 exports.testConcat = testConcat;
+exports.testMoment = testMoment;
 //exports.testFatal = testFatal;
+//exports.random = function(){ _.log(_.sha256(_.uuid())); };
+/*
+exports.testRequest = function(){
+    _.request('localhost/test', function(req){
+        _.log(req);
+    });
+};
+*/
+function testMoment(){
+    _.log(_.moment().format("YYYY-MM-DD"));
+}
+
 
 function testFatal(){
     _.fatal("should be pretty: a b c", {'a':'b','c':'d'}, ['a', 'b', 'c', 'd']);

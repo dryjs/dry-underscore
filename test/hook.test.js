@@ -2,6 +2,7 @@ var assert = require('assert');
 var _ = require('../');
 
 function hooker(){};
+hooker.prototype.property = "property";
 _.hook(hooker.prototype);
 
 var eq = _.test.eq;
@@ -20,6 +21,7 @@ exports.testCall = function(done){
         hooker.hook('test', handler);
         
         hooker.bite('test', 1, 2, 3, function(){
+            eq(this.property, "property");
             callbacks++;
         });
         
