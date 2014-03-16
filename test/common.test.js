@@ -30,12 +30,21 @@ function testHandleBars(){
     var data = {"person": { "name": "Alan" }, "company": {"name": "Rad, Inc." } };
     var template = "{{person.name}} - {{company.name}}";
     _.time("pre");
-    eq("Alan - Rad, Inc.", _.render("hello")(template, data));
+    eq("Alan - Rad, Inc.", _.render("example")(template, data));
     _.time("pre", true);
 
     _.time("post");
-    eq("Alan - Rad, Inc.", _.render("hello")(template, data));
+    eq("Alan - Rad, Inc.", _.render("example")(data));
     _.time("post", true);
+
+    _.render.loadDirectory("./test/testTemplates");
+
+    _.render.loadFile("single", "./test/test.hb");
+    _.render.loadFile("singleTwo", "./test/test.hb");
+    eq(_.render("single")({ data: "hello" }), "hello");
+    eq(_.render("singleTwo")({ data: "hello" }), "hello");
+    eq(_.render("testTemplate")({ data: "hello" }), "hello");
+    eq(_.render("testTemplateTwo")({ data: "hello" }), "hello");
 };
 
 function testMoment(){
