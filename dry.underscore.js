@@ -2836,6 +2836,20 @@ function (_){
         if(n === undefined){ n = 1; }
         return(n * _.minutes.day(7));
     };
+    _.minutes.timeString = function(min){
+        var hours = Math.floor(min / 60);          
+        var minutes = min % 60;
+        var amPm = "AM";
+        if(hours >= 12){ amPm = "PM"; }
+        if(hours > 12){
+            hours -= 12;
+        }
+        if(minutes < 10){
+            minutes = "0" + minutes;
+        }
+
+        return(hours + ":" + minutes + " " + amPm);
+    };
  
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
     _.fatal = function(){ throw(new Error("Fatal Error: " + _.format.apply(null, arguments))); };
@@ -2844,8 +2858,9 @@ function (_){
         return(_.parse(_.stringify(o)));
     };
 
-    _.render = function(templateName){
+    _.regex = function(str){ return(new RegExp(str)); };
 
+    _.render = function(templateName){
         return(function(template, hash){
             var f = null;
             if(_.isString(template)){
@@ -2859,7 +2874,8 @@ function (_){
             }
             if(!f){ _.fatal("no template found. template: " + template + " templateName: " + templateName); }
 
-            return(f(hash));
+            if(hash){ return(f(hash)); }
+            else{ return(f); }
         });
     };
     
@@ -2979,7 +2995,7 @@ function (_){
                 if(lockTest()){ return; }
                 lockModify(); 
                 args.push(lockRelease);
-                f.apply(null, args);
+                f.apply(this, args);
             }
 
             return(lock);
@@ -3494,7 +3510,7 @@ function (_){
             }
             // set default options
             if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
-            if (isUndefined(ctx.depth)) ctx.depth = 2;
+            if (isUndefined(ctx.depth)) ctx.depth = 4;
             if (isUndefined(ctx.colors)) ctx.colors = false;
             if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
             if (ctx.colors) ctx.stylize = stylizeWithColor;
@@ -4061,26 +4077,51 @@ return(dry);
 _.log = (
 function (_){
 
+var logNs = [];
+var options = { level: 'info' };
+
 var log = function(){
-    if(arguments.length && _.isObject(arguments[0])){
+
+    function print(){ 
         var args = _.toArray(arguments);
-        var options = args.unshift();
+        var ns = logNs.join(".");
+        if(ns){ ns += ": "; }
+        args.unshift(ns);
         console.log(_.format.apply(null, args));
-    }else if(arguments.length){
-        console.log(_.format.apply(null, arguments));
     }
+
+    if(arguments.length){
+        var args = _.toArray(arguments);
+        if(_.isObject(arguments[0])){
+            _.extend(options, args.unshift());
+        }
+        print.apply(this, args);
+    }
+
+    var loggers = {};
+    var logPriorities = ['emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug'];
+
+    var ignore = false;
+    _.each(logPriorities, function(logName){
+        if(ignore){ loggers[logName] = _.noop; }
+        else{ loggers[logName] = log; }
+        if(options.level.toLowerCase() == logName.toLowerCase()){ ignore = true; }
+    });
     
-    return({
-        debug: _.noop, 
-        info: log,
-        notice: log,
-        warning: log,
-        error: log,
-        crit: log,
-        alert: log,
-        emerg: log,
+    return(loggers);
+};
+
+log.push = function(ns){ logNs.push(ns); };
+log.pop = function(){ return(logNs.pop()); };
+log.wrap = function(ns, f){
+    return(function(){
+        log.push(ns);
+        var val = f.apply(this, arguments);
+        log.pop();
+        return(val);
     });
 };
+        
 
 return(log);
 
@@ -4252,7 +4293,7 @@ var hooker = function(f){
         
         if(that._hooks && that._hooks[event]){
             _.eachAsync(that._hooks[event], function(val, key, next, end){
-                var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.");
+                var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.", 5000);
                 val.handler.apply(that, _.concat(function(keepRunning){
                     to.back();
                     if(keepRunning === false){ end(); }
