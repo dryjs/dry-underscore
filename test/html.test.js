@@ -24,8 +24,8 @@ function testStyle(){
 
 function testStrip(){
 
-    var input = '<html><head></head><body>this is<div class="classOne classTwo" style="border: 1px solid black;">some <a href="hello" style="color: blue;">anchor</a></div><div></div></body></html>';
-    var expected = 'this is some anchor';
+    var input = '<html><head></head><body>this is <div class="classOne classTwo" style="border: 1px solid black;">some <a href="hello" style="color: blue;">anchor</a>.</div><div></div></body></html>';
+    var expected = 'this is some anchor.';
 
     var result = _.html.strip(input);
 
