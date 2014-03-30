@@ -2850,6 +2850,22 @@ function (_){
 
         return(hours + ":" + minutes + " " + amPm);
     };
+
+    var oldMax = _.max;
+    _.max = function(a, b){
+        if(_.isNumber(a) && _.isNumber(b)){
+            if(a > b){ return(a); }
+            else{ return(b); }
+        }else{ return(oldMax.apply(_, arguments)); }
+    };
+
+    var oldMin = _.min;
+    _.min = function(a, b){
+        if(_.isNumber(a) && _.isNumber(b)){
+            if(a < b){ return(a); }
+            else{ return(b); }
+        }else{ return(oldMin.apply(_, arguments)); }
+    };
  
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
     _.fatal = function(){ throw(new Error("Fatal Error: " + _.format.apply(null, arguments))); };
@@ -2859,6 +2875,11 @@ function (_){
     };
 
     _.regex = function(str){ return(new RegExp(str)); };
+
+    _.onceEvery = function(val, mod, hit, miss){
+        if((val % mod) === 0 && hit){ hit(); }
+        else if(miss){ miss(); }
+    };
 
     _.render = function(templateName){
         return(function(template, hash){
