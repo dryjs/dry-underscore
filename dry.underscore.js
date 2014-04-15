@@ -2790,6 +2790,10 @@ function (_){
         return(d.getTime());
     };
 
+    _.lc = function(s){
+        return(s.toLowerCase());
+    };
+
     _.isoDate = function(d){ 
         if(d === undefined){ d = _.date(); }
         return(_.moment(d).format("YYYY-MM-DD"));
@@ -2991,6 +2995,17 @@ function (_){
                 str = str.substr(0, str.length-1);
             }
             return(str);
+        },
+        uiLock : function(f){
+            var running = false;
+            var eventLock = function(e){
+                if(running){ return e.preventDefault(); }
+                else{ 
+                    running = true;
+                    f.call(this, e, function(){ running = false; }); 
+                }
+            };
+            return(eventLock);
         },
         asyncLock : function(f, lockTest, lockModify, lockRelease){
             var running = false;
@@ -4099,7 +4114,8 @@ _.log = (
 function (_){
 
     var logNs = [];
-    var options = { level: 'info' };
+    // var options = { level: 'info' };
+    var options = { level: 'debug' };
 
     var log = function(){
 
