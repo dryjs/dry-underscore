@@ -15,6 +15,7 @@ exports.testFormat = testFormat;
 exports.testConcat = testConcat;
 exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
+exports.testAsyncMap = testAsyncMap;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.log(_.sha256(_.uuid())); };
@@ -25,6 +26,24 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testAsyncMap(beforeExit){
+
+    var called = 0;
+
+    var a = [1, 2, 3, 4, 5, 6];
+
+    _.asyncMap(a, function(val, i, next){
+
+        _.nextTick(function(){ next(val*2); });
+
+    }, function(result){
+        eq(result, [2, 4, 6, 8, 10, 12]);
+        called++;
+    });
+
+    beforeExit(function(){ eq(called, 1); });
+}
 
 function testHandleBars(){
     var data = {"person": { "name": "Alan" }, "company": {"name": "Rad, Inc." } };
