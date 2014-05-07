@@ -15,7 +15,7 @@ exports.testFormat = testFormat;
 exports.testConcat = testConcat;
 exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
-exports.testAsyncMap = testAsyncMap;
+exports.testMapAsync = testMapAsync;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.log(_.sha256(_.uuid())); };
@@ -27,13 +27,13 @@ exports.testRequest = function(){
 };
 */
 
-function testAsyncMap(beforeExit){
+function testMapAsync(beforeExit){
 
     var called = 0;
 
     var a = [1, 2, 3, 4, 5, 6];
 
-    _.asyncMap(a, function(val, i, next){
+    _.mapAsync(a, function(val, i, next){
 
         _.nextTick(function(){ next(val*2); });
 

@@ -83,7 +83,7 @@ exports.testFieldStack = function(){
     };  
     
     stack = _.fieldStack(testHash);
-    //console.dir(stack);
+    console.dir(stack);
 
     //_.each(stack, function(val){ console.log(val.fieldName); });
 };
