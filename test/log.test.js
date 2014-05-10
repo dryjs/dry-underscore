@@ -17,7 +17,7 @@ function testLog(){
     var called = 0;
 
     var tt = new testTransport();
-    tt.writeFunction(function(timestamp, message){ called++; eq(message, this._expected); });
+    tt.writeFunction(function(logLevel, timestamp, message){ called++; eq(message, this._expected); });
 
     var log = _.log.make();
     log.transports = [tt];
@@ -56,7 +56,7 @@ function testChild(){
     var called = 0;
    
     var tt = new testTransport();
-    tt.writeFunction(function(timestamp, message){ called++; eq(message, this._expected); });
+    tt.writeFunction(function(logLevel, timestamp, message){ called++; eq(message, this._expected); });
 
     var log = _.log.make();
     log.transports = [tt];
