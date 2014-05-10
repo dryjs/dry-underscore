@@ -1,3 +1,4 @@
+"use strict";
 
 var path = require('path');
 var assert = require('assert');
@@ -16,6 +17,7 @@ exports.testConcat = testConcat;
 exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
 exports.testMapAsync = testMapAsync;
+exports.testMakeClassPerformance = testMakeClassPerformance;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.log(_.sha256(_.uuid())); };
@@ -27,13 +29,81 @@ exports.testRequest = function(){
 };
 */
 
+function testMakeClassPerformance(){
+
+    var n = 1 * 1000 * 1000;
+
+    function c(x, y){
+        this.x = x;
+        this.y = y;
+    }
+    c.prototype.str = function(){ return("str"); };
+
+    function cwrap(x, y){ return(new c(x, y)); }
+
+    var makeC = _.makeClass(); 
+    
+    makeC.prototype.init = function(x, y){
+        this.x = x;
+        this.y = y;
+    }
+    makeC.prototype.str = function(){ return("str"); };
+
+    // var makeCF = function(){ if(this.init){ this.init.apply(this, arguments); } };
+    var makeCF = _.fastMakeClass();
+    
+    makeCF.prototype.init = function(x, y){
+        this.x = x;
+        this.y = y;
+    }
+    makeCF.prototype.str = function(){ return("str"); };
+
+    // we call the same loop twice to "compile" it I guess
+    // I know the timing is high the first time and constant
+    // the other times
+
+    _.time("native");
+    _.for(n, function(){ 
+        var ci = new c(1, 2);
+        ci.y = ci.x + ci.y;
+    });
+    _.time("native", true);
+    _.time("native");
+    _.for(n, function(){ 
+        var ci = new c(1, 2);
+        ci.y = ci.x + ci.y;
+    });
+    _.time("native", true);
+
+    _.time("nativeWrap");
+    _.for(n, function(){ var ci = cwrap(1, 2); });
+    _.time("nativeWrap", true);
+    _.time("nativeWrap");
+    _.for(n, function(){ var ci = cwrap(1, 2); });
+    _.time("nativeWrap", true);
+
+    _.time("makeClassFast");
+    _.for(n, function(){ var ci = new makeCF(1, 2); });
+    _.time("makeClassFast", true);
+    _.time("makeClassFast");
+    _.for(n, function(){ var ci = new makeCF(1, 2); });
+    _.time("makeClassFast", true);
+
+    _.time("makeClass");
+    _.for(n, function(){ var ci = new makeC(1, 2); });
+    _.time("makeClass", true);
+    _.time("makeClass");
+    _.for(n, function(){ var ci = new makeC(1, 2); });
+    _.time("makeClass", true);
+}
+
 function testMapAsync(beforeExit){
 
     var called = 0;
 
     var a = [1, 2, 3, 4, 5, 6];
 
-    _.mapAsync(a, function(val, i, next){
+    _.map.async(a, function(val, i, next){
 
         _.nextTick(function(){ next(val*2); });
 
@@ -48,13 +118,13 @@ function testMapAsync(beforeExit){
 function testHandleBars(){
     var data = {"person": { "name": "Alan" }, "company": {"name": "Rad, Inc." } };
     var template = "{{person.name}} - {{company.name}}";
-    _.time("pre");
+    // _.time("pre");
     eq("Alan - Rad, Inc.", _.render("example")(template, data));
-    _.time("pre", true);
+    // _.time("pre", true);
 
-    _.time("post");
+    // _.time("post");
     eq("Alan - Rad, Inc.", _.render("example")(data));
-    _.time("post", true);
+    // _.time("post", true);
 
     _.render.loadDirectory("./test/testTemplates");
 
@@ -66,9 +136,7 @@ function testHandleBars(){
     eq(_.render("testTemplateTwo")({ data: "hello" }), "hello");
 };
 
-function testMoment(){
-    _.log(_.moment().format("YYYY-MM-DD"));
-}
+function testMoment(){ _.log(_.moment().format("YYYY-MM-DD")); }
 
 function hashTest(){
     var iterations = 100 * 1000;
@@ -137,7 +205,7 @@ function testEmptyIterate(beforeExit){
 
     var called = 0;
 
-    _.eachAsync([], function(){ }, function(){ called++; });
+    _.each.async([], function(){ }, function(){ called++; });
 
     beforeExit(function(){ assert.eql(called, 1); });
 }
@@ -169,7 +237,7 @@ function recursiveIterate(a, callback){
     // iterate and recreate array
     var z = [];
     process.nextTick(function() { 
-        _.eachAsync(a, function(index, val, next){
+        _.each.async(a, function(index, val, next){
             if(Array.isArray(val)){
                 recursiveIterate(val, function(r){
                     z.push(r);
