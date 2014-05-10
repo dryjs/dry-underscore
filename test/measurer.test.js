@@ -27,7 +27,8 @@ exports.testDefault = function(beforeExit){
         
         setTimeout(function(){
             _.log(measurer.measure().get());
-            measurer.measure().display(measurer.measure("timeout").last(), _.log);
+            measurer.measure().displayLast("timeout", _.log);
+            measurer.measure("timeout").displayLast(_.log);
         }, 200);
 
         beforeExit(function(){ eq(calls, expectedCalls) });
