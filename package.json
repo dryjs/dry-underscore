@@ -23,7 +23,7 @@
         "node": ">= 0.4"
     },
     "dependencies":{ 
-        ,"formidable":""
+          "formidable":""
         , "tosource" : ""
         , "tamejs" : ""
         , "minimatch" : ""
