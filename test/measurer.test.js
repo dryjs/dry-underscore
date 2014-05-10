@@ -26,9 +26,9 @@ exports.testDefault = function(beforeExit){
         }, 100);
         
         setTimeout(function(){
-            _.log(measurer.measure().get());
-            measurer.measure().displayLast("timeout", _.log);
-            measurer.measure("timeout").displayLast(_.log);
+            // _.log(measurer.measure().get());
+            // measurer.measure().displayLast("timeout", _.log);
+            // measurer.measure("timeout").displayLast(_.log);
         }, 200);
 
         beforeExit(function(){ eq(calls, expectedCalls) });

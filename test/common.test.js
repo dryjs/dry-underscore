@@ -18,6 +18,8 @@ exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
 exports.testMapAsync = testMapAsync;
 exports.testMakeClassPerformance = testMakeClassPerformance;
+exports.testFor = testFor;
+exports.testForPerformance = testForPerformance;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.log(_.sha256(_.uuid())); };
@@ -28,6 +30,46 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testForPerformance(){
+
+    var n = 10 * 1000 * 1000;
+
+    _.time("for loop");
+    for(var i = 0; i < n; i++){
+        _.noop();
+    }
+    _.time("for loop", true);
+    _.time("for loop");
+    for(i = 0; i < n; i++){
+        _.noop();
+    }
+    _.time("for loop", true);
+
+    _.time("for function");
+    _.for(n, function(){ });
+    _.time("for function", true);
+    _.time("for function");
+    _.for(n, function(){ });
+    _.time("for function", true);
+}
+
+function testFor(){
+
+    var actual = 0;
+    var expected = 100;
+
+    _.for(100, function(){ actual++; });
+
+    eq(actual, expected);
+
+    actual = 0;
+    expected = 50;
+
+    _.for(100, function(i){  if(i == 50){ return(false); } actual++; });
+
+    eq(actual, expected);
+}
 
 function testMakeClassPerformance(){
 
