@@ -17,16 +17,17 @@ exports.testConcat = testConcat;
 exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
 exports.testMapAsync = testMapAsync;
+exports.testFilterAsync = testFilterAsync;
 exports.testMakeClassPerformance = testMakeClassPerformance;
 exports.testFor = testFor;
 exports.testForPerformance = testForPerformance;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
-//exports.random = function(){ _.log(_.sha256(_.uuid())); };
+//exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
 /*
 exports.testRequest = function(){
     _.request('localhost/test', function(req){
-        _.log(req);
+        _.stderr(req);
     });
 };
 */
@@ -34,24 +35,25 @@ exports.testRequest = function(){
 function testForPerformance(){
 
     var n = 10 * 1000 * 1000;
+    var strN = "10M";
 
-    _.time("for loop");
+    _.time("for loop " + strN);
     for(var i = 0; i < n; i++){
         _.noop();
     }
-    _.time("for loop", true);
-    _.time("for loop");
+    _.time("for loop " + strN, true);
+    _.time("for loop " + strN);
     for(i = 0; i < n; i++){
         _.noop();
     }
-    _.time("for loop", true);
+    _.time("for loop " + strN, true);
 
-    _.time("for function");
+    _.time("for function " + strN);
     _.for(n, function(){ });
-    _.time("for function", true);
-    _.time("for function");
+    _.time("for function " + strN, true);
+    _.time("for function " + strN);
     _.for(n, function(){ });
-    _.time("for function", true);
+    _.time("for function " + strN, true);
 }
 
 function testFor(){
@@ -157,28 +159,48 @@ function testMapAsync(beforeExit){
     beforeExit(function(){ eq(called, 1); });
 }
 
+function testFilterAsync(beforeExit){
+
+    var called = 0;
+
+    var a = [1, 2, 3, 4, 5, 6];
+
+    _.filter.async(a, function(val, i, next){
+
+        _.nextTick(function(){ next(val < 4); });
+
+    }, function(result){
+        eq(result, [1, 2, 3]);
+        called++;
+    });
+
+    beforeExit(function(){ eq(called, 1); });
+}
+
+
+
 function testHandleBars(){
     var data = {"person": { "name": "Alan" }, "company": {"name": "Rad, Inc." } };
     var template = "{{person.name}} - {{company.name}}";
     // _.time("pre");
-    eq("Alan - Rad, Inc.", _.render("example")(template, data));
+    eq("Alan - Rad, Inc.", _.render.once(template, data));
     // _.time("pre", true);
 
     // _.time("post");
-    eq("Alan - Rad, Inc.", _.render("example")(data));
+    eq("Alan - Rad, Inc.", _.render.once(template, data));
     // _.time("post", true);
 
     _.render.loadDirectory("./test/testTemplates");
 
     _.render.loadFile("single", "./test/test.hb");
     _.render.loadFile("singleTwo", "./test/test.hb");
-    eq(_.render("single")({ data: "hello" }), "hello");
-    eq(_.render("singleTwo")({ data: "hello" }), "hello");
-    eq(_.render("testTemplate")({ data: "hello" }), "hello");
-    eq(_.render("testTemplateTwo")({ data: "hello" }), "hello");
+    eq(_.render("single", { data: "hello" }), "hello");
+    eq(_.render("singleTwo", { data: "hello" }), "hello");
+    eq(_.render("testTemplate", { data: "hello" }), "hello");
+    eq(_.render("testTemplateTwo", { data: "hello" }), "hello");
 };
 
-function testMoment(){ _.log(_.moment().format("YYYY-MM-DD")); }
+function testMoment(){ _.sout(_.moment().format("YYYY-MM-DD")); }
 
 function hashTest(){
     var iterations = 100 * 1000;

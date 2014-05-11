@@ -41,6 +41,11 @@ echo "_.ns = ("
 node -e "console.log(require('./lib/ns.js').mixin.toString())" 
 echo ")(_);" 
 
+echo "_.plumber = (" 
+node -e "console.log(require('./lib/plumber.js').mixin.toString())" 
+echo ")(_);" 
+echo "_.plumber(_);" 
+ 
 echo "_.hook = (" 
 node -e "console.log(require('./lib/hook.js').mixin.toString())" 
 echo ")(_);" 
@@ -54,7 +59,5 @@ echo "_.eventEmitter(_.events);"
 echo "_.measurer = (" 
 node -e "console.log(require('./lib/measurer.js').mixin.toString())" 
 echo ")(_);" 
-echo "_.measurer(_);" 
- 
  
 echo "})();" 

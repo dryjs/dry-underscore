@@ -4,7 +4,7 @@ var eq = _.test.eq;
 var ok = _.test.ok;
 
 function Measurer(){};
-_.measurer(Measurer.prototype);
+_.measurer.make(Measurer.prototype);
 
 exports.testDefault = function(beforeExit){
 
@@ -26,16 +26,15 @@ exports.testDefault = function(beforeExit){
         }, 100);
         
         setTimeout(function(){
-            // _.log(measurer.measure().get());
-            // measurer.measure().displayLast("timeout", _.log);
-            // measurer.measure("timeout").displayLast(_.log);
+            // _.stderr(measurer.measurements());
+            // measurer.displayLast("timeout", _.stderr);
         }, 200);
 
         beforeExit(function(){ eq(calls, expectedCalls) });
     }
     
-    test(_);
-    test(_.measurer({}));
-    test(new Measurer());
+    test(_.measurer);
+    test(_.measurer.make({}));
+    test((new Measurer()).measurer);
 };
 
