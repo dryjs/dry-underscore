@@ -4,18 +4,13 @@ var assert = require('assert');
 var fs = require('fs');
 
 var _ = require('../');
-var join = _.fs.path.join;
+var join = _.paths.join;
 var eq = _.test.eq;
 var ok = _.test.ok;
 
 var testDir = path.normalize(__dirname + "/data/");
 
-exports.pathTest = pathTest;
 exports.testMTime = testMTime;
-exports.globTest = globTest;
-exports.hiddenTest = hiddenTest;
-exports.testAddSlash = testAddSlash;
-exports.testRemoveSlash = testRemoveSlash;
 
 exports.testIsDirectory = testIsDirectory;
 exports.testIsFile = testIsFile;
@@ -32,63 +27,6 @@ exports.testDirectories = testDirectories;
 exports.testFiles = testFiles;
 exports.walkTest = walkTest;
 exports.findTest = findTest;
-
-// exports.testFilterAsyncTame = function(){ _.fs.testFilterAsyncTame(); };
-
-function testAddSlash(){
-    eq("", _.fs.path.addSlash(""));
-    eq("/hello/", _.fs.path.addSlash("/hello"));
-    eq("/hello/", _.fs.path.addSlash("/hello/"));
-    eq("/test/test/", _.fs.path.addSlash("/test/test"));
-}
-
-function testRemoveSlash(){
-    eq("", _.fs.path.removeSlash(""));
-    eq("/hello", _.fs.path.removeSlash("/hello"));
-    eq("/hello", _.fs.path.removeSlash("/hello/"));
-    eq("/test/test", _.fs.path.removeSlash("/test/test/"));
-}
-
-function pathTest(){
-    assert.eql(_.fs.path.changeFile('/a/b/c/file', 'newName'), '/a/b/c/newName');
-    assert.eql(_.fs.path.changeFile('a', 'newName'), 'newName');
-
-    assert.eql(_.fs.path.changeExtension('a/b/c/d.ext', 'js'), 'a/b/c/d.js');
-    assert.eql(_.fs.path.changeExtension('d.ext', 'js'), 'd.js');
-
-    assert.eql(_.fs.path.hideFile('a/b/c/d.ext'), 'a/b/c/.d.ext');
-    assert.eql(_.fs.path.hideFile('d.ext'), '.d.ext');
-}
-
-function hiddenTest(){
-    assert.ok(!_.fs.path.isHidden("/test.js/test.js/asdf.js"));
-    assert.ok(_.fs.path.isHidden("/test.js/test.js/.asdf.js"));
-    assert.ok(!_.fs.path.isHidden("/test.js/.test.js/asdf.js"));
-    assert.ok(_.fs.path.isHidden("/test.js/.test.js/.asdf.js"));
-    assert.ok(!_.fs.path.isHidden("asdf.js"));
-    assert.ok(_.fs.path.isHidden(".asdf.js"));
-}
-
-function globTest(){
-
-    assert.ok(!_.fs.glob.matchFile("/test.js/test.js/.asdf.js", "*.js"));
-    assert.ok(_.fs.glob.matchFile("/test.js/test.js/.asdf.js", "*.js", true));
-    assert.ok(_.fs.glob.matchFile("/test.js/test.js/asdf.js", "*.js"));
-    assert.ok(!_.fs.glob.matchFile("/test.js/test.js/asdf.ms", "*.js"));
-
-    assert.ok(_.fs.glob.matchPath("/test.js/test.ms/asdf.js", "**/*.ms/*"));
-    assert.ok(_.fs.glob.matchPath("/test.js/test.js/asdf.ms", "**/*.ms"));
-    assert.ok(_.fs.glob.matchPath("/test/test/asdf.ms", "**/*.ms"));
-    assert.ok(!_.fs.glob.matchPath("/test/test/asdf.ms", "*.ds"));
-
-    assert.ok(_.fs.glob.matchPath("/test/test/!asdf.js", "**/!*.js"));
-    assert.ok(_.fs.glob.matchPath("/test/test/asdf.ms", "**/as*"));
-
-    assert.ok(_.fs.glob.matchFile("/test/test/!asdf.js", "!*.js"));
-    assert.ok(_.fs.glob.matchFile("/test/test/asdf.ms", "as*"));
-    assert.ok(_.fs.glob.matchFile("/test/test/asdf.ms", "as*.ms"));
-    assert.ok(!_.fs.glob.matchFile("/test/test/adf.ms", "as*.ms"));
-};
 
 function testMTime(){
     _.fs.modificationTime(testDir + '/parent/parent.file', function(err, mtime){
@@ -473,7 +411,7 @@ function testReadDir(beforeExit){
     });
     
     _.fs.readDir(testDir + "parent/parent.file.doesnotexist", { fullPath: true }, function(err, names){
-        ok(_.fs.error.isNoEnt(err));
+        ok(_.ecode.noEnt(err));
         eq(undefined, names);
         n++;
     });
@@ -537,13 +475,13 @@ function testDirectories(beforeExit){
     });
     
     _.fs.directories(testDir + "parent/parent.file", function(err, names){
-        ok(_.fs.error.isNotDir(err));
+        ok(_.ecode.notDir(err));
         eq(undefined, names);
         n++;
     });
     
     _.fs.directories(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.fs.error.isNoEnt(err));
+        ok(_.ecode.noEnt(err));
         eq(undefined, names);
         n++;
     });
@@ -568,13 +506,13 @@ function testDirectories(beforeExit){
     }, false);
     
     _.fs.directories(testDir + "parent/parent.file", function(err, names){
-        ok(_.fs.error.isNotDir(err));
+        ok(_.ecode.notDir(err));
         eq(undefined, names);
         n++;
     }, false);
     
     _.fs.directories(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.fs.error.isNoEnt(err));
+        ok(_.ecode.noEnt(err));
         eq(undefined, names);
         n++;
     }, false);
@@ -605,13 +543,13 @@ function testFiles(beforeExit){
     });
     
     _.fs.files(testDir + "parent/parent.file", function(err, names){
-        ok(_.fs.error.isNotDir(err));
+        ok(_.ecode.notDir(err));
         eq(undefined, names);
         n++;
     });
     
     _.fs.files(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.fs.error.isNoEnt(err));
+        ok(_.ecode.noEnt(err));
         eq(undefined, names);
         n++;
     });
@@ -635,13 +573,13 @@ function testFiles(beforeExit){
     }, false);
     
     _.fs.files(testDir + "parent/parent.file", function(err, names){
-        ok(_.fs.error.isNotDir(err));
+        ok(_.ecode.notDir(err));
         eq(undefined, names);
         n++;
     }, false);
     
     _.fs.files(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.fs.error.isNoEnt(err));
+        ok(_.ecode.noEnt(err));
         eq(undefined, names);
         n++;
     }, false);
@@ -677,7 +615,7 @@ function walkTest(beforeExit){
         './parent/parent.file'
     ];
 
-    var expectedPaths = _.map(relativePaths, function(val){ return(_.fs.path.normalize(testDir + val)); });
+    var expectedPaths = _.map(relativePaths, function(val){ return(_.paths.normalize(testDir + val)); });
     var foundPaths = []; 
 
     _.fs.walk.sync(testDir, function onFile(fileName, filePath){
@@ -756,7 +694,7 @@ function findTest(beforeExit){
         './parent/parent.file'
     ];
 
-    var expectedPaths = _.map(relativePaths, function(val){ return(_.fs.path.normalize(testDir + val)); });
+    var expectedPaths = _.map(relativePaths, function(val){ return(_.paths.normalize(testDir + val)); });
     var foundPaths = []; 
 
     var foundPaths = _.fs.find.sync(testDir, "*.file");
@@ -770,7 +708,7 @@ function findTest(beforeExit){
 
     foundPaths = _.fs.find.sync(testDir, { pattern: "*.file", prune: function(dirName){ return(dirName === 'child'); } });
 
-    var prunedExpected = [_.fs.path.normalize(testDir + './parent/parent.file')];
+    var prunedExpected = [_.paths.normalize(testDir + './parent/parent.file')];
 
     _.each(prunedExpected, function(val){
         eq([val], _.filter(foundPaths, function(found){ return(found === val); }));

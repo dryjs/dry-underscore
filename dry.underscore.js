@@ -2873,6 +2873,15 @@ function (_){
  
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
     _.fatal = function(){ throw(new Error("Fatal Error: " + _.format.apply(null, arguments))); };
+    _.error = function(code, message, extra){
+        extra = extra || {};
+        if(extra.message){ extra.originalMessage = extra.message; }
+        if(extra.code){ extra.originalCode = extra.code; }
+        return(_.extend({
+            type: 'error',
+            stack: (new Error(message)).stack
+        }, extra, { code: code, message: message }));
+    };
 
     _.jsonClone = function(o){ 
         return(_.parse(_.stringify(o)));
@@ -2885,611 +2894,641 @@ function (_){
         else if(miss){ miss(); }
     };
 
-    _.render = function(templateName){
-        return(function(template, hash){
-            var f = null;
-            if(_.isString(template)){
-                f = _.hb.compile(template);
-                if(!templateName){ templateName = template; }
-                _.render.templates[templateName] = f;
-            }else if(_.isObject(template)){
-                hash = template;
-                template = null;
-                if(templateName){ f = _.render.templates[templateName]; }
-            }
-            if(!f){ _.fatal("no template found. template: " + template + " templateName: " + templateName); }
-
-            if(hash){ return(f(hash)); }
-            else{ return(f); }
-        });
+    _.render = function(templateName, hash){
+        if(_.render.template(templateName)){
+            return(_.render.template(templateName)(hash));
+        }else{
+            return(null);
+        }
     };
+
+    _.render.once = function(template, hash){
+        return(_.hb.compile(template)(hash));
+    };
+
+    _.render.compile = function(templateName, template){
+        _.render.templates[templateName] = _.hb.compile(template);
+    };
+
+    _.render.template = function(templateName){
+        return(_.render.templates[templateName]);
+    }
     
     _.render.templates = {};
 
-    _.mixin({
-        noop: function(){},
-        byteUnits : function(val){
-            var unit = "B";
-            if(val > 1024){
-                val /= 1024;
-                unit = "KB"
-            }
-            if(val > 1024){
-                val /= 1024;
-                unit = "MB"
-            }
-            if(val > 1024){
-                val /= 1024;
-                unit = "GB"
-            }
-            if(val > 1024){
-                val /= 1024;
-                unit = "TB"
-            }
-            return(val + " " + unit);
-        },
-        stringify : function(){ return(JSON.stringify.apply(null, arguments)); },
-        parse : function(){ return(JSON.parse.apply(null, arguments)); },
-        call: function(callback){
-            if(!_.isFunction(callback)){ return(false); }
-            if(arguments.length > 1){
-                var args = _.toArray(arguments);
-                args.shift();
-                callback.apply(null, args);
-                return(true);
-            }else{ callback(); return(true); }
-        },
-        get: function(obj, key, defaultValue){
-            if(_.isFunction(obj)){ return(obj()); }
-            if(key === undefined){ return(obj); }
-            if(defaultValue !== undefined){
-                if(!obj[key]){
-                    obj[key] = defaultValue;
-                    return(obj[key]);
-                }else{
-                    return(obj[key]);
-                }
-            }
-            if(obj[key] !== undefined){
-                if(_.isFunction(obj[key])){ return(obj[key]()); }
-                else{ return(obj[key]); }
-            }else{
-                for (var prop in obj){
-                    if(_.has(obj, prop) && prop.toLowerCase() === key.toLowerCase()){
-                        return obj[prop];
-                    }
-                }
-                return undefined;
-            }
-        },
-        time: function(str, log){
-            if(str === undefined){ return(new Date().getTime()); }
+    _.noop =  function(){};
+    _.byteUnits = function(val){
+        var unit = "B";
+        if(val > 1024){
+            val /= 1024;
+            unit = "KB"
+        }
+        if(val > 1024){
+            val /= 1024;
+            unit = "MB"
+        }
+        if(val > 1024){
+            val /= 1024;
+            unit = "GB"
+        }
+        if(val > 1024){
+            val /= 1024;
+            unit = "TB"
+        }
+        return(val + " " + unit);
+    };
+    _.stringify = function(){ return(JSON.stringify.apply(null, arguments)); };
+    _.parse = function(){ return(JSON.parse.apply(null, arguments)); };
+    _.call = function(callback){
+        if(!_.isFunction(callback)){ return(false); }
+        if(arguments.length > 1){
+            var args = _.toArray(arguments);
+            args.shift();
+            callback.apply(null, args);
+            return(true);
+        }else{ callback(); return(true); }
+    };
 
-            if(!_.time.hash){ _.time.hash = {}; }
-            var time = new Date().getTime();
-            if(_.time.hash[str]){
-                var t2 = _.time.hash[str];
-                _.time.hash[str] = undefined;
-                var val = time - t2;
-                if(log){ _.log(str + ":", val + "ms"); }
-                return(val);
-            }else{ _.time.hash[str] = time; }
-        },
-        isEmptyObjectWithNoPrototype : function(o){
-            if(!_.isObject(o)){ return(false); }
-            var isEmpty = true;
-            for(key in o){
-                isEmpty = false;
-                break;
+    _.within = function(a, b, acceptableDiff){
+        return(Math.abs(a-b) < acceptableDiff);
+    };
+
+    _.get = function(obj, key, defaultValue){
+        if(_.isFunction(obj) && !key){ return(obj()); }
+        if(key === undefined){ return(obj); }
+        if(defaultValue !== undefined){
+            if(!obj[key]){
+                obj[key] = defaultValue;
+                return(obj[key]);
+            }else{
+                return(obj[key]);
             }
-            return(isEmpty);
-        },
-        isObject : function(o){ return(o !== null && typeof(o) === 'object' && !_.isArray(o)); },
-        stripLineBreaks : function(str) { return(str.replace(/[\r\n]/gi ,"")); },
-        trimAndStripQuotes: function(str){
-            str = _.trim(str);
-            if(str[0] === "'" || str[0] === '"'){
-                str = str.substr(1, str.length-1);
+        }
+        if(obj[key] !== undefined){
+            if(_.isFunction(obj[key])){ return(obj[key]()); }
+            else{ return(obj[key]); }
+        }else{
+            for (var prop in obj){
+                if(_.has(obj, prop) && prop.toLowerCase() === key.toLowerCase()){
+                    return obj[prop];
+                }
             }
-            if(str[str.length-1] === "'" || str[str.length-1] === '"'){
-                str = str.substr(0, str.length-1);
+            return undefined;
+        }
+    };
+
+    _.time = function(str, log){
+        if(str === undefined){ return(new Date().getTime()); }
+
+        if(!_.time.hash){ _.time.hash = {}; }
+        var time = new Date().getTime();
+        if(_.time.hash[str]){
+            var t2 = _.time.hash[str];
+            _.time.hash[str] = undefined;
+            var val = time - t2;
+            if(log){ _.stderr(str + ": ", val + "ms"); }
+            return(val);
+        }else{ _.time.hash[str] = time; }
+    };
+    
+    // an order of magnitued cheaper than _.times
+    // effectively as cheap as a for loop
+    _.for = function(times, f){
+        for(var i = 0; i < times; i++){ 
+            if(f(i) === false){ break; }
+        }
+    };
+
+    _.isEmptyObjectWithNoPrototype = function(o){
+        if(!_.isObject(o)){ return(false); }
+        var isEmpty = true;
+        for(var key in o){
+            isEmpty = false;
+            break;
+        }
+        return(isEmpty);
+    };
+    _.isObject = function(o){ return(o !== null && typeof(o) === 'object' && !_.isArray(o)); };
+    _.stripLineBreaks = function(str) { return(str.replace(/[\r\n]/gi ,"")); };
+    _.trimAndStripQuotes = function(str){
+        str = _.trim(str);
+        if(str[0] === "'" || str[0] === '"'){
+            str = str.substr(1, str.length-1);
+        }
+        if(str[str.length-1] === "'" || str[str.length-1] === '"'){
+            str = str.substr(0, str.length-1);
+        }
+        return(str);
+    };
+    _.lock = function(f){
+        var running = false;
+
+        function lock(){
+            if(running){ return; }
+
+            running = true;
+            f.apply(null, arguments);
+            running = false;
+        }
+
+        return(lock);
+    };
+ 
+    _.lock.ui = function(f){
+        var running = false;
+        var eventLock = function(e){
+            if(running){ return e.preventDefault(); }
+            else{ 
+                running = true;
+                f.call(this, e, function(){ running = false; }); 
             }
-            return(str);
-        },
-        uiLock : function(f){
-            var running = false;
-            var eventLock = function(e){
-                if(running){ return e.preventDefault(); }
-                else{ 
-                    running = true;
-                    f.call(this, e, function(){ running = false; }); 
+        };
+        return(eventLock);
+    };
+    _.lock.async = function(f, lockTest, lockModify, lockRelease){
+        var running = false;
+
+        function lock(){
+            var args = _.toArray(arguments);
+
+            if(lockTest){
+                var userTest = lockTest;
+                var testArgs = _.toArray(arguments);
+                lockTest = function(){ 
+                    var testArgsCopy = _.toArray(testArgs);
+                    testArgsCopy.unshift(running);
+                    return(userTest.apply(null, testArgsCopy)); 
+                };
+            }else{
+                lockTest = function(){ return(running); }; 
+            }
+
+            lockModify = lockModify || function(){ running = true; }
+            lockRelease = lockRelease || function(){ running = false; };                
+
+            if(lockTest()){ return; }
+            lockModify(); 
+            args.push(lockRelease);
+            f.apply(this, args);
+        }
+
+        return(lock);
+
+    };
+    _.addProperties = function(o, propArray, val){
+        _.each(propArray, function(prop){ o[prop] = val; });
+        return(o);
+    };
+    _.walk = function(o, iterator, context){
+        _.each(o, function(val, key, o){
+            iterator.call(context, val, key, o);
+            if(val && typeof(val) === 'object'){
+                _.walk(val, iterator, context);
+            }
+        });
+    };
+    _.substitute = function(o, replacer, context){
+        _.each(o, function(val, key, o){
+            var newVal = replacer.call(context, val, key, o);
+            if(newVal !== undefined){
+                o[key] = newVal;
+                val = newVal;
+            }
+            if(val && typeof(val) === 'object'){
+                _.substitute(val, replacer, context);
+            }
+        });
+    };
+    _.isIterable = function(o){ return(_.isArray(o) || _.isObject(o)); };
+    // breakable each, return(false) to stop iteration
+    _.beach = function(a, f, c){ _.find(a, function(){ return(f.apply(this, arguments) === false); }, c); };
+    _.each.async = function(o, iterator, complete, context){
+        if(complete && !_.isFunction(complete)){
+            context = complete;
+            complete = null;
+        }
+
+        context = context || null;
+
+        var keys = _.keys(o);
+
+        var callComplete = function(){ _.nextTick(complete) };
+        if(!complete){ callComplete = function(){}; }
+
+        (function doWork(i){
+            function callIterator(){ iterator.call(context, o[keys[i]], keys[i], function(){ doWork(i+1); }, callComplete); }
+            if(i >= keys.length){ callComplete(); }
+            else{
+                if(((i + 1) % 30) === 0){ process.nextTick(callIterator); }
+                else{ callIterator(); }
+            }
+        })(0);
+    };
+    _.map.async = function(o, mapFunction, completedCallback, context){
+        var results = [];
+
+        completedCallback = completedCallback || _.noop;
+        context = context || null;
+
+        _.each.async(o, function(val, key, next){
+                mapFunction.call(context, val, key, function(result){ results.push(result); next(); }); 
+        }, function(){ completedCallback(results); });
+    };
+    _.filter.async = function(o, filterFunction, completedCallback, context){
+        var results = [];
+
+        completedCallback = completedCallback || _.noop;
+        context = context || null;
+
+        _.each.async(o, function(val, key, next){
+                filterFunction.call(context, val, key, function(result){ if(result){ results.push(val); } next(); }); 
+        }, function(){ completedCallback(results); });
+    };
+ 
+    _.exists = function(col, target, insensitive){
+        if(insensitive){
+            return(_.any(col, function(a){ return(a.toLowerCase() === target.toLowerCase()); }));
+        }else{
+            return(_.any(col, function(a){ return(a === target); }));
+        }
+    };
+    _.join_path = function(){
+        var a = _.toArray(arguments);
+
+        var result = [];
+        var startSlash = false;  
+        var endSlash = false;
+
+        if(a.length > 0 && a[0].length > 0 && a[0][0] === "/"){ startSlash = true; }
+        if(a.length > 0 && a[a.length-1].length > 0 && a[a.length-1][a[a.length-1].length-1] === "/"){ endSlash = true; }
+
+        _.each(a, function(part){ 
+            var sp = part.split('/'); 
+            sp = _.filter(sp, function(a){ return(a != ""); });
+            _.each(sp, function(unit){ result.push(unit); });
+        });
+
+        result = result.join('/');
+
+        if(startSlash){ result = "/" + result; }
+        if(endSlash){ result += "/"; }
+
+        return(result);
+    };
+    _.pad = function(str, n){
+        if((n-str.length) > 0){
+            return(str + Array(n-str.length).join(" "));
+        }else{ return(str); }
+    };
+    _.removeElements = function(array, from, to) {
+        var rest = array.slice((to || from) + 1 || array.length);
+        array.length = from < 0 ? array.length + from : from;
+        return array.push.apply(array, rest);
+    };
+    _.unionize = function(){
+        var args = arguments;
+        return(function(){
+            var uargs = arguments;
+            _.each(args, function(f){
+                if(_.isFunction(f)){
+                    f.apply(undefined, uargs);
+                }
+            });
+        });
+    };
+    _.trim = function trim(str) {
+        if(String.prototype.trim){
+            return(String.prototype.trim.call(str)); 
+        }else{
+            str = str.replace(/^\s\s*/, '');
+            var ws = /\s/;
+            var i = str.length;
+            while (ws.test(str.charAt(--i)));
+            return str.slice(0, i + 1);
+        }
+    };
+    _.getterSetter = function (variableName){
+        return(function(val){
+            if(val === undefined){ return(this[variableName]); }
+            else{
+                this[variableName] = val;
+                return(this);
+            }
+        });
+    };
+
+    _.getter = function (variableName){
+        return(function(){
+            return(this[variableName]);
+        });
+    };
+
+    _.r = _.getter;
+    _.rw = _.getterSetter;
+
+    // 10x slower than basic constructor 
+    // makeClass - By Hubert Kauker (MIT Licensed)
+    // original by John Resig (MIT Licensed).
+    _.makeClass = (function(Void) {
+        return function(){
+            var constructor = function(){
+                var init=constructor.prototype.init, 
+                    hasInitMethod=(typeof init == "function"), 
+                    instance;
+                if ( this instanceof constructor ) {
+                    if(hasInitMethod) init.apply( this, arguments );
+                } else {
+                    Void.prototype = constructor.prototype;
+                    instance = new Void();
+                    if(hasInitMethod) init.apply( instance, arguments );
+                    return instance;
                 }
             };
-            return(eventLock);
-        },
-        asyncLock : function(f, lockTest, lockModify, lockRelease){
-            var running = false;
+            return constructor;
+        };
+    })(function(){});
 
-            function lock(){
-                var args = _.toArray(arguments);
-
-                if(lockTest){
-                    var userTest = lockTest;
-                    var testArgs = _.toArray(arguments);
-                    lockTest = function(){ 
-                        var testArgsCopy = _.toArray(testArgs);
-                        testArgsCopy.unshift(running);
-                        return(userTest.apply(null, testArgsCopy)); 
-                    };
-                }else{
-                    lockTest = function(){ return(running); }; 
-                }
-
-                lockModify = lockModify || function(){ running = true; }
-                lockRelease = lockRelease || function(){ running = false; };                
-
-                if(lockTest()){ return; }
-                lockModify(); 
-                args.push(lockRelease);
-                f.apply(this, args);
+    // 4x slower than basic constructor
+    // 2x slower than basic constructor
+    // if you copy the init code below 
+    // into your own constructor
+    _.fastMakeClass = function(){
+        return(function constructor(){
+            if(this.init){
+                this.init.apply(this, arguments);
             }
-
-            return(lock);
-
-        },
-        lock : function(f){
-            var running = false;
-
-            function lock(){
-                if(running){ return; }
-
-                running = true;
-                f.apply(null, arguments);
-                running = false;
-            }
-
-            return(lock);
-        },
-        addProperties : function(o, propArray, val){
-            _.each(propArray, function(prop){ o[prop] = val; });
-            return(o);
-        },
-        walk : function(o, iterator, context){
-            _.each(o, function(val, key, o){
-                iterator.call(context, val, key, o);
-                if(val && typeof(val) === 'object'){
-                    _.walk(val, iterator, context);
-                }
-            });
-        },
-        substitute : function(o, replacer, context){
-            _.each(o, function(val, key, o){
-                var newVal = replacer.call(context, val, key, o);
-                if(newVal !== undefined){
-                    o[key] = newVal;
-                    val = newVal;
-                }
-                if(val && typeof(val) === 'object'){
-                    _.substitute(val, replacer, context);
-                }
-            });
-        },
-        isIterable : function(o){ return(_.isArray(o) || _.isObject(o)); },
-        eachAsync : function(o, iterator, complete, context){
-            if(complete && !_.isFunction(complete)){
-                context = complete;
-                complete = null;
-            }
-
-            context = context || null;
-
-            var keys = _.keys(o);
-
-            var callComplete = function(){ _.nextTick(complete) };
-            if(!complete){ callComplete = function(){}; }
-
-            (function doWork(i){
-                if(i >= keys.length){ callComplete(); }
-                else{
-                    function callIterator(){ iterator.call(context, o[keys[i]], keys[i], function(){ doWork(i+1); }, callComplete); }
-
-                    if(((i + 1) % 30) === 0){ process.nextTick(callIterator); }
-                    else{ callIterator(); }
-                }
-            })(0);
-        },
-        asyncMap : function(o, mapFunction, completedCallback, context){
-            var results = [];
-
-            completedCallback = completedCallback || _.noop;
-            context = context || null;
-
-            _.eachAsync(o, function(val, key, next){
-                    mapFunction.call(context, val, key, function(result){ results.push(result); next(); }); 
-            }, function(){ completedCallback(results); });
-        },
-        find : function(col, target, insensitive){
-            if(!insensitive && _.isArray(col)){
-                return(_.indexOf(col, target));
-            }
-        },
-        exists : function(col, target, insensitive){
-            if(insensitive){
-                return(_.any(col, function(a){ return(a.toLowerCase() === target.toLowerCase()); }));
-            }else{
-                return(_.any(col, function(a){ return(a === target); }));
-            }
-        },
-        join_path: function(){
-            var a = _.toArray(arguments);
-
-            var result = [];
-            var startSlash = false;  
-            var endSlash = false;
-
-            if(a.length > 0 && a[0].length > 0 && a[0][0] === "/"){ startSlash = true; }
-            if(a.length > 0 && a[a.length-1].length > 0 && a[a.length-1][a[a.length-1].length-1] === "/"){ endSlash = true; }
-
-            _.each(a, function(part){ 
-                var sp = part.split('/'); 
-                sp = _.filter(sp, function(a){ return(a != ""); });
-                _.each(sp, function(unit){ result.push(unit); });
-            });
-
-            result = result.join('/');
-
-            if(startSlash){ result = "/" + result; }
-            if(endSlash){ result += "/"; }
-
-            return(result);
-        },
-        removeElements: function(array, from, to) {
-            var rest = array.slice((to || from) + 1 || array.length);
-            array.length = from < 0 ? array.length + from : from;
-            return array.push.apply(array, rest);
-        },
-        fieldStack : function(obj){
-            var workingStack = [];
-            var resultStack = [];
-            var currentItem = obj;
-
-            if(_.isIterable(currentItem)){
-                _.each(currentItem, function(val, key){
-                    workingStack.push({ object: currentItem, fieldName: key });
-                    resultStack.push({ object: currentItem, fieldName: key });
-                });
-            }
-
-            var stackItem = workingStack.pop(); 
-
-            while(stackItem){
-                currentItem = stackItem.object[stackItem.fieldName];
-
-                if(_.isIterable(currentItem)){
-                    _.each(currentItem, function(val, key){
-                        workingStack.push({ object: currentItem, fieldName: key });
-                        resultStack.push({ object: currentItem, fieldName: key });
-                    });
-                }
-
-                stackItem = workingStack.pop(); 
-            } 
-
-            return(resultStack);
-        },
-        unionize : function(){
-            var args = arguments;
-            return(function(){
-                var uargs = arguments;
-                _.each(args, function(f){
-                    if(_.isFunction(f)){
-                        f.apply(undefined, uargs);
-                    }
-                });
-            });
-        },
-        trim : function trim(str) {
-            if(String.prototype.trim){
-                return(String.prototype.trim.call(str)); 
-            }else{
-                str = str.replace(/^\s\s*/, '');
-                var ws = /\s/;
-                var i = str.length;
-                while (ws.test(str.charAt(--i)));
-                return str.slice(0, i + 1);
-            }
-        },
-        getterSetter : function (variableName){
-            return(function(val){
-                if(val === undefined){ return(this[variableName]); }
-                else{
-                    this[variableName] = val;
-                    return(this);
-                }
-            });
-        },
-        // makeClass - By John Resig (MIT Licensed)
-        makeClass : function (){
-            return(function(args){
-                if ( this instanceof arguments.callee ) {
-                    if ( typeof this.init == "function" ){
-                        this.init.apply( this, args.callee ? args : arguments );
-                    }
-                } else{
-                    return new arguments.callee( arguments );
-                }
-            });
-        },
-        toNumber : function(n){
-            n = n - 0; 
-            if(isNaN(n)){ return(null); }
-            else{ return(n); }
-        },
-        n : function(n){ return(_.toNumber(n)); },
-        s : function(n){ return(n + ""); },
-        formatNumber: function(nStr){
-            nStr += '';
-            var x = nStr.split('.');
-            var x1 = x[0];
-            var x2 = x.length > 1 ? '.' + x[1] : '';
-            var rgx = /(\d+)(\d{3})/;
-            while (rgx.test(x1)) {
-                    x1 = x1.replace(rgx, '$1' + ',' + '$2');
-            }
-            return x1 + x2;
-        },
-        uuid : function(len, radix) {
-            // ported by Tom Robison
-
-            /*
-               Based on Math.uuid.js 1.4 by Robert Kieffer
-
-               ----
-               Copyright (c) 2008, Robert Kieffer
-               All rights reserved.
-
-               Redistribution and use in source and binary forms, with or without
-               modification, are permitted provided that the following conditions are met:
-
-             * Redistributions of source code must retain the above copyright notice,
-             this list of conditions and the following disclaimer.
-             * Redistributions in binary form must reproduce the above copyright
-             notice, this list of conditions and the following disclaimer in the
-             documentation and/or other materials provided with the distribution.
-             * Neither the name of Robert Kieffer nor the names of its contributors
-             may be used to endorse or promote products derived from this software
-             without specific prior written permission.
-             THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-             AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-             IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-             ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-             LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-             CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-             SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-             INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-             CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-             ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-             POSSIBILITY OF SUCH DAMAGE.
-
-            */
-
-
-
-            /*
-             * Generate a random uuid.
-             *
-             * USAGE: uuid.uuid(length, radix)
-             * length - the desired number of characters
-             * radix - the number of allowable values for each character.
-             *
-             * EXAMPLES:
-             * // No arguments - returns RFC4122, version 4 ID
-             * >>> Math.uuid()
-             * "92329D39-6F5C-4520-ABFC-AAB64544E172"
-             *
-             * // One argument - returns ID of the specified length
-             * >>> Math.uuid(15) // 15 character ID (default base=62)
-             * "VcydxgltxrVZSTV"
-             *
-             * // Two arguments - returns ID of the specified length, and radix. (Radix must be <= 62)
-             * >>> Math.uuid(8, 2) // 8 character ID (base=2)
-             * "01001010"
-             * >>> Math.uuid(8, 10) // 8 character ID (base=10)
-             * "47473046"
-             * >>> Math.uuid(8, 16) // 8 character ID (base=16)
-             * "098F4D35"
-             */
-
-            var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-            var chars = CHARS, uuid = [], rnd = Math.random;
-            radix = radix || chars.length;
-
-            if (len) {
-                // Compact form
-                for (var i = 0; i < len; i++)
-                    uuid[i] = chars[0 | rnd()*radix];
-            } else {
-                // rfc4122, version 4 form
-                var r;
-
-                // rfc4122 requires these characters
-                uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
-                uuid[14] = '4';
-
-                // Fill in random data. At i==19 set the high bits of clock sequence as
-                // per rfc4122, sec. 4.1.5
-                for (var i = 0; i < 36; i++) {
-                    if (!uuid[i]) {
-                        r = 0 | rnd()*16;
-                        uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r & 0xf];
-                    }
-                }
-            }
-
-            return uuid.join('');
-        },
-        sha256: function (msg, utf8encode) {
-            var Sha256 = {};  // Sha256 namespace
-
-            Sha256.ROTR = function(n, x) { return (x >>> n) | (x << (32-n)); }
-            Sha256.Sigma0 = function(x) { return Sha256.ROTR(2,  x) ^ Sha256.ROTR(13, x) ^ Sha256.ROTR(22, x); }
-            Sha256.Sigma1 = function(x) { return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); }
-            Sha256.sigma0 = function(x) { return Sha256.ROTR(7,  x) ^ Sha256.ROTR(18, x) ^ (x>>>3);  }
-            Sha256.sigma1 = function(x) { return Sha256.ROTR(17, x) ^ Sha256.ROTR(19, x) ^ (x>>>10); }
-            Sha256.Ch = function(x, y, z)  { return (x & y) ^ (~x & z); }
-            Sha256.Maj = function(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); }
-            
-            //
-            // hexadecimal representation of a number 
-            //   (note toString(16) is implementation-dependant, and  
-            //   in IE returns signed numbers when used on full words)
-            //
-            Sha256.toHexStr = function(n) {
-              var s="", v;
-              for (var i=7; i>=0; i--) { v = (n>>>(i*4)) & 0xf; s += v.toString(16); }
-              return s;
-            }
-            
-            
-            /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-            /*  Utf8 class: encode / decode between multi-byte Unicode characters and UTF-8 multiple          */
-            /*              single-byte character encoding (c) Chris Veness 2002-2010                         */
-            /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-            
-            var Utf8 = {};  // Utf8 namespace
-            
-            /**
-             * Encode multi-byte Unicode string into utf-8 multiple single-byte characters 
-             * (BMP / basic multilingual plane only)
-             *
-             * Chars in range U+0080 - U+07FF are encoded in 2 chars, U+0800 - U+FFFF in 3 chars
-             *
-             * @param {String} strUni Unicode string to be encoded as UTF-8
-             * @returns {String} encoded string
-             */
-            Utf8.encode = function(strUni) {
-              // use regular expressions & String.replace callback function for better efficiency 
-              // than procedural approaches
-              var strUtf = strUni.replace(
-                  /[\u0080-\u07ff]/g,  // U+0080 - U+07FF => 2 bytes 110yyyyy, 10zzzzzz
-                  function(c) { 
-                    var cc = c.charCodeAt(0);
-                    return String.fromCharCode(0xc0 | cc>>6, 0x80 | cc&0x3f); }
-                );
-              strUtf = strUtf.replace(
-                  /[\u0800-\uffff]/g,  // U+0800 - U+FFFF => 3 bytes 1110xxxx, 10yyyyyy, 10zzzzzz
-                  function(c) { 
-                    var cc = c.charCodeAt(0); 
-                    return String.fromCharCode(0xe0 | cc>>12, 0x80 | cc>>6&0x3F, 0x80 | cc&0x3f); }
-                );
-              return strUtf;
-            }
-            
-            /**
-             * Decode utf-8 encoded string back into multi-byte Unicode characters
-             *
-             * @param {String} strUtf UTF-8 string to be decoded back to Unicode
-             * @returns {String} decoded string
-             */
-            Utf8.decode = function(strUtf) {
-              // note: decode 3-byte chars first as decoded 2-byte strings could appear to be 3-byte char!
-              var strUni = strUtf.replace(
-                  /[\u00e0-\u00ef][\u0080-\u00bf][\u0080-\u00bf]/g,  // 3-byte chars
-                  function(c) {  // (note parentheses for precence)
-                    var cc = ((c.charCodeAt(0)&0x0f)<<12) | ((c.charCodeAt(1)&0x3f)<<6) | ( c.charCodeAt(2)&0x3f); 
-                    return String.fromCharCode(cc); }
-                );
-              strUni = strUni.replace(
-                  /[\u00c0-\u00df][\u0080-\u00bf]/g,                 // 2-byte chars
-                  function(c) {  // (note parentheses for precence)
-                    var cc = (c.charCodeAt(0)&0x1f)<<6 | c.charCodeAt(1)&0x3f;
-                    return String.fromCharCode(cc); }
-                );
-              return strUni;
-            }
-            
-            /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-            utf8encode =  (typeof utf8encode == 'undefined') ? true : utf8encode;
-            
-            // convert string to UTF-8, as SHA only deals with byte-streams
-            if (utf8encode) msg = Utf8.encode(msg);
-            
-            // constants [§4.2.2]
-            var K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-                     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-                     0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-                     0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-                     0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-                     0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-                     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-                     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
-            // initial hash value [§5.3.1]
-            var H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
-
-            // PREPROCESSING 
-         
-            msg += String.fromCharCode(0x80);  // add trailing '1' bit (+ 0's padding) to string [§5.1.1]
-
-            // convert string msg into 512-bit/16-integer blocks arrays of ints [§5.2.1]
-            var l = msg.length/4 + 2;  // length (in 32-bit integers) of msg + 1 + appended length
-            var N = Math.ceil(l/16);   // number of 16-integer-blocks required to hold 'l' ints
-            var M = new Array(N);
-
-            for (var i=0; i<N; i++) {
-                M[i] = new Array(16);
-                for (var j=0; j<16; j++) {  // encode 4 chars per integer, big-endian encoding
-                    M[i][j] = (msg.charCodeAt(i*64+j*4)<<24) | (msg.charCodeAt(i*64+j*4+1)<<16) | 
-                              (msg.charCodeAt(i*64+j*4+2)<<8) | (msg.charCodeAt(i*64+j*4+3));
-                } // note running off the end of msg is ok 'cos bitwise ops on NaN return 0
-            }
-            // add length (in bits) into final pair of 32-bit integers (big-endian) [§5.1.1]
-            // note: most significant word would be (len-1)*8 >>> 32, but since JS converts
-            // bitwise-op args to 32 bits, we need to simulate this by arithmetic operators
-            M[N-1][14] = ((msg.length-1)*8) / Math.pow(2, 32); M[N-1][14] = Math.floor(M[N-1][14])
-            M[N-1][15] = ((msg.length-1)*8) & 0xffffffff;
-
-
-            // HASH COMPUTATION [§6.1.2]
-
-            var W = new Array(64); var a, b, c, d, e, f, g, h;
-            for (var i=0; i<N; i++) {
-
-                // 1 - prepare message schedule 'W'
-                for (var t=0;  t<16; t++) W[t] = M[i][t];
-                for (var t=16; t<64; t++) W[t] = (Sha256.sigma1(W[t-2]) + W[t-7] + Sha256.sigma0(W[t-15]) + W[t-16]) & 0xffffffff;
-
-                // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
-                a = H[0]; b = H[1]; c = H[2]; d = H[3]; e = H[4]; f = H[5]; g = H[6]; h = H[7];
-
-                // 3 - main loop (note 'addition modulo 2^32')
-                for (var t=0; t<64; t++) {
-                    var T1 = h + Sha256.Sigma1(e) + Sha256.Ch(e, f, g) + K[t] + W[t];
-                    var T2 = Sha256.Sigma0(a) + Sha256.Maj(a, b, c);
-                    h = g;
-                    g = f;
-                    f = e;
-                    e = (d + T1) & 0xffffffff;
-                    d = c;
-                    c = b;
-                    b = a;
-                    a = (T1 + T2) & 0xffffffff;
-                }
-                 // 4 - compute the new intermediate hash value (note 'addition modulo 2^32')
-                H[0] = (H[0]+a) & 0xffffffff;
-                H[1] = (H[1]+b) & 0xffffffff; 
-                H[2] = (H[2]+c) & 0xffffffff; 
-                H[3] = (H[3]+d) & 0xffffffff; 
-                H[4] = (H[4]+e) & 0xffffffff;
-                H[5] = (H[5]+f) & 0xffffffff;
-                H[6] = (H[6]+g) & 0xffffffff; 
-                H[7] = (H[7]+h) & 0xffffffff; 
-            }
-
-            return Sha256.toHexStr(H[0]) + Sha256.toHexStr(H[1]) + Sha256.toHexStr(H[2]) + Sha256.toHexStr(H[3]) + 
-                   Sha256.toHexStr(H[4]) + Sha256.toHexStr(H[5]) + Sha256.toHexStr(H[6]) + Sha256.toHexStr(H[7]);
+        });
+    };
+ 
+    _.toNumber = function(n){
+        n = n - 0; 
+        if(isNaN(n)){ return(null); }
+        else{ return(n); }
+    };
+    _.n = function(n){ return(_.toNumber(n)); };
+    _.s = function(n){ return(n + ""); };
+    _.formatNumber = function(nStr){
+        nStr += '';
+        var x = nStr.split('.');
+        var x1 = x[0];
+        var x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+                x1 = x1.replace(rgx, '$1' + ',' + '$2');
         }
-    });
+        return x1 + x2;
+    };
+    _.uuid = function(len, radix) {
+        // ported by Tom Robison
+
+        /*
+           Based on Math.uuid.js 1.4 by Robert Kieffer
+
+           ----
+           Copyright (c) 2008, Robert Kieffer
+           All rights reserved.
+
+           Redistribution and use in source and binary forms, with or without
+           modification, are permitted provided that the following conditions are met:
+
+         * Redistributions of source code must retain the above copyright notice,
+         this list of conditions and the following disclaimer.
+         * Redistributions in binary form must reproduce the above copyright
+         notice, this list of conditions and the following disclaimer in the
+         documentation and/or other materials provided with the distribution.
+         * Neither the name of Robert Kieffer nor the names of its contributors
+         may be used to endorse or promote products derived from this software
+         without specific prior written permission.
+         THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+         AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+         IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+         ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+         LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+         CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+         SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+         INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+         CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+         ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+         POSSIBILITY OF SUCH DAMAGE.
+
+        */
+
+
+
+        /*
+         * Generate a random uuid.
+         *
+         * USAGE: uuid.uuid(length, radix)
+         * length - the desired number of characters
+         * radix - the number of allowable values for each character.
+         *
+         * EXAMPLES:
+         * // No arguments - returns RFC4122, version 4 ID
+         * >>> Math.uuid()
+         * "92329D39-6F5C-4520-ABFC-AAB64544E172"
+         *
+         * // One argument - returns ID of the specified length
+         * >>> Math.uuid(15) // 15 character ID (default base=62)
+         * "VcydxgltxrVZSTV"
+         *
+         * // Two arguments - returns ID of the specified length, and radix. (Radix must be <= 62)
+         * >>> Math.uuid(8, 2) // 8 character ID (base=2)
+         * "01001010"
+         * >>> Math.uuid(8, 10) // 8 character ID (base=10)
+         * "47473046"
+         * >>> Math.uuid(8, 16) // 8 character ID (base=16)
+         * "098F4D35"
+         */
+
+        var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+        var chars = CHARS, uuid = [], rnd = Math.random;
+        radix = radix || chars.length;
+
+        if (len) {
+            // Compact form
+            for (var i = 0; i < len; i++)
+                uuid[i] = chars[0 | rnd()*radix];
+        } else {
+            // rfc4122, version 4 form
+            var r;
+
+            // rfc4122 requires these characters
+            uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
+            uuid[14] = '4';
+
+            // Fill in random data. At i==19 set the high bits of clock sequence as
+            // per rfc4122, sec. 4.1.5
+            for (var i = 0; i < 36; i++) {
+                if (!uuid[i]) {
+                    r = 0 | rnd()*16;
+                    uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r & 0xf];
+                }
+            }
+        }
+
+        return uuid.join('');
+    };
+    _.sha256 = function (msg, utf8encode) {
+        var Sha256 = {};  // Sha256 namespace
+
+        Sha256.ROTR = function(n, x) { return (x >>> n) | (x << (32-n)); }
+        Sha256.Sigma0 = function(x) { return Sha256.ROTR(2,  x) ^ Sha256.ROTR(13, x) ^ Sha256.ROTR(22, x); }
+        Sha256.Sigma1 = function(x) { return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); }
+        Sha256.sigma0 = function(x) { return Sha256.ROTR(7,  x) ^ Sha256.ROTR(18, x) ^ (x>>>3);  }
+        Sha256.sigma1 = function(x) { return Sha256.ROTR(17, x) ^ Sha256.ROTR(19, x) ^ (x>>>10); }
+        Sha256.Ch = function(x, y, z)  { return (x & y) ^ (~x & z); }
+        Sha256.Maj = function(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); }
+        
+        //
+        // hexadecimal representation of a number 
+        //   (note toString(16) is implementation-dependant, and  
+        //   in IE returns signed numbers when used on full words)
+        //
+        Sha256.toHexStr = function(n) {
+          var s="", v;
+          for (var i=7; i>=0; i--) { v = (n>>>(i*4)) & 0xf; s += v.toString(16); }
+          return s;
+        }
+        
+        
+        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+        /*  Utf8 class: encode / decode between multi-byte Unicode characters and UTF-8 multiple          */
+        /*              single-byte character encoding (c) Chris Veness 2002-2010                         */
+        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+        
+        var Utf8 = {};  // Utf8 namespace
+        
+        /**
+         * Encode multi-byte Unicode string into utf-8 multiple single-byte characters 
+         * (BMP / basic multilingual plane only)
+         *
+         * Chars in range U+0080 - U+07FF are encoded in 2 chars, U+0800 - U+FFFF in 3 chars
+         *
+         * @param {String} strUni Unicode string to be encoded as UTF-8
+         * @returns {String} encoded string
+         */
+        Utf8.encode = function(strUni) {
+          // use regular expressions & String.replace callback function for better efficiency 
+          // than procedural approaches
+          var strUtf = strUni.replace(
+              /[\u0080-\u07ff]/g,  // U+0080 - U+07FF => 2 bytes 110yyyyy, 10zzzzzz
+              function(c) { 
+                var cc = c.charCodeAt(0);
+                return String.fromCharCode(0xc0 | cc>>6, 0x80 | cc&0x3f); }
+            );
+          strUtf = strUtf.replace(
+              /[\u0800-\uffff]/g,  // U+0800 - U+FFFF => 3 bytes 1110xxxx, 10yyyyyy, 10zzzzzz
+              function(c) { 
+                var cc = c.charCodeAt(0); 
+                return String.fromCharCode(0xe0 | cc>>12, 0x80 | cc>>6&0x3F, 0x80 | cc&0x3f); }
+            );
+          return strUtf;
+        }
+        
+        /**
+         * Decode utf-8 encoded string back into multi-byte Unicode characters
+         *
+         * @param {String} strUtf UTF-8 string to be decoded back to Unicode
+         * @returns {String} decoded string
+         */
+        Utf8.decode = function(strUtf) {
+          // note: decode 3-byte chars first as decoded 2-byte strings could appear to be 3-byte char!
+          var strUni = strUtf.replace(
+              /[\u00e0-\u00ef][\u0080-\u00bf][\u0080-\u00bf]/g,  // 3-byte chars
+              function(c) {  // (note parentheses for precence)
+                var cc = ((c.charCodeAt(0)&0x0f)<<12) | ((c.charCodeAt(1)&0x3f)<<6) | ( c.charCodeAt(2)&0x3f); 
+                return String.fromCharCode(cc); }
+            );
+          strUni = strUni.replace(
+              /[\u00c0-\u00df][\u0080-\u00bf]/g,                 // 2-byte chars
+              function(c) {  // (note parentheses for precence)
+                var cc = (c.charCodeAt(0)&0x1f)<<6 | c.charCodeAt(1)&0x3f;
+                return String.fromCharCode(cc); }
+            );
+          return strUni;
+        }
+        
+        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+
+        utf8encode =  (typeof utf8encode == 'undefined') ? true : utf8encode;
+        
+        // convert string to UTF-8, as SHA only deals with byte-streams
+        if (utf8encode) msg = Utf8.encode(msg);
+        
+        // constants [§4.2.2]
+        var K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+                 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+                 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+                 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+                 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+                 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+                 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+                 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+        // initial hash value [§5.3.1]
+        var H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+
+        // PREPROCESSING 
+     
+        msg += String.fromCharCode(0x80);  // add trailing '1' bit (+ 0's padding) to string [§5.1.1]
+
+        // convert string msg into 512-bit/16-integer blocks arrays of ints [§5.2.1]
+        var l = msg.length/4 + 2;  // length (in 32-bit integers) of msg + 1 + appended length
+        var N = Math.ceil(l/16);   // number of 16-integer-blocks required to hold 'l' ints
+        var M = new Array(N);
+
+        for (var i=0; i<N; i++) {
+            M[i] = new Array(16);
+            for (var j=0; j<16; j++) {  // encode 4 chars per integer, big-endian encoding
+                M[i][j] = (msg.charCodeAt(i*64+j*4)<<24) | (msg.charCodeAt(i*64+j*4+1)<<16) | 
+                          (msg.charCodeAt(i*64+j*4+2)<<8) | (msg.charCodeAt(i*64+j*4+3));
+            } // note running off the end of msg is ok 'cos bitwise ops on NaN return 0
+        }
+        // add length (in bits) into final pair of 32-bit integers (big-endian) [§5.1.1]
+        // note: most significant word would be (len-1)*8 >>> 32, but since JS converts
+        // bitwise-op args to 32 bits, we need to simulate this by arithmetic operators
+        M[N-1][14] = ((msg.length-1)*8) / Math.pow(2, 32); M[N-1][14] = Math.floor(M[N-1][14])
+        M[N-1][15] = ((msg.length-1)*8) & 0xffffffff;
+
+
+        // HASH COMPUTATION [§6.1.2]
+
+        var W = new Array(64); var a, b, c, d, e, f, g, h;
+        for (var i=0; i<N; i++) {
+
+            // 1 - prepare message schedule 'W'
+            for (var t=0;  t<16; t++) W[t] = M[i][t];
+            for (var t=16; t<64; t++) W[t] = (Sha256.sigma1(W[t-2]) + W[t-7] + Sha256.sigma0(W[t-15]) + W[t-16]) & 0xffffffff;
+
+            // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
+            a = H[0]; b = H[1]; c = H[2]; d = H[3]; e = H[4]; f = H[5]; g = H[6]; h = H[7];
+
+            // 3 - main loop (note 'addition modulo 2^32')
+            for (var t=0; t<64; t++) {
+                var T1 = h + Sha256.Sigma1(e) + Sha256.Ch(e, f, g) + K[t] + W[t];
+                var T2 = Sha256.Sigma0(a) + Sha256.Maj(a, b, c);
+                h = g;
+                g = f;
+                f = e;
+                e = (d + T1) & 0xffffffff;
+                d = c;
+                c = b;
+                b = a;
+                a = (T1 + T2) & 0xffffffff;
+            }
+             // 4 - compute the new intermediate hash value (note 'addition modulo 2^32')
+            H[0] = (H[0]+a) & 0xffffffff;
+            H[1] = (H[1]+b) & 0xffffffff; 
+            H[2] = (H[2]+c) & 0xffffffff; 
+            H[3] = (H[3]+d) & 0xffffffff; 
+            H[4] = (H[4]+e) & 0xffffffff;
+            H[5] = (H[5]+f) & 0xffffffff;
+            H[6] = (H[6]+g) & 0xffffffff; 
+            H[7] = (H[7]+h) & 0xffffffff; 
+        }
+
+        return Sha256.toHexStr(H[0]) + Sha256.toHexStr(H[1]) + Sha256.toHexStr(H[2]) + Sha256.toHexStr(H[3]) + 
+               Sha256.toHexStr(H[4]) + Sha256.toHexStr(H[5]) + Sha256.toHexStr(H[6]) + Sha256.toHexStr(H[7]);
+    };
 
     // taken from the nodejs source
     _.format = (function(){
@@ -3997,8 +4036,7 @@ function (_){
         }
 
 
-        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-            'Oct', 'Nov', 'Dec'];
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
         // 26 Feb 16:19:34
         function timestamp() {
@@ -4125,143 +4163,191 @@ return(dry);
 _.log = (
 function (_){
 
-    function makeLogger(options){
+    function consoleTransport(log, logLevel, timestamp, entry){ 
+        var writer = _.stdout;
+        var priority = log.priority(logLevel);
+
+        // error or worse
+        if(priority > 3){ writer = _.stderr; }
+
+        if(log.timestamp()){ writer(_.moment(timestamp).format("YYYY-MM-DD HH:MM:SS") + ":", entry); }
+        else{ writer(entry); }
+    }
+
+
+    function logger(options){
 
         options = options || {};
 
-        var log = function(){
-            if(arguments.length){ writeToLog.apply(this, arguments); }
-            return(makeLoggers());
-        };
+        this._namespace = options.namespace ? options.namespace : "";
+        this.timestamp(options.timestamp);
 
-        log._ns = [];
-
-        log.init = function(){
-            log.timestamp(options.timestamp);
-            if(options.namespace){ log._ns.push(options.namespace); }
-            if(options.level){ log.level(options.level); }
-            if(options.parent){ log._parent = options.parent; }
-        };
-
-        function makeLoggers(){
-            var loggers = {};
-
-            var priorities = log.priorities();
-
-            var ignore = false;
-            _.each(priorities, function(logName){
-                if(ignore){ loggers[logName] = _.noop; }
-                else{ loggers[logName] = log; }
-                if(_.lc(log.level()) === _.lc(logName)){ ignore = true; }
-            });
-
-            return(loggers);
+        if(options.parent){ 
+            this._parent = options.parent;
+            this._transports = [];
+        }else{ 
+            this._parent = null;
+            this._transports = _.clone(this._defaultTransports);
         }
 
-        log.namespace = function(){
-            var ns = "";
-
-            if(log.parent()){
-                ns += log.parent().ns()
-            }
-
-            if(log._ns.length){
-                ns += log._ns.join(".");
-            }
-
-            return(ns);
-        };
-
-        function writeToLog(){ 
-            var args = _.toArray(arguments);
-            var ns = log.namespace();
-            if(ns){ ns += ": "; }
-            args.unshift(ns);
-            var entry = _.format.apply(null, args);
-            _.each(log.transports, function(f){
-                if(_.isFunction(f.writeEntry)){
-                    f.writeEntry(_.timestamp(), entry);
-                }else if(_.isFunction(f)){
-                    f(_.timestamp(), entry);
-                }
-            });
-        }
-
-        log.levels = function(){ return(log._levels); };
-        log.priorities = function(){ return(log._priorities); };
-        log._levels = ['debug', 'info', 'notice', 'warning', 'error', 'crit', 'alert', 'emerg'];
-        log._priorities = ['emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug'];
-        
-        function consoleTransport(timestamp, entry){ 
-            if(log.timestamp()){ console.log(_.moment(timestamp).format("YYYY-MM-DD HH:MM:SS") + ":", entry); }
-            else{ console.log(entry); }
-        }
-
-        log.transports = [consoleTransport];
-
-        // you can revert to parent settings by nulling out child settings
-        log.setting = function(setting, defaultValue){
-           if(log[setting] !== undefined && log[setting] !== null){
-                return(log[setting]);
-            }else if(log._parent){
-                return(log._parent.getSetting(setting, defaultValue));
-            }else{
-                return(defaultValue);
-            }
-        };
-
-        log.level = function(level){
-            if(level !== undefined){
-                log._level = level;
-                return(log);
-            }else{ 
-                return(log.setting("_level", _.last(log.priorities())));
-            }
-        };
-
-        log.timestamp = function(enable){
-            if(enable !== undefined){
-                log._timestamp = enable;
-                return(log);
-            }else{ 
-                return(log.setting("_timestamp", false));
-            }
-        };
-
-        log.make = function(options){
-            return(makeLogger(options));
-        };
-
-        log.child = function(ns){ return(log.make({ namespace: ns, parent: log })); };
-
-        log.parent = function(){ 
-            if(log._parent){
-                return(log._parent);
-            }else{
-                return(null);
-            }
-        };
-
-        log.init();
-
-        return(log);
+        this.level('debug'); 
+        if(options.level){ this.level(options.level); }
     }
+
+    logger.prototype._levels = ['debug', 'info', 'notice', 'warning', 'error', 'crit', 'alert', 'emerg'];
+    logger.prototype._priorities = { 'debug' : 0, 'info' : 1, 'notice' : 2, 'warning' : 3, 'error' : 4, 'crit' : 5, 'alert' : 6, 'emerg' : 7 };
+
+    logger.prototype.levels = function(){ return(this._levels); };
+    logger.prototype.priorities = function(){ return(this._priorities); };
+
+    logger.prototype._defaultTransports = [consoleTransport];
+
+    logger.prototype.transports = function(t){
+        if(t){ this._transports = t; }
+        else{ return(this._transports); }
+    };
+
+    logger.prototype.priority = function(level){ 
+        if(level === undefined){
+            return(this.priority(this.level()));
+        }else if(this._priorities[level] !== undefined){
+            return(this._priorities[level]);
+        }else{
+            return(-1); 
+        }
+    };
+
+    logger.prototype.level = function(level){
+        if(level === undefined){
+            return(this._level);
+        }else{
+            if(this.priority(level) < 0){ return; }
+            this._level = level;
+        }
+    };
+
+    logger.prototype.namespace = function(ns){
+        if(ns !== undefined){ this._namespace = ns; }
+
+        var ns = "";
+
+        if(this.parent()){ ns += this.parent().namespace(); }
+        if(this._namespace){
+            if(ns){ ns += "."; }
+            ns += this._namespace;
+        }
+
+        return(ns);
+    };
+
+    logger.prototype._write = function(logLevel, pieces){ 
+
+        var ns = this.namespace();
+        if(ns){ ns += ": "; }
+        pieces.unshift(ns);
+        var entry = _.format.apply(null, pieces);
+
+        this._transport(logLevel, entry);
+    }
+
+    logger.prototype._transport = function(logLevel, entry){
+        var self = this;
+        var ts = _.timestamp();
+
+        _.each(this.transports(), function(f){
+            if(_.isFunction(f.writeEntry)){
+                f.writeEntry(self, logLevel, ts, entry);
+            }else if(_.isFunction(f)){
+                f(self, logLevel, ts, entry);
+            }
+        });
+
+        if(this.parent()){ this.parent()._transport(logLevel, entry); }
+    }
+
+    logger.prototype.parent = function(){ 
+        if(this._parent){ return(this._parent); }
+        else{ return(null); }
+    };
+
+    function makeLogFunction(logLevel){
+        return(function(){
+            /*
+            _.p("log:", this);
+            _.p("current log level:", this.level());
+            _.p("current log priority:", this.priority());
+            _.p("current log level priority:", this.priority(this.level()));
+            _.p("incoming log level:", logLevel);
+            _.p("incoming log level priority:", this.priority(logLevel));
+            */
+
+            if(this.priority(this.level()) <= this.priority(logLevel)){
+                this._write(logLevel, _.toArray(arguments));
+            }
+            return(this);
+        });
+    }
+
+    _.each(logger.prototype._levels, function(logLevel){
+        logger.prototype[logLevel] = makeLogFunction(logLevel);
+    });
+
+    // you can revert to parent settings by nulling out child settings
+    logger.prototype.setting = function(setting, defaultValue){
+        if(this[setting] !== undefined && this[setting] !== null){
+            return(this[setting]);
+        }else if(this.parent()){
+            return(this.parent().setting(setting, defaultValue));
+        }else{
+            return(defaultValue);
+        }
+    };
+
+    logger.prototype.timestamp = function(enable){
+        if(enable !== undefined){
+            this._timestamp = enable;
+            return(this);
+        }else{ 
+            return(this.setting("_timestamp", false));
+        }
+    };
+
+    logger.prototype.make = function(options){
+        return(new logger(options));
+    };
+
+    logger.prototype.child = function(ns){ 
+        return(this.make({ namespace: ns, parent: this }));
+    };
 
     function mixin(root, options){
         root = root || {};
 
-        root.log = makeLogger(options);
+        root.log = new logger(options);
 
         return(root.log);
     }
-                
+
     return(mixin());
 }
 )(_);
 (
 function (_){
 
+    _.stdout = function(){
+        var entry = _.format.apply(null, arguments);
+        console.log(entry);
+    };
 
+    _.stderr = function(){
+        var entry = _.format.apply(null, arguments);
+        console.log(entry);
+    };
+
+    _.sout = _.stdout;
+    _.serr = _.stderr;
+    _.p = _.stderr;
+    
     _.nextTick = (function() {
 
         if(!window.postMessage && !window.addEventListener){
@@ -4376,6 +4462,46 @@ function mixin(_){
     return(ns);
 }
 )(_);
+_.plumber = (
+function (_){
+
+var plumber = function(f){
+
+    if(f === undefined){ f = {}; }
+    
+    f.plunger = function(err){ 
+        throw(err);
+    };
+
+    f.plumb = function(goodF, badF){
+        var self = this;
+        var args = arguments;
+        return(function(err){
+            if(err){ 
+                args = _.toArray(args);
+                if(_.isFunction(badF)){
+                    args = args.slice(2);
+                    args.unshift(err);
+                    return badF.apply(null, args);
+                }else{
+                    args = args.slice(1);
+                    args.unshift(err);
+                    return self.plunger.apply(self, args);
+                }
+            }else{
+                goodF.apply(null, _.toArray(arguments).slice(1));
+            }
+        });
+    };
+
+    return(f);
+};
+
+return(plumber);
+
+}
+)(_);
+_.plumber(_);
 _.hook = (
 function (_){
 
@@ -4423,7 +4549,7 @@ var hooker = function(f){
         event = event.toLowerCase();
         
         if(that._hooks && that._hooks[event]){
-            _.eachAsync(that._hooks[event], function(val, key, next, end){
+            _.each.async(that._hooks[event], function(val, key, next, end){
                 var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.", 5000);
                 val.handler.apply(that, _.concat(function(keepRunning){
                     to.back();
@@ -4530,4 +4656,156 @@ return(eventEmitter);
 )(_);
 _.events = {};
 _.eventEmitter(_.events);
+_.measurer = (
+function (_){
+
+    function measurer(options){
+
+        options = options || {};
+
+        this._parent = options.parent || null;
+        this._transportsAsync = [];
+        this._transportsSync = [this.runningTotalTransport];
+    }
+
+    measurer.prototype.parent = function(){ return(this._parent); };
+
+    measurer.prototype.runningTotalTransport = function(measurement){
+        var measurements = _.get(this, "_measurements", {});
+        var category = _.get(measurements, measurement.category, {});
+        var measurements = _.get(category, measurement.name, {});
+        if(measurements[measurement.duration] === undefined){
+            measurements[measurement.duration] = 0;
+        }
+        measurements[measurement.duration]++;
+        measurements.last = measurement.duration;
+    };
+
+    measurer.prototype.transport = function(measurement){
+        var self = this;
+
+        _.each(this.transportsSync(), function(transport){ transport.call(self, measurement); });
+        _.nextTick(function(){ _.each(self.transportsAsync(), function(transport){ transport.call(self, measurement); }); });
+
+        if(this.parent()){ this.parent().transport(measurement); }
+    };
+
+    measurer.prototype.transportsSync = function(){ return(_.get(this, "_transportsSync", [])); };
+    measurer.prototype.transportsAsync = function(){ return(_.get(this, "_transportsAsync", [])); };
+
+    measurer.prototype.measure = function(categoryName, measurementName){
+        var self = this;
+
+        if(measurementName !== undefined || _.isObject(categoryName)){ 
+            var stopped = self.stop(categoryName, measurementName);
+            if(stopped !== null){ return(stopped); }
+            else{ return(self.start(categoryName, measurementName)); }
+        }
+    };
+     
+    measurer.prototype.child = function(options){
+        return(new measurer(_.defaults(options, { parent: this})));
+    };
+
+    measurer.prototype.start = function(categoryName, measurementName){
+        var pendingMeasurements = _.get(this, "_pendingMeasurements", {});
+        var category = _.get(pendingMeasurements, categoryName, {});
+        var measurements = _.get(category, measurementName, {});
+        var newMeasurement = { type: 'measurement', category: categoryName, name: measurementName, token: _.uuid() };
+        newMeasurement.start = _.timestamp();
+
+        measurements[newMeasurement.token] = newMeasurement;
+            
+        return(newMeasurement);
+    };
+
+    measurer.prototype.stop = function(categoryName, measurementName){
+        var self = this;
+        var end = _.timestamp();
+        var token = "";
+
+        if(_.isObject(categoryName) && categoryName.type === 'measurement'){
+            var tokenObj = categoryName;
+            categoryName = tokenObj.category;
+            measurementName = tokenObj.name;
+            token = tokenObj.token;
+        }
+
+        var pendingMeasurements = _.get(this, "_pendingMeasurements", {});
+        var category = _.get(pendingMeasurements, categoryName, {});
+        var measurements = _.get(category, measurementName, {});
+        
+        var measurement = null;
+
+        if(token){
+            measurement = measurements[token];
+        }else if(_.keys(measurements).length === 1){
+            measurement = measurements[_.keys(measurements)[0]];
+        }
+
+        if(measurement){
+            measurement.end = end;
+            measurement.duration = measurement.end - measurement.start;
+
+            self.transport(measurement);
+        }
+
+        return(measurement);
+    };
+
+    measurer.prototype.measurements = function(categoryName, measurementName){
+        var measurements = _.get(this, "_measurements", {})
+        
+        if(!categoryName){
+            return(measurements);
+        }else if(!measurementName){
+            return(_.get(measurements, categoryName));
+        }else{
+            var category = _.get(measurements, categoryName);
+            if(category){ return(_.get(category, measurementName)); }
+            else{ return(undefined); }
+        }
+    };
+
+    measurer.prototype.last = function(categoryName, measurementName){
+        var measurements = _.get(this, "_measurements", {})
+        var category = _.get(measurements, categoryName);
+        
+        if(!measurementName){
+            var result = {};
+            _.each(category, function(measurements, measurementName){
+                result[measurementName] = measurements.last;
+            });
+            return(result);
+        }else{
+            if(category){ return(_.get(category, measurementName).last); }
+            else{ return(undefined); }
+        }
+    };
+
+    measurer.prototype.displayLast = function(categoryName, writer){
+        var measurements = this.last(categoryName);
+
+        var sorted = _.map(measurements, function(value, name){
+            return({ value: value, name: name});
+        });
+
+        sorted.sort(function(a, b){ return(a.value - b.value); });
+
+        _.each(sorted, function(measurement){
+            writer(measurement.name + ": " + measurement.value + "ms");
+        });
+    };
+
+    measurer.prototype.make = function(root, options){
+        root = root || {};
+
+        root.measurer = new measurer(options);
+
+        return(root.measurer);
+    }
+
+    return(new measurer());
+}
+)(_);
 })();

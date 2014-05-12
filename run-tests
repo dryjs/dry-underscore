@@ -1,0 +1,3 @@
+#!/bin/bash
+tamejs ./test/async.test.tjs > ./test/async.test.js && expresso
+
