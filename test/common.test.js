@@ -5,6 +5,7 @@ var assert = require('assert');
 
 var _ = require('../');
 var eq = _.test.eq;
+var ok = _.test.ok;
 
 exports.testHasType = testHasType;
 exports.testHasTypes = testHasTypes;
@@ -18,9 +19,8 @@ exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
 exports.testMapAsync = testMapAsync;
 exports.testFilterAsync = testFilterAsync;
-exports.testMakeClassPerformance = testMakeClassPerformance;
 exports.testFor = testFor;
-exports.testForPerformance = testForPerformance;
+exports.testTimeout = testTimeout;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -32,28 +32,33 @@ exports.testRequest = function(){
 };
 */
 
-function testForPerformance(){
+function testTimeout(beforeExit){
 
-    var n = 10 * 1000 * 1000;
-    var strN = "10M";
+    var successCalled = 0;
+    var errorCalled = 0;
 
-    _.time("for loop " + strN);
-    for(var i = 0; i < n; i++){
-        _.noop();
+    function goodSuccess(){ successCalled++; };
+    function goodError(){ errorCalled++; };
+    function badSuccess(){ _.fatal("shouldn't be called."); }
+    function badError(){ _.fatal("shouldn't be called."); }
+
+    setTimeout(_.timeout(goodSuccess, badError, 100), 20);
+    setTimeout(_.timeout(badSuccess, goodError, 100), 200);
+
+    function withArgs(callback, t){ 
+        setTimeout(function(){
+            callback(1, 2, 3);
+        }, t);
     }
-    _.time("for loop " + strN, true);
-    _.time("for loop " + strN);
-    for(i = 0; i < n; i++){
-        _.noop();
-    }
-    _.time("for loop " + strN, true);
 
-    _.time("for function " + strN);
-    _.for(n, function(){ });
-    _.time("for function " + strN, true);
-    _.time("for function " + strN);
-    _.for(n, function(){ });
-    _.time("for function " + strN, true);
+    withArgs(_.timeout(function(a, b, c){ eq(a, 1); eq(b, 2); eq(c, 3);  successCalled++ }, badError, 100), 20);
+    setTimeout(_.timeout(badSuccess, function(err){ errorCalled++; ok(err.add); }, 100, {add: true}), 200);
+
+    beforeExit(function(){ 
+        eq(successCalled, 2);
+        eq(errorCalled, 2);
+    });
+
 }
 
 function testFor(){
@@ -71,74 +76,6 @@ function testFor(){
     _.for(100, function(i){  if(i == 50){ return(false); } actual++; });
 
     eq(actual, expected);
-}
-
-function testMakeClassPerformance(){
-
-    var n = 1 * 1000 * 1000;
-
-    function c(x, y){
-        this.x = x;
-        this.y = y;
-    }
-    c.prototype.str = function(){ return("str"); };
-
-    function cwrap(x, y){ return(new c(x, y)); }
-
-    var makeC = _.makeClass(); 
-    
-    makeC.prototype.init = function(x, y){
-        this.x = x;
-        this.y = y;
-    }
-    makeC.prototype.str = function(){ return("str"); };
-
-    // var makeCF = function(){ if(this.init){ this.init.apply(this, arguments); } };
-    var makeCF = _.fastMakeClass();
-    
-    makeCF.prototype.init = function(x, y){
-        this.x = x;
-        this.y = y;
-    }
-    makeCF.prototype.str = function(){ return("str"); };
-
-    // we call the same loop twice to "compile" it I guess
-    // I know the timing is high the first time and constant
-    // the other times
-
-    _.time("native");
-    _.for(n, function(){ 
-        var ci = new c(1, 2);
-        ci.y = ci.x + ci.y;
-    });
-    _.time("native", true);
-    _.time("native");
-    _.for(n, function(){ 
-        var ci = new c(1, 2);
-        ci.y = ci.x + ci.y;
-    });
-    _.time("native", true);
-
-    _.time("nativeWrap");
-    _.for(n, function(){ var ci = cwrap(1, 2); });
-    _.time("nativeWrap", true);
-    _.time("nativeWrap");
-    _.for(n, function(){ var ci = cwrap(1, 2); });
-    _.time("nativeWrap", true);
-
-    _.time("makeClassFast");
-    _.for(n, function(){ var ci = new makeCF(1, 2); });
-    _.time("makeClassFast", true);
-    _.time("makeClassFast");
-    _.for(n, function(){ var ci = new makeCF(1, 2); });
-    _.time("makeClassFast", true);
-
-    _.time("makeClass");
-    _.for(n, function(){ var ci = new makeC(1, 2); });
-    _.time("makeClass", true);
-    _.time("makeClass");
-    _.for(n, function(){ var ci = new makeC(1, 2); });
-    _.time("makeClass", true);
 }
 
 function testMapAsync(beforeExit){
@@ -180,6 +117,8 @@ function testFilterAsync(beforeExit){
 
 
 function testHandleBars(){
+    _.log.level("info");
+
     var data = {"person": { "name": "Alan" }, "company": {"name": "Rad, Inc." } };
     var template = "{{person.name}} - {{company.name}}";
     // _.time("pre");

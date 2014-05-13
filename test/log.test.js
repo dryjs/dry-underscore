@@ -5,19 +5,7 @@ var eq = _.test.eq;
 
 exports.testLog = testLog;
 exports.testChild = testChild;
-exports.testPerformance = testPerformance;
 
-function testPerformance(){
-
-    // var n = 1; 
-    var n = .1 * 1000 * 1000;
-
-    _.time("make log");
-    _.for(n, function(){ 
-        _.log.make();
-    });
-    _.time("make log", true);
-}
 
 function testTransport(){ }
 testTransport.prototype.expected = function(str){ this._expected = str; };
