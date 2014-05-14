@@ -2,13 +2,27 @@ var fs = require('fs');
 var assert = require('assert');
 var _ = require('../');
 
+var eq = _.test.eq;
+
 exports.testEcho = function(beforeExit){
     var n = 0;
-    _.shell("echo 'shell is working.'", function(code){
-        assert.eql(code, 0);
+    _.exec("echo 'shell is working.'", function(code, stdout, stderr){
+        eq(code, 0);
+        eq(stdout, "shell is working.\n");
+        eq(stderr, "");
         n++;
     });
-    beforeExit(function(){ assert.eql(n, 1); });
+
+    /*
+    _.shell("echo 'shell is working.'", function(code, stdout, stderr){
+        eq(code, 0);
+        eq(stdout, "shell is working.\n");
+        eq(stderr, "");
+        n++;
+    });
+    */
+ 
+    beforeExit(function(){ eq(n, 1); });
 }
 
 exports.testTrimAndStripQuotes = function(){

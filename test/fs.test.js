@@ -30,7 +30,8 @@ exports.findTest = findTest;
 
 function testMTime(){
     _.fs.modificationTime(testDir + '/parent/parent.file', function(err, mtime){
-        console.log(mtime);
+        ok(!err);
+        ok(mtime);
     });
 }
 

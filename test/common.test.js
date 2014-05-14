@@ -139,7 +139,7 @@ function testHandleBars(){
     eq(_.render("testTemplateTwo", { data: "hello" }), "hello");
 };
 
-function testMoment(){ _.sout(_.moment().format("YYYY-MM-DD")); }
+function testMoment(){ ok(_.moment().format("YYYY-MM-DD")); }
 
 function hashTest(){
     var iterations = 100 * 1000;
