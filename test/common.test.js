@@ -90,9 +90,25 @@ function testMemoizeAsync(beforeExit){
         called++;
     }, 3);
 
+    f(2, 2, function(a, b, c){
+        eq(a, 2);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    f(2, 2, function(a, b, c){
+        eq(a, 2);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+
+
     beforeExit(function(){ 
-        eq(expensiveCalled, 1);
-        eq(called, 3);
+        eq(expensiveCalled, 2);
+        eq(called, 5);
     });
 }
 
