@@ -19,6 +19,9 @@ exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
 exports.testMapAsync = testMapAsync;
 exports.testFilterAsync = testFilterAsync;
+exports.testRmap = testRmap;
+exports.testRfilter = testRfilter;
+exports.testMemoizeAsync = testMemoizeAsync;
 exports.testFor = testFor;
 exports.testTimeout = testTimeout;
 //exports.hashTest = hashTest;
@@ -31,6 +34,67 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testRmap(){
+    var expected = [1, 2, 3, 6];
+
+    var first = true
+    eq(expected, _.rmap([0, 1, 2, 3], function(a){
+        if(first){
+            first = false;
+            return(a*2);
+        }else{ return(a+1); }
+    }));
+}
+
+function testRfilter(){
+
+    var expected = [0, 1, 3];
+
+    var iter = 0;
+    eq(expected, _.rfilter([0, 1, 2, 3], function(a){
+        if(iter++ === 1){
+            return(false);
+        }else{ return(true); }
+    }));
+}
+
+function testMemoizeAsync(beforeExit){
+
+    var called = 0;
+    var expensiveCalled = 0;
+
+    var f = _.memoize.async(function(a, b, cb, c){
+        expensiveCalled++;
+        _.nextTick(function(){ cb(a, b, c); });
+    });
+
+    f(1, 2, function(a, b, c){
+        eq(a, 1);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    f(1, 2, function(a, b, c){
+        eq(a, 1);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    f(1, 2, function(a, b, c){
+        eq(a, 1);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    beforeExit(function(){ 
+        eq(expensiveCalled, 1);
+        eq(called, 3);
+    });
+}
 
 function testTimeout(beforeExit){
 
