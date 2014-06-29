@@ -104,8 +104,6 @@ function testMemoizeAsync(beforeExit){
         called++;
     }, 3);
 
-
-
     beforeExit(function(){ 
         eq(expensiveCalled, 2);
         eq(called, 5);

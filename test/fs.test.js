@@ -4,7 +4,7 @@ var assert = require('assert');
 var fs = require('fs');
 
 var _ = require('../');
-var join = _.paths.join;
+var join = _.path.join;
 var eq = _.test.eq;
 var ok = _.test.ok;
 
@@ -20,7 +20,7 @@ exports.testMoveFiles = testMoveFiles;
 exports.testReadFile = testReadFile;
 exports.testIsDirectoryEmpty = testIsDirectoryEmpty;
 exports.testDirectoryContains = testDirectoryContains;
-exports.testFindFileInParents = testFindFileInParents;
+exports.testFindInParents = testFindInParents;
 exports.testReadDir = testReadDir;
 exports.testMakeRemoveTree = testMakeRemoveTree;
 exports.testDirectories = testDirectories;
@@ -256,38 +256,45 @@ function testDirectoryContains(beforeExit){
     
 }
 
-function testFindFileInParents(beforeExit){
+function testFindInParents(beforeExit){
     var n = 0;
         
-    eq(testDir + "parent", _.fs.findFileInParents.sync(testDir + "parent/child/child.directory/", "parent.file"));
+    eq(testDir + "parent", _.fs.findInParents.sync(testDir + "parent/child/child.directory/", "parent.file"));
+    eq(testDir + "parent", _.fs.findInParents.sync(testDir + "parent/child/child.directory/", "child"));
     
-    eq("", _.fs.findFileInParents.sync(testDir + "parent/child/child.directory/", "parent.file.doesnotexist"));
+    eq("", _.fs.findInParents.sync(testDir + "parent/child/child.directory/", "parent.file.doesnotexist"));
         
     try{
-        eq("", _.fs.findFileInParents.sync(testDir + "parent/child/child.directory/doesntexist/", "parent.file.doesnotexist"));
+        eq("", _.fs.findInParents.sync(testDir + "parent/child/child.directory/doesntexist/", "parent.file.doesnotexist"));
     }catch(e){
         n++;
     }
     
-    _.fs.findFileInParents(testDir + "parent/child/child.directory/doesntexist/", "parent.file", function(err, path){
+    _.fs.findInParents(testDir + "parent/child/child.directory/doesntexist/", "parent.file", function(err, path){
         ok(err);
         eq(undefined, path);
         n++;
     });
         
-    _.fs.findFileInParents(testDir + "parent/child/child.directory/", "parent.file", function(err, path){
+    _.fs.findInParents(testDir + "parent/child/child.directory/", "parent.file", function(err, path){
         ok(!err);
         eq(testDir + "parent/", path);
         n++;
     });
     
-    _.fs.findFileInParents(testDir + "parent/child/child.directory/", "parent.file.doesnotexist", function(err, path){
+    _.fs.findInParents(testDir + "parent/child/child.directory/", "child", function(err, path){
+        ok(!err);
+        eq(testDir + "parent/", path);
+        n++;
+    });
+ 
+    _.fs.findInParents(testDir + "parent/child/child.directory/", "parent.file.doesnotexist", function(err, path){
         ok(!err);
         eq(path, "");
         n++;
     });
     
-    beforeExit(function(){ assert.equal(4, n); });
+    beforeExit(function(){ assert.equal(5, n); });
 }
 
 function testFileExists(beforeExit){
@@ -616,7 +623,7 @@ function walkTest(beforeExit){
         './parent/parent.file'
     ];
 
-    var expectedPaths = _.map(relativePaths, function(val){ return(_.paths.normalize(testDir + val)); });
+    var expectedPaths = _.map(relativePaths, function(val){ return(_.path.normalize(testDir + val)); });
     var foundPaths = []; 
 
     _.fs.walk.sync(testDir, function onFile(fileName, filePath){
@@ -695,7 +702,7 @@ function findTest(beforeExit){
         './parent/parent.file'
     ];
 
-    var expectedPaths = _.map(relativePaths, function(val){ return(_.paths.normalize(testDir + val)); });
+    var expectedPaths = _.map(relativePaths, function(val){ return(_.path.normalize(testDir + val)); });
     var foundPaths = []; 
 
     var foundPaths = _.fs.find.sync(testDir, "*.file");
@@ -709,7 +716,7 @@ function findTest(beforeExit){
 
     foundPaths = _.fs.find.sync(testDir, { pattern: "*.file", prune: function(dirName){ return(dirName === 'child'); } });
 
-    var prunedExpected = [_.paths.normalize(testDir + './parent/parent.file')];
+    var prunedExpected = [_.path.normalize(testDir + './parent/parent.file')];
 
     _.each(prunedExpected, function(val){
         eq([val], _.filter(foundPaths, function(found){ return(found === val); }));
