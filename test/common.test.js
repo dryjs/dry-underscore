@@ -114,27 +114,41 @@ function testTimeout(beforeExit){
 
     var successCalled = 0;
     var errorCalled = 0;
+    var totalCalled = 0;
 
-    function goodSuccess(){ successCalled++; };
-    function goodError(){ errorCalled++; };
-    function badSuccess(){ _.fatal("shouldn't be called."); }
-    function badError(){ _.fatal("shouldn't be called."); }
+    function expectError(err){
+        ok(err);
+        errorCalled++;
+        totalCalled++;
+    }
 
-    setTimeout(_.timeout(goodSuccess, badError, 100), 20);
-    setTimeout(_.timeout(badSuccess, goodError, 100), 200);
+    function expectSuccess(err){
+        ok(!err);
+        successCalled++;
+        totalCalled++;
+    }
+
+    setTimeout(_.timeout(expectSuccess, 100), 20);
+    setTimeout(_.timeout(expectError, 100), 200);
 
     function withArgs(callback, t){ 
         setTimeout(function(){
-            callback(1, 2, 3);
+            callback(null, 1, 2, 3);
         }, t);
     }
 
-    withArgs(_.timeout(function(a, b, c){ eq(a, 1); eq(b, 2); eq(c, 3);  successCalled++ }, badError, 100), 20);
-    setTimeout(_.timeout(badSuccess, function(err){ errorCalled++; ok(err.add); }, 100, {add: true}), 200);
+    withArgs(_.timeout(
+        _.plumb(function(a, b, c){ 
+            eq(a, 1); eq(b, 2); eq(c, 3);
+            successCalled++; totalCalled++;
+        }, function(err){ ok(!err) }), 
+    100), 20);
+    setTimeout(_.timeout(function(err){ ok(err); errorCalled++; ok(err.add); totalCalled++ }, 100, {add: true}), 200);
 
     beforeExit(function(){ 
         eq(successCalled, 2);
         eq(errorCalled, 2);
+        eq(totalCalled, 4);
     });
 
 }
