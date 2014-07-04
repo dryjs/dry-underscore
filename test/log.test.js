@@ -2,10 +2,42 @@
 var assert = require('assert');
 var _ = require('../');
 var eq = _.test.eq;
+var ok = _.test.ok;
 
 exports.testLog = testLog;
 exports.testChild = testChild;
+exports.testVerbose = testVerbose;
 
+function testVerbose(){
+
+    var log = _.log.make();
+
+    ok(log.verbose());
+
+    log.level("info");
+    ok(!log.verbose());
+
+    log.level("debug");
+    ok(log.verbose());
+
+    log.level("info");
+    ok(!log.verbose());
+
+    log.verboseLevel("info");
+    log.level("info");
+    ok(log.verbose());
+
+    log.verboseLevel("invalid");
+    ok(log.verbose());
+
+    log.level("emerg");
+    ok(!log.verbose());
+
+    log.level("alert");
+    ok(!log.verbose());
+
+    eq(log.verboseLevel(), "info");
+}
 
 function testTransport(){ }
 testTransport.prototype.expected = function(str){ this._expected = str; };
