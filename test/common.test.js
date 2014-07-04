@@ -24,6 +24,7 @@ exports.testRfilter = testRfilter;
 exports.testMemoizeAsync = testMemoizeAsync;
 exports.testFor = testFor;
 exports.testTimeout = testTimeout;
+exports.testPlumber = testPlumber;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -34,6 +35,44 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testPlumber(beforeExit){
+    var calls = 0;
+    var expectedCalls = 15;
+
+    function throws(callback){ callback(_.error("BadError", "bad error.")); }
+
+    function abc(callback){ callback(null, 'a', 'b', 'c'); }
+
+    function invalidCall(){ throw(_.exception("BadCall", "Unexpected call.")); }
+
+    function returnsFalse(){ return(false); }
+    function returnsTrue(){ return(true); };
+
+    var expectsError = function(err){ ok(_.error.eq("BadError", err)); eq(arguments.length, 1); calls++; }
+    var expectsGood = function(err, a, b, c){ ok(!err); eq(a, 'a'); eq(b, 'b'); eq(c, 'c'); calls++; }
+
+    throws(_.plumb(invalidCall, expectsError));
+    abc(_.plumb(function(a, b, c){ eq(a, 'a'); eq(b, 'b'); eq(c, 'c'); calls++; }, invalidCall));
+
+    throws(_.plumb(invalidCall, expectsError, "OtherError"));
+    throws(_.plumb(invalidCall, expectsError, ["OtherError"]));
+    throws(_.plumb(invalidCall, expectsError, returnsFalse));
+    throws(_.plumb(invalidCall, expectsError, [returnsFalse]));
+
+    abc(_.plumb(expectsGood, invalidCall, "OtherError"));
+    abc(_.plumb(expectsGood, invalidCall, ["OtherError", "NotherError"]));
+    abc(_.plumb(expectsGood, invalidCall, returnsFalse));
+    abc(_.plumb(expectsGood, invalidCall, [returnsFalse]));
+    abc(_.plumb(expectsGood, invalidCall, ["OtherError", returnsFalse]));
+
+    throws(_.plumb(expectsError, invalidCall, "BadError"));
+    throws(_.plumb(expectsError, invalidCall, ["OtherError", "BadError"]));
+    throws(_.plumb(expectsError, invalidCall, returnsTrue));
+    throws(_.plumb(expectsError, invalidCall, [returnsFalse, returnsTrue]));
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+}
 
 function testRmap(){
     var expected = [1, 2, 3, 6];

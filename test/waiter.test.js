@@ -10,6 +10,7 @@ exports.testResults = testResults;
 exports.testPlumb = testPlumb;
 exports.testPlumbAll = testPlumbAll;
 exports.testOutOfOrder = testOutOfOrder;
+exports.testExtraArgs = testExtraArgs;
 
 function testOutOfOrder(beforeExit){
 
@@ -61,6 +62,35 @@ function testResults(beforeExit){
 
     beforeExit(function(){ eq(called, 1); });
 }
+
+function testExtraArgs(beforeExit){
+
+    var called = 0;
+
+    function asyncFunction(i, callback){ 
+        _.nextTick(function(){ callback(i, "a", "b"); });
+    }
+
+    var w = _.waiter();
+
+    _.for(10, function(i){ asyncFunction(i, w.defer("z", "x")); });
+
+    var expected = [];
+    _.for(10, function(i){ expected.push([i, "a", "b", "z", "x"]); });
+
+    var results = [];
+
+    w.results(function(i, a, b, c, d){ 
+        results.push([i, a, b, c, d]);
+    }, function(){
+        called++;
+        eq(results, expected);
+    });
+
+    beforeExit(function(){ eq(called, 1); });
+}
+
+
 
 function testPlumbAll(beforeExit){
 
