@@ -143,7 +143,7 @@ function testReadFile(beforeExit){
 
 function testIsDirectoryEmpty(beforeExit){
 
-    _.fs.makeTree.sync(testDir + 'parent/empty/');
+    _.fs.mkdir.sync(testDir + 'parent/empty/');
 
     var n = 0;
     
@@ -435,13 +435,13 @@ function testMakeRemoveTree(beforeExit){
     _.fs.removeTree.sync(testDir + 'async');
     n++;
 
-    _.fs.makeTree.sync(testDir + 'sync/make/tree/');
+    _.fs.mkdir.sync(testDir + 'sync/make/tree/');
     eq(true, _.fs.exists.sync(testDir + 'sync/make/tree/'));
 
     _.fs.removeTree.sync(testDir + 'sync');
     eq(false, _.fs.exists.sync(testDir + 'sync'));    
 
-    _.fs.makeTree(testDir + 'async/make/tree/', function(err){
+    _.fs.mkdir(testDir + 'async/make/tree/', function(err){
         eq(true, _.fs.exists.sync(testDir + 'async/make/tree'));
         ok(!err);
         _.fs.removeTree(testDir + 'async', function(err){
@@ -451,7 +451,7 @@ function testMakeRemoveTree(beforeExit){
         });    
     });
     
-    _.fs.makeTree(testDir + 'parent/child/', function(err){
+    _.fs.mkdir(testDir + 'parent/child/', function(err){
         ok(!err);
         n++;
     });
