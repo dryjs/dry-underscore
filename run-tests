@@ -1,3 +1,4 @@
 #!/bin/bash
-tamejs ./test/async.test.tjs > ./test/async.test.js && expresso
+tamejs ./test/async.test.tjs > ./test/async.test.js &&
+tamejs ./test/builder.test.tjs > ./test/builder.test.js && expresso
 

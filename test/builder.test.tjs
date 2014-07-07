@@ -1,0 +1,103 @@
+
+var _ = require('../');
+var eq = _.test.eq;
+var ok = _.test.ok;
+
+var root = _.path.fun(_.path.normalize(__dirname + "/builder-data/"));
+
+exports.testCache = testCache;
+
+function testCache(beforeExit){
+
+    var calls = 0;
+    var expectedCalls = 0;
+
+    var result = null;
+
+    function thrw(x){ _.p(x.stack); throw(x); }
+
+    await{ _.fs.mkdir(root(), _.plumb(defer(), thrw)); }
+    await{ _.fs.removeTree(root(), _.plumb(defer(), thrw)); }
+    await{ _.fs.mkdir(root(), _.plumb(defer(), thrw)); }
+    await{ _.fs.exists(root("cache"), _.plumb(defer(result), thrw)); }
+    ok(!result);
+
+    var b = _.builder({
+        cache: root("cache"),
+        clean: true
+    });
+
+
+
+
+
+
+    /*
+    eq(['child', 'empty', 'parent.file'], _.fs.readDir.sync(testDir + "parent"));
+    try{
+        eq([], _.fs.readDir.sync(testDir + "parent/parent.file"));
+    }catch(e){
+        n++;
+    }
+    try{
+        eq([], _.fs.readDir.sync(testDir + "parent/parent.file.doesnotexist"));
+    }catch(e){
+        n++;
+    }
+    
+    _.fs.readDir(testDir + "parent", function(err, names){
+        ok(!err);
+        eq(['child', 'empty', 'parent.file'], names);
+        n++;
+    });
+    
+    _.fs.readDir(testDir + "parent/parent.file", function(err, names){
+        ok(err);
+        eq(undefined, names);
+        n++;
+    });
+    
+    _.fs.readDir(testDir + "parent/parent.file.doesnotexist", function(err, names){
+        ok(err);
+        eq(undefined, names);
+        n++;
+    });
+    
+    eq([],
+        _.difference(
+            [testDir + 'parent/' + 'parent.file', testDir + 'parent/' + 'child', testDir + 'parent/' + 'empty'], 
+            _.fs.readDir.sync(testDir + "parent", { fullPath: true })
+        )
+    );
+    try{
+        eq([], _.fs.readDir.sync(testDir + "parent/parent.file", { fullPath: true }));
+    }catch(e){
+        n++;
+    }
+    try{
+        eq([], _.fs.readDir.sync(testDir + "parent/parent.file.doesnotexist", { fullPath: true }));
+    }catch(e){
+        n++;
+    }
+    
+    _.fs.readDir(testDir + "parent", { fullPath: true }, function(err, names){
+        ok(!err);
+        eq([], _.difference([testDir + 'parent/' + 'parent.file', testDir + 'parent/' + 'child', testDir + 'parent/' +'empty'], names));
+        n++;
+    });
+    
+    _.fs.readDir(testDir + "parent/parent.file", { fullPath: true }, function(err, names){
+        ok(err);
+        eq(undefined, names);
+        n++;
+    });
+    
+    _.fs.readDir(testDir + "parent/parent.file.doesnotexist", { fullPath: true }, function(err, names){
+        ok(_.ecode.noEnt(err));
+        eq(undefined, names);
+        n++;
+    });
+    */
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+}
