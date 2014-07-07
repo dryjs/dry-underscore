@@ -4,6 +4,7 @@ var eq = _.test.eq;
 var ok = _.test.ok;
 
 exports.testPipeline = testPipeline;
+exports.testDryBuild = testDryBuild;
 
 function testPipeline(beforeExit){
 
@@ -41,6 +42,23 @@ function testPipeline(beforeExit){
     catch(e){ ok(false); }
 
     eq(p.order(), ['0', '0.5', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+}
+
+function testDryBuild(beforeExit){
+
+    var calls = 0;
+    var expectedCalls = 0;
+
+    var p = _.pipeline();
+
+    p.before("skeletons", "skeletons-expand");
+    p.after("skeletons", "models");
+    p.before("models", "models-build");
+    p.after("models", "bundle");
+
+    eq(p.order(), ['skeletons-expand', 'skeletons', 'models-build', 'models', 'bundle']);
 
     beforeExit(function(){ eq(calls, expectedCalls); });
 }
