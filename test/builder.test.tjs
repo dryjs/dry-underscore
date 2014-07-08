@@ -5,20 +5,21 @@ var ok = _.test.ok;
 
 var root = _.path.fun(_.path.normalize(__dirname + "/builder-data/"));
 
-exports.testCache = testCache;
+exports.testBuilder = testBuilder;
+// exports.testStages = testStages;
 
-function testCache(beforeExit){
+function testBuilder(beforeExit){
 
     var calls = 0;
-    var expectedCalls = 0;
+    var expectedCalls = 1;
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
 
     var result = null;
 
     function thrw(x){ _.p(x.stack); throw(x); }
 
-    await{ _.fs.mkdir(root(), _.plumb(defer(), thrw)); }
-    await{ _.fs.removeTree(root(), _.plumb(defer(), thrw)); }
-    await{ _.fs.mkdir(root(), _.plumb(defer(), thrw)); }
+    await{ _.fs.deleteFile(root("cache"), _.plumb(defer(), thrw, _.ecode.noEnt)); }
     await{ _.fs.exists(root("cache"), _.plumb(defer(result), thrw)); }
     ok(!result);
 
@@ -27,77 +28,167 @@ function testCache(beforeExit){
         clean: true
     });
 
+    await{ b.load(_.plumb(defer(), thrw)); }
 
+    var err = null;
+    var file = null;
 
-
-
-
-    /*
-    eq(['child', 'empty', 'parent.file'], _.fs.readDir.sync(testDir + "parent"));
-    try{
-        eq([], _.fs.readDir.sync(testDir + "parent/parent.file"));
-    }catch(e){
-        n++;
+    await{ 
+        b.build(root("not-there"), function(file, data, callback){
+            eq(file, { path: root("not-there"), exists: false, created: false, dirty: true, removed: false });
+            eq(data, undefined);
+            callback(null, "two");
+        }, defer(err, file, result)); 
     }
-    try{
-        eq([], _.fs.readDir.sync(testDir + "parent/parent.file.doesnotexist"));
-    }catch(e){
-        n++;
+
+    eq(err, null);
+    eq(file, { path: root("not-there"), exists: false, created: false, dirty: false, removed: false });
+    eq(result, undefined);
+
+    await{ 
+        b.build(root("test-error.txt"), function(file, data, callback){
+            delete file.mtime;
+            eq(file, { path: root("test-error.txt"), exists: true, created: true, dirty: true, removed: false });
+            eq(data, "");
+            callback({ code: "ERROR" });
+        }, defer(err, file, result)); 
     }
-    
-    _.fs.readDir(testDir + "parent", function(err, names){
-        ok(!err);
-        eq(['child', 'empty', 'parent.file'], names);
-        n++;
-    });
-    
-    _.fs.readDir(testDir + "parent/parent.file", function(err, names){
-        ok(err);
-        eq(undefined, names);
-        n++;
-    });
-    
-    _.fs.readDir(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(err);
-        eq(undefined, names);
-        n++;
-    });
-    
-    eq([],
-        _.difference(
-            [testDir + 'parent/' + 'parent.file', testDir + 'parent/' + 'child', testDir + 'parent/' + 'empty'], 
-            _.fs.readDir.sync(testDir + "parent", { fullPath: true })
-        )
-    );
-    try{
-        eq([], _.fs.readDir.sync(testDir + "parent/parent.file", { fullPath: true }));
-    }catch(e){
-        n++;
+
+    eq(err, { code: "ERROR" });
+    eq(file, undefined);
+    eq(result, undefined);
+
+ 
+    await{ 
+        b.build(root("one.txt"), function(file, data, callback){
+            delete file.mtime;
+            eq(file, { path: root("one.txt"), exists: true, created: true, dirty: true, removed: false });
+            eq(data, "one\n");
+            callback(null, "two");
+        }, defer(err, file, result)); 
     }
-    try{
-        eq([], _.fs.readDir.sync(testDir + "parent/parent.file.doesnotexist", { fullPath: true }));
-    }catch(e){
-        n++;
+
+    eq(err, null);
+    delete file.mtime;
+    eq(file, { path: root("one.txt"), exists: true, created: true, dirty: true, removed: false });
+    eq(result, "two");
+    eq(b.cache(root("one.txt")), "two");
+
+    b.finished();
+
+    await{ 
+        b.build(root("one.txt"), function(file, data, callback){
+            _.p("file: ", file);
+            _.p("file   : ", file.mtime);
+            _.p("builder: ", b.last());
+            _.p("builder newer: ", file.mtime < b.last());
+            ok(false);
+        }, defer(err, file, result)); 
     }
+
+    eq(err, null);
+    delete file.mtime;
+    eq(file, { path: root("one.txt"), exists: true, created: false, dirty: false, removed: false });
+    eq(result, "two");
+
+    await{ b.save(_.plumb(defer(), thrw)); }
     
-    _.fs.readDir(testDir + "parent", { fullPath: true }, function(err, names){
-        ok(!err);
-        eq([], _.difference([testDir + 'parent/' + 'parent.file', testDir + 'parent/' + 'child', testDir + 'parent/' +'empty'], names));
-        n++;
+    var ab = _.builder({
+        cache: root("cache"),
+        clean: false
     });
-    
-    _.fs.readDir(testDir + "parent/parent.file", { fullPath: true }, function(err, names){
-        ok(err);
-        eq(undefined, names);
-        n++;
-    });
-    
-    _.fs.readDir(testDir + "parent/parent.file.doesnotexist", { fullPath: true }, function(err, names){
-        ok(_.ecode.noEnt(err));
-        eq(undefined, names);
-        n++;
-    });
-    */
+
+    await{ ab.load(_.plumb(defer(), thrw)); }
+
+    await{ 
+        ab.build(root("one.txt"), function(file, data, callback){
+            ok(false);
+        }, defer(err, file, result)); 
+    }
+
+    eq(err, null);
+    delete file.mtime;
+    eq(file, { path: root("one.txt"), exists: true, created: false, dirty: false, removed: false });
+    eq(result, "two");
+
+    await{ _.fs.exists(root("cache"), _.plumb(defer(result), thrw)); }
+    ok(result);
+
+    calls++;
+}
+
+function testStages(beforeExit){
+
+    var calls = 0;
+    var expectedCalls = 1;
 
     beforeExit(function(){ eq(calls, expectedCalls); });
+
+    function thrw(x){ _.p(x.stack); throw(x); }
+
+    var b = _.builder({
+        clean: true
+    });
+
+    b.stages.before("build", "prebuild");
+    b.stages.after("build", "postbuild");
+
+    var prebuildHit = false;
+    b.stage("prebuild", function(next, results){
+        results["prebuild-one"] = true;
+        setTimeout(next, 50);
+        prebuildHit = true;
+    });
+
+    b.stage("prebuild", function(next, results){
+        results["prebuild-two"] = true;
+        setTimeout(next, 150);
+        prebuildHit = true;
+    });
+
+    b.stage("build", function(next, results){
+        results["build-one"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+    });
+
+    b.stage("build", function(next, results){
+        results["build-two"] = true;
+        setTimeout(next, 150);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-two"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-two"] = true;
+        setTimeout(next, 150);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    var results = {};
+
+    await{ b.run(results, _.plumb(defer(), thrw)); }
+
+    ok(results["prebuild-one"]);
+    ok(results["prebuild-two"]);
+    ok(results["build-one"]);
+    ok(results["build-two"]);
+    ok(results["postbuild-one"]);
+    ok(results["postbuild-two"]);
+
+    calls++;
 }
+
