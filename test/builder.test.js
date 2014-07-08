@@ -10,6 +10,7 @@ var __tame_fn_0 = function (__tame_k) {
     
     exports . testBuilder = testBuilder ;
     exports . testStages = testStages ;
+    exports . testError = testError ;
     function testBuilder (beforeExit) {
         var __tame_defer_cb = tame.findDeferCb ([beforeExit]);
         tame.setActiveCb (__tame_defer_cb);
@@ -41,7 +42,7 @@ var __tame_fn_0 = function (__tame_k) {
                         __tame_defers.defer ( { 
                             func_name : "testBuilder",
                             parent_cb : __tame_defer_cb,
-                            line : 22,
+                            line : 23,
                             file : "./test/builder.test.tjs"
                         } )
                         , thrw , _ . ecode . noEnt ) ) ;
@@ -66,7 +67,7 @@ var __tame_fn_0 = function (__tame_k) {
                                 ,
                             func_name : "testBuilder",
                             parent_cb : __tame_defer_cb,
-                            line : 23,
+                            line : 24,
                             file : "./test/builder.test.tjs"
                         } )
                         , thrw ) ) ;
@@ -96,7 +97,7 @@ var __tame_fn_0 = function (__tame_k) {
                                 __tame_defers.defer ( { 
                                     func_name : "testBuilder",
                                     parent_cb : __tame_defer_cb,
-                                    line : 31,
+                                    line : 32,
                                     file : "./test/builder.test.tjs"
                                 } )
                                 , thrw ) ) ;
@@ -134,7 +135,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                 }
                                                 ,
                                             parent_cb : __tame_defer_cb,
-                                            line : 41,
+                                            line : 42,
                                             file : "./test/builder.test.tjs"
                                         } )
                                         ) ;
@@ -174,7 +175,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                         }
                                                         ,
                                                     parent_cb : __tame_defer_cb,
-                                                    line : 54,
+                                                    line : 55,
                                                     file : "./test/builder.test.tjs"
                                                 } )
                                                 ) ;
@@ -214,7 +215,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                                 }
                                                                 ,
                                                             parent_cb : __tame_defer_cb,
-                                                            line : 68,
+                                                            line : 69,
                                                             file : "./test/builder.test.tjs"
                                                         } )
                                                         ) ;
@@ -259,7 +260,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                                         }
                                                                         ,
                                                                     parent_cb : __tame_defer_cb,
-                                                                    line : 86,
+                                                                    line : 87,
                                                                     file : "./test/builder.test.tjs"
                                                                 } )
                                                                 ) ;
@@ -286,7 +287,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                                         b . save ( _ . plumb (
                                                                         __tame_defers.defer ( { 
                                                                             parent_cb : __tame_defer_cb,
-                                                                            line : 94,
+                                                                            line : 95,
                                                                             file : "./test/builder.test.tjs"
                                                                         } )
                                                                         , thrw ) ) ;
@@ -313,7 +314,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                                                 ab . load ( _ . plumb (
                                                                                 __tame_defers.defer ( { 
                                                                                     parent_cb : __tame_defer_cb,
-                                                                                    line : 101,
+                                                                                    line : 102,
                                                                                     file : "./test/builder.test.tjs"
                                                                                 } )
                                                                                 , thrw ) ) ;
@@ -343,7 +344,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                                                         }
                                                                                         ,
                                                                                     parent_cb : __tame_defer_cb,
-                                                                                    line : 106,
+                                                                                    line : 107,
                                                                                     file : "./test/builder.test.tjs"
                                                                                 } )
                                                                                 ) ;
@@ -375,7 +376,7 @@ var __tame_fn_0 = function (__tame_k) {
                                                                                                 }
                                                                                                 ,
                                                                                             parent_cb : __tame_defer_cb,
-                                                                                            line : 114,
+                                                                                            line : 115,
                                                                                             file : "./test/builder.test.tjs"
                                                                                         } )
                                                                                         , thrw ) ) ;
@@ -545,7 +546,7 @@ var __tame_fn_0 = function (__tame_k) {
                         __tame_defers.defer ( { 
                             func_name : "testStages",
                             parent_cb : __tame_defer_cb,
-                            line : 183,
+                            line : 184,
                             file : "./test/builder.test.tjs"
                         } )
                         , thrw ) ) ;
@@ -576,6 +577,145 @@ var __tame_fn_0 = function (__tame_k) {
             tame.setActiveCb (null);
         };
         tame.callChain([__tame_fn_46, __tame_k]);
+        tame.setActiveCb (null);
+    }
+    function testError (beforeExit) {
+        var __tame_defer_cb = tame.findDeferCb ([beforeExit]);
+        tame.setActiveCb (__tame_defer_cb);
+        var __tame_this = this;
+        var __tame_arguments = arguments;
+        var __tame_fn_51 = function (__tame_k) {
+            tame.setActiveCb (__tame_defer_cb);
+            var calls = 0 ;
+            var expectedCalls = 1 ;
+            
+            beforeExit (
+            function  () {
+                eq ( calls , expectedCalls ) ;
+            }
+            ) ;
+            function thrw (x) {
+                _ . p ( x . stack ) ; throw ( x ) ;
+            }
+            var b = _ . builder ( {
+            clean : true
+            } ) ;
+            
+            b . stages . before ( "build" , "prebuild" ) ;
+            b . stages . after ( "build" , "postbuild" ) ;
+            
+            var prebuildHit = false ;
+            b . stage ( "prebuild" ,
+            function  (next, results) {
+                results [ "prebuild-one" ] = true ;
+                setTimeout ( next , 50 ) ;
+                prebuildHit = true ;
+            }
+            ) ;
+            
+            b . stage ( "prebuild" ,
+            function  (next, results) {
+                results [ "prebuild-two" ] = true ;
+                setTimeout ( next , 150 ) ;
+                prebuildHit = true ;
+            }
+            ) ;
+            
+            b . stage ( "build" ,
+            function  (next, results) {
+                results [ "build-one" ] = true ;
+                setTimeout ( next , 50 ) ;
+                ok ( results [ "prebuild-one" ] ) ;
+                ok ( results [ "prebuild-two" ] ) ;
+            }
+            ) ;
+            
+            b . stage ( "build" ,
+            function  (next, results) {
+                results [ "build-two" ] = true ;
+                ok ( results [ "prebuild-one" ] ) ;
+                ok ( results [ "prebuild-two" ] ) ;
+                setTimeout (
+                function  () {
+                    next ( _ . error ( "ExpectedError" , "Expected error." ) ) ;
+                }
+                , 150 ) ;
+            }
+            ) ;
+            
+            b . stage ( "postbuild" ,
+            function  (next, results) {
+                results [ "postbuild-one" ] = true ;
+                setTimeout ( next , 50 ) ;
+                ok ( results [ "prebuild-one" ] ) ;
+                ok ( results [ "prebuild-two" ] ) ;
+                ok ( results [ "build-one" ] ) ;
+                ok ( results [ "build-two" ] ) ;
+            }
+            ) ;
+            
+            b . stage ( "postbuild" ,
+            function  (next, results) {
+                results [ "postbuild-two" ] = true ;
+                setTimeout ( next , 150 ) ;
+                ok ( results [ "prebuild-one" ] ) ;
+                ok ( results [ "prebuild-two" ] ) ;
+                ok ( results [ "build-one" ] ) ;
+                ok ( results [ "build-two" ] ) ;
+            }
+            ) ;
+            
+            var results = { } ;
+            var __tame_fn_47 = function (__tame_k) {
+                tame.setActiveCb (__tame_defer_cb);
+                var err, res;
+                var __tame_fn_48 = function (__tame_k) {
+                    tame.setActiveCb (__tame_defer_cb);
+                    var __tame_defers = new tame.Deferrals (__tame_k);
+                    var __tame_fn_49 = function (__tame_k) {
+                        tame.setActiveCb (__tame_defer_cb);
+                        b . run ( results ,
+                        __tame_defers.defer ( { 
+                            assign_fn : 
+                                function () {
+                                    err = arguments[0];
+                                    res = arguments[1];
+                                }
+                                ,
+                            func_name : "testError",
+                            parent_cb : __tame_defer_cb,
+                            line : 261,
+                            file : "./test/builder.test.tjs"
+                        } )
+                        ) ;
+                        tame.callChain([__tame_k]);
+                        tame.setActiveCb (null);
+                    };
+                    __tame_fn_49(tame.end);
+                    __tame_defers._fulfill();
+                    tame.setActiveCb (null);
+                };
+                var __tame_fn_50 = function (__tame_k) {
+                    tame.setActiveCb (__tame_defer_cb);
+                    eq ( res , undefined ) ;
+                    ok ( _ . error . eq ( "ExpectedError" , err ) ) ;
+                    
+                    ok ( results [ "prebuild-one" ] ) ;
+                    ok ( results [ "prebuild-two" ] ) ;
+                    ok ( results [ "build-one" ] ) ;
+                    ok ( results [ "build-two" ] ) ;
+                    
+                    calls ++ ;
+                    tame.callChain([__tame_k]);
+                    tame.setActiveCb (null);
+                };
+                tame.callChain([__tame_fn_48, __tame_fn_50, __tame_k]);
+                tame.setActiveCb (null);
+            };
+            tame.callChain([__tame_fn_47, __tame_k]);
+            tame.setActiveCb (null);
+        };
+        tame.callChain([__tame_fn_51, __tame_k]);
         tame.setActiveCb (null);
     }
     tame.callChain([__tame_k]);

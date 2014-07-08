@@ -7,6 +7,7 @@ var root = _.path.fun(_.path.normalize(__dirname + "/builder-data/"));
 
 exports.testBuilder = testBuilder;
 exports.testStages = testStages;
+exports.testError = testError;
 
 function testBuilder(beforeExit){
 
@@ -188,6 +189,84 @@ function testStages(beforeExit){
     ok(results["build-two"]);
     ok(results["postbuild-one"]);
     ok(results["postbuild-two"]);
+
+    calls++;
+}
+
+function testError(beforeExit){
+
+    var calls = 0;
+    var expectedCalls = 1;
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+
+    function thrw(x){ _.p(x.stack); throw(x); }
+
+    var b = _.builder({
+        clean: true
+    });
+
+    b.stages.before("build", "prebuild");
+    b.stages.after("build", "postbuild");
+
+    var prebuildHit = false;
+    b.stage("prebuild", function(next, results){
+        results["prebuild-one"] = true;
+        setTimeout(next, 50);
+        prebuildHit = true;
+    });
+
+    b.stage("prebuild", function(next, results){
+        results["prebuild-two"] = true;
+        setTimeout(next, 150);
+        prebuildHit = true;
+    });
+
+    b.stage("build", function(next, results){
+        results["build-one"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+    });
+
+    b.stage("build", function(next, results){
+        results["build-two"] = true;
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        setTimeout(function(){
+            next(_.error("ExpectedError", "Expected error."));
+        }, 150);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-one"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-two"] = true;
+        setTimeout(next, 150);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    var results = {};
+
+    await{ b.run(results, defer(var err, res)); }
+
+    eq(res, undefined);
+    ok(_.error.eq("ExpectedError", err));
+
+    ok(results["prebuild-one"]);
+    ok(results["prebuild-two"]);
+    ok(results["build-one"]);
+    ok(results["build-two"]);
 
     calls++;
 }
