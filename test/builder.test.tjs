@@ -6,7 +6,7 @@ var ok = _.test.ok;
 var root = _.path.fun(_.path.normalize(__dirname + "/builder-data/"));
 
 exports.testBuilder = testBuilder;
-// exports.testStages = testStages;
+exports.testStages = testStages;
 
 function testBuilder(beforeExit){
 
@@ -161,7 +161,7 @@ function testStages(beforeExit){
     });
 
     b.stage("postbuild", function(next, results){
-        results["postbuild-two"] = true;
+        results["postbuild-one"] = true;
         setTimeout(next, 50);
         ok(results["prebuild-one"]);
         ok(results["prebuild-two"]);

@@ -9,6 +9,7 @@ var __tame_fn_0 = function (__tame_k) {
     var root = _ . path . fun ( _ . path . normalize ( __dirname + "/builder-data/" ) ) ;
     
     exports . testBuilder = testBuilder ;
+    exports . testStages = testStages ;
     function testBuilder (beforeExit) {
         var __tame_defer_cb = tame.findDeferCb ([beforeExit]);
         tame.setActiveCb (__tame_defer_cb);
@@ -512,7 +513,7 @@ var __tame_fn_0 = function (__tame_k) {
             
             b . stage ( "postbuild" ,
             function  (next, results) {
-                results [ "postbuild-two" ] = true ;
+                results [ "postbuild-one" ] = true ;
                 setTimeout ( next , 50 ) ;
                 ok ( results [ "prebuild-one" ] ) ;
                 ok ( results [ "prebuild-two" ] ) ;
