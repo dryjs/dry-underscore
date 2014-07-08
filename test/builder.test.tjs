@@ -189,6 +189,7 @@ function testStages(beforeExit){
     ok(results["build-two"]);
     ok(results["postbuild-one"]);
     ok(results["postbuild-two"]);
+    b.measurer.displayLast("builder");
 
     calls++;
 }

@@ -565,6 +565,7 @@ var __tame_fn_0 = function (__tame_k) {
                     ok ( results [ "build-two" ] ) ;
                     ok ( results [ "postbuild-one" ] ) ;
                     ok ( results [ "postbuild-two" ] ) ;
+                    b . measurer . displayLast ( "builder" ) ;
                     
                     calls ++ ;
                     tame.callChain([__tame_k]);
@@ -684,7 +685,7 @@ var __tame_fn_0 = function (__tame_k) {
                                 ,
                             func_name : "testError",
                             parent_cb : __tame_defer_cb,
-                            line : 261,
+                            line : 262,
                             file : "./test/builder.test.tjs"
                         } )
                         ) ;
