@@ -22,7 +22,7 @@ exports.testIsDirectoryEmpty = testIsDirectoryEmpty;
 exports.testDirectoryContains = testDirectoryContains;
 exports.testFindInParents = testFindInParents;
 exports.testReadDir = testReadDir;
-exports.testMakeRemoveTree = testMakeRemoveTree;
+exports.testMakeRmdir = testMakeRmdir;
 exports.testDirectories = testDirectories;
 exports.testFiles = testFiles;
 exports.walkTest = walkTest;
@@ -428,23 +428,23 @@ function testReadDir(beforeExit){
 
 }
 
-function testMakeRemoveTree(beforeExit){
+function testMakeRmdir(beforeExit){
     var n = 0;
 
-    _.fs.removeTree.sync(testDir + 'sync');
-    _.fs.removeTree.sync(testDir + 'async');
+    _.fs.rmdir.sync(testDir + 'sync');
+    _.fs.rmdir.sync(testDir + 'async');
     n++;
 
     _.fs.mkdir.sync(testDir + 'sync/make/tree/');
     eq(true, _.fs.exists.sync(testDir + 'sync/make/tree/'));
 
-    _.fs.removeTree.sync(testDir + 'sync');
+    _.fs.rmdir.sync(testDir + 'sync');
     eq(false, _.fs.exists.sync(testDir + 'sync'));    
 
     _.fs.mkdir(testDir + 'async/make/tree/', function(err){
         eq(true, _.fs.exists.sync(testDir + 'async/make/tree'));
         ok(!err);
-        _.fs.removeTree(testDir + 'async', function(err){
+        _.fs.rmdir(testDir + 'async', function(err){
             ok(!err);
             eq(false, _.fs.exists.sync(testDir + 'async'));
             n++;

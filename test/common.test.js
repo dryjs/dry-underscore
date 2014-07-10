@@ -25,6 +25,7 @@ exports.testMemoizeAsync = testMemoizeAsync;
 exports.testFor = testFor;
 exports.testTimeout = testTimeout;
 exports.testPlumber = testPlumber;
+exports.testOmap = testOmap;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -35,6 +36,17 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testOmap(){
+    var o = { a: 'a', b: 'b', c: 'c' };
+    var expected = { "a-a": 1, "b-b": 2, "c-c": 3 };
+    eq(expected, _.omap(o, function(cb, val, key){ 
+        if(val === 'a'){ val = 1; }
+        if(val === 'b'){ val = 2; }
+        if(val === 'c'){ val = 3; }
+        cb(val, key + "-" + key);
+    }));
+}
 
 function testPlumber(beforeExit){
     var calls = 0;
