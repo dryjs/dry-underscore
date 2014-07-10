@@ -8,7 +8,7 @@ var join = _.path.join;
 var eq = _.test.eq;
 var ok = _.test.ok;
 
-var testDir = path.normalize(__dirname + "/data/");
+var testDir = path.normalize(__dirname + "/fs-data/");
 
 exports.testMTime = testMTime;
 

@@ -1,1 +1,0 @@
-/Users/kendrick/Dropbox/Projects/dry/dry-underscore/test/data/mv2.txt

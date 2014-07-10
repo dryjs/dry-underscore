@@ -1,4 +1,5 @@
 #!/bin/bash
 tamejs ./test/async.test.tjs > ./test/async.test.js &&
+tamejs ./test/build.test.tjs > ./test/build.test.js && 
 tamejs ./test/builder.test.tjs > ./test/builder.test.js && expresso
 
