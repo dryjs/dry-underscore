@@ -1,6 +1,6 @@
 {
     "name":"dry-underscore",
-    "version":"0.4.14",
+    "version":"0.4.16",
     "main": "./lib/index.js",
     "description": "The DRY Undescore Library",
     "author": {
@@ -18,10 +18,6 @@
     "directories": {
         "lib": "./lib",
         "bin": "./bin"
-    },
-    "engines": {
-        "node": "0.4 || 0.5 || 0.6 || 0.7 || 0.8 || 0.10",
-        "npm": "1"
     },
     "dependencies":{ 
         "winston":""
