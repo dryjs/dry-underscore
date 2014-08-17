@@ -2775,6 +2775,9 @@ delete this.Handlebars;
 })();
 (
 function (_){
+
+    _.a = function(a){ return(_.toArray(a)); };
+    _.undef = function(x){ return(x === undefined); };
     _.date = function(ts){
         if(_.isNumber(ts)){
             return(new Date(ts));
@@ -2855,6 +2858,13 @@ function (_){
         return(hours + ":" + minutes + " " + amPm);
     };
 
+    _.wit = function(f){
+        return(function(obj){
+            f(obj);
+            return(obj);
+        });
+    };
+
     var oldMax = _.max;
     _.max = function(a, b){
         if(_.isNumber(a) && _.isNumber(b)){
@@ -2871,14 +2881,76 @@ function (_){
         }else{ return(oldMin.apply(_, arguments)); }
     };
  
+    _.omap = function(o, f){
+        var result = {};
+        _.each(o, function(val, key, callback){
+            f(function(v, k){
+                if(!k){ throw(_.exception("omap: key must be specified.")); }
+                result[k] = v;
+            }, val, key, o)
+        });
+        return(result);
+    };
+
+    _.plumb = function(goodF, badF, catchList){
+
+        if(!badF){ _.fatal("NoPlunger", "We won't swallow errors. You need to provide an error callback."); }
+
+        if(catchList && !_.isArray(catchList)){
+            catchList = [catchList];
+        }
+
+        function shouldCatch(err){
+            return(_.find(catchList, function(filter){
+                if(_.isFunction(filter)){
+                    return(filter(err));
+                }else if(_.isString(filter)){
+                    return(_.error.eq(filter, err));
+                }else{ return(false); }
+            }));
+        }
+
+        return(function(err){
+            var args = _.a(arguments);
+            var argsSliced = args.slice(1);
+
+            if(!err){ 
+                if(catchList){ return goodF.apply(null, args); }
+                else{ return goodF.apply(null, argsSliced); }
+            }
+
+            if(catchList && shouldCatch(err)){
+                return goodF.apply(null, args);
+            }else{
+                return badF.apply(null, args);
+            }
+        });
+    };
+
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
-    _.fatal = function(){ throw(new Error("Fatal Error: " + _.format.apply(null, arguments))); };
+    _.fatal = function(){ throw(_.exception("Fatal", "fatal: " + _.format.apply(null, arguments))); };
     _.error = function(code, message, extra){
         extra = extra || {};
         if(extra.message){ extra.originalMessage = extra.message; }
         if(extra.code){ extra.originalCode = extra.code; }
         return(_.extend({
             type: 'error',
+            stack: (new Error(message)).stack
+        }, extra, { code: code, message: message }));
+    };
+    _.error.eq = function(code, err){
+        if(err === undefined){
+            return(code && code.type === "error");
+        }else if(err && err.code && err.code === code){
+            return(true);
+        }else{ return(false); }
+    };
+    _.exception = function(code, message, extra){
+        extra = extra || {};
+        if(extra.message){ extra.originalMessage = extra.message; }
+        if(extra.code){ extra.originalCode = extra.code; }
+        return(_.extend({
+            type: 'exception',
             stack: (new Error(message)).stack
         }, extra, { code: code, message: message }));
     };
@@ -2997,6 +3069,42 @@ function (_){
         for(var i = 0; i < times; i++){ 
             if(f(i) === false){ break; }
         }
+    };
+
+    _.rfor = function(times, f){
+        for(var i = times; i >= 0; i--){
+            if(f(i) === false){ break; }
+        }
+    };
+
+    _.timeout = function(f, ms, err){
+
+        var ran = false;
+
+        if(!_.isNumber(ms)){
+            err = ms;
+            ms = null;
+        }
+
+        if(_.isString(err)){
+            err = { message: err };
+        }
+
+        var ms = ms || 1000;
+
+        var token = setTimeout(function(){
+            if(ran){ return; }
+            ran = true;
+            err = err || {};
+            f(_.extend(_.error("Timeout", "Operation timed out."), err));
+        }, ms);
+
+        return(function(){
+            if(ran){ return; }
+            clearTimeout(token);
+            ran = true;
+            f.apply(this, arguments);
+        });
     };
 
     _.isEmptyObjectWithNoPrototype = function(o){
@@ -3119,7 +3227,7 @@ function (_){
             function callIterator(){ iterator.call(context, o[keys[i]], keys[i], function(){ doWork(i+1); }, callComplete); }
             if(i >= keys.length){ callComplete(); }
             else{
-                if(((i + 1) % 30) === 0){ process.nextTick(callIterator); }
+                if(((i + 1) % 30) === 0){ _.nextTick(callIterator); }
                 else{ callIterator(); }
             }
         })(0);
@@ -3143,6 +3251,73 @@ function (_){
         _.each.async(o, function(val, key, next){
                 filterFunction.call(context, val, key, function(result){ if(result){ results.push(val); } next(); }); 
         }, function(){ completedCallback(results); });
+    };
+
+    _.rfilter = function(a, filterFunction){
+        var results = [];
+
+        _.rfor(a.length-1, function(i){
+            if(filterFunction(a[i], i)){
+                results.unshift(a[i]);
+            }
+        });
+
+        return(results);
+    };
+
+    _.rmap = function(a, mapFunction){
+        var results = [];
+
+        _.rfor(a.length-1, function(i){
+            results.unshift(mapFunction(a[i], i));
+        });
+
+        return(results);
+    };
+
+    _.memoize.async = function(f, cache){
+        cache = cache || {};
+        if(!cache.results){ cache.results = {}; }
+        if(!cache.pending){ cache.pending = {}; }
+
+        return(function(){
+            var args = _.toArray(arguments);
+            var callback = null;
+            var hashKey = "";
+
+            function sendResults(){
+                cache.results[hashKey] = arguments;
+
+                var pendingCallback = null;
+                while(cache.pending[hashKey].length){
+                    pendingCallback = cache.pending[hashKey].pop();
+                    if(_.isFunction(pendingCallback)){
+                        pendingCallback.apply(null, arguments);
+                    }
+                }
+            }
+
+            args = _.rmap(args, function(arg){
+                if(_.isFunction(arg) && !callback){
+                    callback = arg;
+                    return(sendResults);
+                }else{ 
+                    hashKey += _.s(arg) + "|";
+                    return(arg);
+                }
+            });
+
+            if(cache.results[hashKey]){
+                return callback.apply(null, arguments);
+            }else if(cache.results[hashKey] === undefined){
+                cache.results[hashKey] = null;
+                cache.pending[hashKey] = [];
+                cache.pending[hashKey].push(callback);
+                f.apply(null, args);
+            }else{
+                cache.pending[hashKey].push(callback);
+            }
+        });
     };
  
     _.exists = function(col, target, insensitive){
@@ -3266,7 +3441,13 @@ function (_){
         else{ return(n); }
     };
     _.n = function(n){ return(_.toNumber(n)); };
-    _.s = function(n){ return(n + ""); };
+    _.s = function(n){ 
+        if(arguments.length === 1 && _.isNumber(n)){
+            return(n + "");
+        }else{
+            return(_.format.apply(null, arguments));
+        }
+    };
     _.formatNumber = function(nStr){
         nStr += '';
         var x = nStr.split('.');
@@ -4177,6 +4358,10 @@ function (_){
 
     function logger(options){
 
+        if(_.isString(options)){
+            options = { namespace: options };
+        }
+
         options = options || {};
 
         this._namespace = options.namespace ? options.namespace : "";
@@ -4191,6 +4376,7 @@ function (_){
         }
 
         this.level('debug'); 
+        this.verboseLevel('debug'); 
         if(options.level){ this.level(options.level); }
     }
 
@@ -4199,6 +4385,10 @@ function (_){
 
     logger.prototype.levels = function(){ return(this._levels); };
     logger.prototype.priorities = function(){ return(this._priorities); };
+
+    logger.prototype.verbose = function(){
+        return(this.priority(this.level()) <= this.priority(this.verboseLevel()));
+    };
 
     logger.prototype._defaultTransports = [consoleTransport];
 
@@ -4223,6 +4413,15 @@ function (_){
         }else{
             if(this.priority(level) < 0){ return; }
             this._level = level;
+        }
+    };
+
+    logger.prototype.verboseLevel = function(level){
+        if(level === undefined){
+            return(this._verboseLevel);
+        }else{
+            if(this.priority(level) < 0){ return; }
+            this._verboseLevel = level;
         }
     };
 
@@ -4272,15 +4471,6 @@ function (_){
 
     function makeLogFunction(logLevel){
         return(function(){
-            /*
-            _.p("log:", this);
-            _.p("current log level:", this.level());
-            _.p("current log priority:", this.priority());
-            _.p("current log level priority:", this.priority(this.level()));
-            _.p("incoming log level:", logLevel);
-            _.p("incoming log level priority:", this.priority(logLevel));
-            */
-
             if(this.priority(this.level()) <= this.priority(logLevel)){
                 this._write(logLevel, _.toArray(arguments));
             }
@@ -4320,7 +4510,7 @@ function (_){
         return(this.make({ namespace: ns, parent: this }));
     };
 
-    function mixin(root, options){
+    logger.prototype.mixin = function(root, options){
         root = root || {};
 
         root.log = new logger(options);
@@ -4328,7 +4518,7 @@ function (_){
         return(root.log);
     }
 
-    return(mixin());
+    return(logger.prototype.mixin());
 }
 )(_);
 (
@@ -4344,8 +4534,6 @@ function (_){
         console.log(entry);
     };
 
-    _.sout = _.stdout;
-    _.serr = _.stderr;
     _.p = _.stderr;
     
     _.nextTick = (function() {
@@ -4462,49 +4650,11 @@ function mixin(_){
     return(ns);
 }
 )(_);
-_.plumber = (
-function (_){
-
-var plumber = function(f){
-
-    if(f === undefined){ f = {}; }
-    
-    f.plunger = function(err){ 
-        throw(err);
-    };
-
-    f.plumb = function(goodF, badF){
-        var self = this;
-        var args = arguments;
-        return(function(err){
-            if(err){ 
-                args = _.toArray(args);
-                if(_.isFunction(badF)){
-                    args = args.slice(2);
-                    args.unshift(err);
-                    return badF.apply(null, args);
-                }else{
-                    args = args.slice(1);
-                    args.unshift(err);
-                    return self.plunger.apply(self, args);
-                }
-            }else{
-                goodF.apply(null, _.toArray(arguments).slice(1));
-            }
-        });
-    };
-
-    return(f);
-};
-
-return(plumber);
-
-}
-)(_);
-_.plumber(_);
 _.hook = (
 function (_){
 
+// TODO: rewrite error handling, pass errors along chain
+// TODO: add timeout to hooker
 var hooker = function(f){
 
     if(f === undefined){ f = {}; }
@@ -4536,33 +4686,38 @@ var hooker = function(f){
         }
     };
 
-    f.bite = function(event){ // ..., callback
+    f.bite = f.serial = function(event, args, callback){
         var that = this;
-        var args = _.toArray(arguments);
 
-        var event = args.shift();
-        var callback = args.pop();
+        if(_.isFunction(args) && !callback){
+            callback = args;
+            args = [];
+        }
 
         if(!_.isString(event) || !_.isFunction(callback)){
             _.fatal("You must provide an event name and a function.");
         }
         event = event.toLowerCase();
         
+        var error = null;
         if(that._hooks && that._hooks[event]){
             _.each.async(that._hooks[event], function(val, key, next, end){
-                var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.", 5000);
-                val.handler.apply(that, _.concat(function(keepRunning){
-                    to.back();
-                    if(keepRunning === false){ end(); }
+                // var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.", 5000);
+                val.handler.apply(null, _.concat(function(err){
+                    if(err){ error = err; end(); }
                     else{ next(); }
                 }, args));
             }, function(){
-                callback();
+                callback.apply(null, _.concat(error, args));
             });
         }else{
-            callback();
+            callback.apply(null, _.concat(null, args));
         }
     };
+    
+    /*
+    f.biteAll = f.parallel = function(event, args, callback){ };
+    */
     
     return(f);
 };
@@ -4659,6 +4814,8 @@ _.eventEmitter(_.events);
 _.measurer = (
 function (_){
 
+    // TODO: I need to refactor this, make it better.
+
     function measurer(options){
 
         options = options || {};
@@ -4696,15 +4853,20 @@ function (_){
     measurer.prototype.measure = function(categoryName, measurementName){
         var self = this;
 
+        if(_.undef(categoryName) && _.undef(measurementName)){
+            categoryName = "default";
+            measurementName = _.uuid();
+        }
+
         if(measurementName !== undefined || _.isObject(categoryName)){ 
             var stopped = self.stop(categoryName, measurementName);
-            if(stopped !== null){ return(stopped); }
+            if(stopped){ return(stopped); }
             else{ return(self.start(categoryName, measurementName)); }
         }
     };
      
     measurer.prototype.child = function(options){
-        return(new measurer(_.defaults(options, { parent: this})));
+        return(new measurer(_.defaults(options, { parent: this })));
     };
 
     measurer.prototype.start = function(categoryName, measurementName){
@@ -4739,18 +4901,24 @@ function (_){
 
         if(token){
             measurement = measurements[token];
+            delete measurements[token];
         }else if(_.keys(measurements).length === 1){
             measurement = measurements[_.keys(measurements)[0]];
+            delete measurements[_.keys(measurements)[0]];
         }
+
+        // if(!measurement){ throw(_.exception("NoMeasurement", "No measurement found to stop.")); }
 
         if(measurement){
             measurement.end = end;
             measurement.duration = measurement.end - measurement.start;
 
             self.transport(measurement);
-        }
 
-        return(measurement);
+            return(measurement);
+
+        }else{ return(null); }
+
     };
 
     measurer.prototype.measurements = function(categoryName, measurementName){
@@ -4784,13 +4952,14 @@ function (_){
     };
 
     measurer.prototype.displayLast = function(categoryName, writer){
+        writer = writer || _.stderr;
         var measurements = this.last(categoryName);
 
         var sorted = _.map(measurements, function(value, name){
             return({ value: value, name: name});
         });
 
-        sorted.sort(function(a, b){ return(a.value - b.value); });
+        // sorted.sort(function(a, b){ return(a.value - b.value); });
 
         _.each(sorted, function(measurement){
             writer(measurement.name + ": " + measurement.value + "ms");

@@ -23,7 +23,7 @@
         "node": ">= 0.4"
     },
     "dependencies":{ 
-          "tamejs" : "0.4.13"
+          "tamejs" : "0.4.14"
         , "formidable":"1.0.9"
         , "tosource" : "0.1.1"
         , "minimatch" : "0.2.11"

@@ -14,33 +14,35 @@ exports.testDefault = function(beforeExit){
         
         measurer.measure("timeout", "one");
         setTimeout(function(){ 
-            ok(_.within(measurer.measure("timeout", "one").duration, 40, 5));
+            ok(_.within(measurer.measure("timeout", "one").duration, 40, 10));
             calls++;
         }, 40);
         
         measurer.measure("timeout", "two");
         setTimeout(function(){ 
-            ok(_.within(measurer.measure("timeout", "two").duration, 50, 5));
-            calls++;
-        }, 50);
-
-        var token = measurer.measure("token", "one")
-        setTimeout(function(){ 
-            ok(_.within(measurer.measure(token).duration, 60, 5));
+            ok(_.within(measurer.measure("timeout", "two").duration, 60, 10));
             calls++;
         }, 60);
 
+        var token = measurer.measure("token", "one")
+        setTimeout(function(){ 
+            ok(_.within(measurer.measure(token).duration, 80, 10));
+            calls++;
+        }, 80);
+
         var tokenTwo = measurer.measure();
         setTimeout(function(){ 
-            ok(_.within(measurer.measure(tokenTwo).duration, 70, 5));
+            ok(_.within(measurer.measure(tokenTwo).duration, 100, 10));
             calls++;
-        }, 70);
+        }, 100);
         
 
+        /*
         setTimeout(function(){
             // _.stderr(measurer.measurements());
             // measurer.displayLast("timeout", _.stderr);
         }, 200);
+        */
 
         beforeExit(function(){ eq(calls, expectedCalls) });
     }

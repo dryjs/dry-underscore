@@ -13,16 +13,12 @@ exports.testEcho = function(beforeExit){
         n++;
     });
 
-    /*
     _.shell("echo 'shell is working.'", function(code, stdout, stderr){
         eq(code, 0);
-        eq(stdout, "shell is working.\n");
-        eq(stderr, "");
-        n++;
+        n++
     });
-    */
  
-    beforeExit(function(){ eq(n, 1); });
+    beforeExit(function(){ eq(n, 2); });
 }
 
 exports.testTrimAndStripQuotes = function(){
