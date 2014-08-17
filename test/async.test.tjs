@@ -1,0 +1,47 @@
+var _ = require('../');
+var eq = _.test.eq;
+var ok = _.test.ok;
+
+exports.testTame = function(beforeExit){
+    var called = 0;
+
+    // works
+    await{
+        _.each([1, 2, 3], function(){
+            (function(cb){
+                await{ setTimeout(defer(), 10); }
+                called++;
+                cb();
+            })(defer());
+        });
+    }
+
+    await{
+        _.each([1, 2, 3], function(){
+            setTimeout(defer(), 10);
+            called++;
+        });
+    }
+
+    beforeExit(function(){ eq(called, 6); });
+};
+
+exports.testFilterAsyncTame = function(beforeExit){
+
+    var called = 0;
+
+    var a = [1, 2, 3, 4, 5, 6];
+
+    await { 
+        _.filter.async(a, function(val, i, next){
+            await{ _.nextTick(defer()); }
+            next(val < 4); 
+            called++;
+        }, defer(var result)); 
+    }
+
+    _.test.eq(result, [1, 2, 3]);
+
+    beforeExit(function(){ eq(called, 6); });
+};
+

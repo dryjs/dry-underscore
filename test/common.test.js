@@ -1,9 +1,11 @@
+"use strict";
 
 var path = require('path');
 var assert = require('assert');
 
 var _ = require('../');
 var eq = _.test.eq;
+var ok = _.test.ok;
 
 exports.testHasType = testHasType;
 exports.testHasTypes = testHasTypes;
@@ -15,25 +17,217 @@ exports.testFormat = testFormat;
 exports.testConcat = testConcat;
 exports.testMoment = testMoment;
 exports.testHandleBars = testHandleBars;
-exports.testAsyncMap = testAsyncMap;
+exports.testMapAsync = testMapAsync;
+exports.testFilterAsync = testFilterAsync;
+exports.testRmap = testRmap;
+exports.testRfilter = testRfilter;
+exports.testMemoizeAsync = testMemoizeAsync;
+exports.testFor = testFor;
+exports.testTimeout = testTimeout;
+exports.testPlumber = testPlumber;
+exports.testOmap = testOmap;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
-//exports.random = function(){ _.log(_.sha256(_.uuid())); };
+//exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
 /*
 exports.testRequest = function(){
     _.request('localhost/test', function(req){
-        _.log(req);
+        _.stderr(req);
     });
 };
 */
 
-function testAsyncMap(beforeExit){
+function testOmap(){
+    var o = { a: 'a', b: 'b', c: 'c' };
+    var expected = { "a-a": 1, "b-b": 2, "c-c": 3 };
+    eq(expected, _.omap(o, function(cb, val, key){ 
+        if(val === 'a'){ val = 1; }
+        if(val === 'b'){ val = 2; }
+        if(val === 'c'){ val = 3; }
+        cb(val, key + "-" + key);
+    }));
+}
+
+function testPlumber(beforeExit){
+    var calls = 0;
+    var expectedCalls = 15;
+
+    function throws(callback){ callback(_.error("BadError", "bad error.")); }
+
+    function abc(callback){ callback(null, 'a', 'b', 'c'); }
+
+    function invalidCall(){ throw(_.exception("BadCall", "Unexpected call.")); }
+
+    function returnsFalse(){ return(false); }
+    function returnsTrue(){ return(true); };
+
+    var expectsError = function(err){ ok(_.error.eq("BadError", err)); eq(arguments.length, 1); calls++; }
+    var expectsGood = function(err, a, b, c){ ok(!err); eq(a, 'a'); eq(b, 'b'); eq(c, 'c'); calls++; }
+
+    throws(_.plumb(invalidCall, expectsError));
+    abc(_.plumb(function(a, b, c){ eq(a, 'a'); eq(b, 'b'); eq(c, 'c'); calls++; }, invalidCall));
+
+    throws(_.plumb(invalidCall, expectsError, "OtherError"));
+    throws(_.plumb(invalidCall, expectsError, ["OtherError"]));
+    throws(_.plumb(invalidCall, expectsError, returnsFalse));
+    throws(_.plumb(invalidCall, expectsError, [returnsFalse]));
+
+    abc(_.plumb(expectsGood, invalidCall, "OtherError"));
+    abc(_.plumb(expectsGood, invalidCall, ["OtherError", "NotherError"]));
+    abc(_.plumb(expectsGood, invalidCall, returnsFalse));
+    abc(_.plumb(expectsGood, invalidCall, [returnsFalse]));
+    abc(_.plumb(expectsGood, invalidCall, ["OtherError", returnsFalse]));
+
+    throws(_.plumb(expectsError, invalidCall, "BadError"));
+    throws(_.plumb(expectsError, invalidCall, ["OtherError", "BadError"]));
+    throws(_.plumb(expectsError, invalidCall, returnsTrue));
+    throws(_.plumb(expectsError, invalidCall, [returnsFalse, returnsTrue]));
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+}
+
+function testRmap(){
+    var expected = [1, 2, 3, 6];
+
+    var first = true
+    eq(expected, _.rmap([0, 1, 2, 3], function(a){
+        if(first){
+            first = false;
+            return(a*2);
+        }else{ return(a+1); }
+    }));
+}
+
+function testRfilter(){
+
+    var expected = [0, 1, 3];
+
+    var iter = 0;
+    eq(expected, _.rfilter([0, 1, 2, 3], function(a){
+        if(iter++ === 1){
+            return(false);
+        }else{ return(true); }
+    }));
+}
+
+function testMemoizeAsync(beforeExit){
+
+    var called = 0;
+    var expensiveCalled = 0;
+
+    var f = _.memoize.async(function(a, b, cb, c){
+        expensiveCalled++;
+        _.nextTick(function(){ cb(a, b, c); });
+    });
+
+    f(1, 2, function(a, b, c){
+        eq(a, 1);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    f(1, 2, function(a, b, c){
+        eq(a, 1);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    f(1, 2, function(a, b, c){
+        eq(a, 1);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    f(2, 2, function(a, b, c){
+        eq(a, 2);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    f(2, 2, function(a, b, c){
+        eq(a, 2);
+        eq(b, 2);
+        eq(c, 3);
+        called++;
+    }, 3);
+
+    beforeExit(function(){ 
+        eq(expensiveCalled, 2);
+        eq(called, 5);
+    });
+}
+
+function testTimeout(beforeExit){
+
+    var successCalled = 0;
+    var errorCalled = 0;
+    var totalCalled = 0;
+
+    function expectError(err){
+        ok(err);
+        errorCalled++;
+        totalCalled++;
+    }
+
+    function expectSuccess(err){
+        ok(!err);
+        successCalled++;
+        totalCalled++;
+    }
+
+    setTimeout(_.timeout(expectSuccess, 100), 20);
+    setTimeout(_.timeout(expectError, 100), 200);
+
+    function withArgs(callback, t){ 
+        setTimeout(function(){
+            callback(null, 1, 2, 3);
+        }, t);
+    }
+
+    withArgs(_.timeout(
+        _.plumb(function(a, b, c){ 
+            eq(a, 1); eq(b, 2); eq(c, 3);
+            successCalled++; totalCalled++;
+        }, function(err){ ok(!err) }), 
+    100), 20);
+    setTimeout(_.timeout(function(err){ ok(err); errorCalled++; ok(err.add); totalCalled++ }, 100, {add: true}), 200);
+
+    beforeExit(function(){ 
+        eq(successCalled, 2);
+        eq(errorCalled, 2);
+        eq(totalCalled, 4);
+    });
+
+}
+
+function testFor(){
+
+    var actual = 0;
+    var expected = 100;
+
+    _.for(100, function(){ actual++; });
+
+    eq(actual, expected);
+
+    actual = 0;
+    expected = 50;
+
+    _.for(100, function(i){  if(i == 50){ return(false); } actual++; });
+
+    eq(actual, expected);
+}
+
+function testMapAsync(beforeExit){
 
     var called = 0;
 
     var a = [1, 2, 3, 4, 5, 6];
 
-    _.asyncMap(a, function(val, i, next){
+    _.map.async(a, function(val, i, next){
 
         _.nextTick(function(){ next(val*2); });
 
@@ -45,30 +239,50 @@ function testAsyncMap(beforeExit){
     beforeExit(function(){ eq(called, 1); });
 }
 
+function testFilterAsync(beforeExit){
+
+    var called = 0;
+
+    var a = [1, 2, 3, 4, 5, 6];
+
+    _.filter.async(a, function(val, i, next){
+
+        _.nextTick(function(){ next(val < 4); });
+
+    }, function(result){
+        eq(result, [1, 2, 3]);
+        called++;
+    });
+
+    beforeExit(function(){ eq(called, 1); });
+}
+
+
+
 function testHandleBars(){
+    _.log.level("info");
+
     var data = {"person": { "name": "Alan" }, "company": {"name": "Rad, Inc." } };
     var template = "{{person.name}} - {{company.name}}";
-    _.time("pre");
-    eq("Alan - Rad, Inc.", _.render("example")(template, data));
-    _.time("pre", true);
+    // _.time("pre");
+    eq("Alan - Rad, Inc.", _.render.once(template, data));
+    // _.time("pre", true);
 
-    _.time("post");
-    eq("Alan - Rad, Inc.", _.render("example")(data));
-    _.time("post", true);
+    // _.time("post");
+    eq("Alan - Rad, Inc.", _.render.once(template, data));
+    // _.time("post", true);
 
     _.render.loadDirectory("./test/testTemplates");
 
     _.render.loadFile("single", "./test/test.hb");
     _.render.loadFile("singleTwo", "./test/test.hb");
-    eq(_.render("single")({ data: "hello" }), "hello");
-    eq(_.render("singleTwo")({ data: "hello" }), "hello");
-    eq(_.render("testTemplate")({ data: "hello" }), "hello");
-    eq(_.render("testTemplateTwo")({ data: "hello" }), "hello");
+    eq(_.render("single", { data: "hello" }), "hello");
+    eq(_.render("singleTwo", { data: "hello" }), "hello");
+    eq(_.render("testTemplate", { data: "hello" }), "hello");
+    eq(_.render("testTemplateTwo", { data: "hello" }), "hello");
 };
 
-function testMoment(){
-    _.log(_.moment().format("YYYY-MM-DD"));
-}
+function testMoment(){ ok(_.moment().format("YYYY-MM-DD")); }
 
 function hashTest(){
     var iterations = 100 * 1000;
@@ -137,7 +351,7 @@ function testEmptyIterate(beforeExit){
 
     var called = 0;
 
-    _.eachAsync([], function(){ }, function(){ called++; });
+    _.each.async([], function(){ }, function(){ called++; });
 
     beforeExit(function(){ assert.eql(called, 1); });
 }
@@ -169,7 +383,7 @@ function recursiveIterate(a, callback){
     // iterate and recreate array
     var z = [];
     process.nextTick(function() { 
-        _.eachAsync(a, function(index, val, next){
+        _.each.async(a, function(index, val, next){
             if(Array.isArray(val)){
                 recursiveIterate(val, function(r){
                     z.push(r);

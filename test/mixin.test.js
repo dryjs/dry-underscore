@@ -2,13 +2,23 @@ var fs = require('fs');
 var assert = require('assert');
 var _ = require('../');
 
+var eq = _.test.eq;
+
 exports.testEcho = function(beforeExit){
     var n = 0;
-    _.shell("echo 'shell is working.'", function(code){
-        assert.eql(code, 0);
+    _.exec("echo 'shell is working.'", function(code, stdout, stderr){
+        eq(code, 0);
+        eq(stdout, "shell is working.\n");
+        eq(stderr, "");
         n++;
     });
-    beforeExit(function(){ assert.eql(n, 1); });
+
+    _.shell("echo 'shell is working.'", function(code, stdout, stderr){
+        eq(code, 0);
+        n++
+    });
+ 
+    beforeExit(function(){ eq(n, 2); });
 }
 
 exports.testTrimAndStripQuotes = function(){
@@ -49,51 +59,12 @@ exports.testEmptySimpleObject = function(){
     assert.eql(_.isEmptyObjectWithNoPrototype(d2), false);
 };
 
-exports.testFieldStack = function(){
-
-    var testHash = { 
-        Type: 'BaseModel',
-        Id: '123',
-        InstanceId: 10, 
-        View: {
-            Type: 'BaseModel',
-            Id: 'Test',
-            View: {
-                Type: 'BaseModel',
-                Id: 'Test2',
-                View: [
-                    "zero",
-                    1,  
-                    {Type: 'BaseModel', Id: 'Test3' },
-                    { Type: 'BaseModel',
-                        Id: 'Test4',
-                        View: {
-                            'a' : { 
-                                'b' : { 
-                                    Type: 'BaseModel',
-                                    Id: 'deep'
-                                }   
-                            }   
-                        }   
-                    },  
-                    "four"
-                ]   
-            }   
-        }                                                                                                                                                                         
-    };  
-    
-    stack = _.fieldStack(testHash);
-    //console.dir(stack);
-
-    //_.each(stack, function(val){ console.log(val.fieldName); });
-};
-
 exports.testAsyncLockSimple = function(beforeExit){
 
     var runs = 0;
 
     function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
-    var f = _.asyncLock(inc);
+    var f = _.lock.async(inc);
     f();
     f();
     process.nextTick(f);
@@ -108,7 +79,7 @@ exports.testAsyncLockExtraTest = function(beforeExit){
     function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
     var disabled = false;
 
-    var f = _.asyncLock(inc, function(def){ return(def || disabled); });
+    var f = _.lock.async(inc, function(def){ return(def || disabled); });
     f();
     f();
     disabled = true;
@@ -128,7 +99,7 @@ exports.testAsyncLockComplex = function(beforeExit){
     var disabled = false;
     var locked = false;
 
-    var f = _.asyncLock(inc, function(){ return(disabled || locked); }, function(){ locked = true; }, function(){ locked = false; } );
+    var f = _.lock.async(inc, function(){ return(disabled || locked); }, function(){ locked = true; }, function(){ locked = false; } );
     f();
     f();
     disabled = true;
@@ -183,7 +154,7 @@ exports.eachAsyncTest = function(beforeExit){
     var t2ResultsObject = [];
 
     function test(o, results, finished){
-        _.eachAsync(o, function(val, key, next){
+        _.each.async(o, function(val, key, next){
             called++;
             setTimeout(function(){ results[key] = val; next(); }, 10);
         }, finished);

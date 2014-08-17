@@ -1,0 +1,1 @@
+/Users/kendrick/Dropbox/Projects/dry/dry-underscore/test/fs-data/mv3.txt

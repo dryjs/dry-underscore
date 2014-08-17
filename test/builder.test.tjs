@@ -1,0 +1,274 @@
+
+var _ = require('../');
+var eq = _.test.eq;
+var ok = _.test.ok;
+
+var root = _.path.fun(_.path.normalize(__dirname + "/builder-data/"));
+
+exports.testBuilder = testBuilder;
+exports.testStages = testStages;
+exports.testError = testError;
+
+function testBuilder(beforeExit){
+
+    var calls = 0;
+    var expectedCalls = 1;
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+
+    var result = null;
+
+    function thrw(x){ _.p(x.stack); throw(x); }
+
+    await{ _.fs.deleteFile(root("cache"), _.plumb(defer(), thrw, _.ecode.noEnt)); }
+    await{ _.fs.exists(root("cache"), _.plumb(defer(result), thrw)); }
+    ok(!result);
+
+    var b = _.builder({
+        cache: root("cache"),
+        clean: true
+    });
+
+    await{ b.load(_.plumb(defer(), thrw)); }
+
+    var err = null;
+    var file = null;
+
+    await{ 
+        b.build(root("not-there"), function(file, data, callback){
+            eq(file, { path: root("not-there"), exists: false, created: false, dirty: true, removed: false });
+            eq(data, undefined);
+            callback(null, "two");
+        }, defer(err, file, result)); 
+    }
+
+    eq(err, null);
+    eq(file, { path: root("not-there"), exists: false, created: false, dirty: false, removed: false });
+    eq(result, undefined);
+
+    await{ 
+        b.build(root("test-error.txt"), function(file, data, callback){
+            delete file.mtime;
+            eq(file, { path: root("test-error.txt"), exists: true, created: true, dirty: true, removed: false });
+            eq(data, "");
+            callback({ code: "ERROR" });
+        }, defer(err, file, result)); 
+    }
+
+    eq(err, { code: "ERROR" });
+    eq(file, undefined);
+    eq(result, undefined);
+
+ 
+    await{ 
+        b.build(root("one.txt"), function(file, data, callback){
+            delete file.mtime;
+            eq(file, { path: root("one.txt"), exists: true, created: true, dirty: true, removed: false });
+            eq(data, "one\n");
+            callback(null, "two");
+        }, defer(err, file, result)); 
+    }
+
+    eq(err, null);
+    delete file.mtime;
+    eq(file, { path: root("one.txt"), exists: true, created: true, dirty: true, removed: false });
+    eq(result, "two");
+    eq(b.cache(root("one.txt")), "two");
+
+    b.finished();
+
+    await{ 
+        b.build(root("one.txt"), function(file, data, callback){
+            _.p("file: ", file);
+            _.p("file   : ", file.mtime);
+            _.p("builder: ", b.last());
+            _.p("builder newer: ", file.mtime < b.last());
+            ok(false);
+        }, defer(err, file, result)); 
+    }
+
+    eq(err, null);
+    delete file.mtime;
+    eq(file, { path: root("one.txt"), exists: true, created: false, dirty: false, removed: false });
+    eq(result, "two");
+
+    await{ b.save(_.plumb(defer(), thrw)); }
+    
+    var ab = _.builder({
+        cache: root("cache"),
+        clean: false
+    });
+
+    await{ ab.load(_.plumb(defer(), thrw)); }
+
+    await{ 
+        ab.build(root("one.txt"), function(file, data, callback){
+            ok(false);
+        }, defer(err, file, result)); 
+    }
+
+    eq(err, null);
+    delete file.mtime;
+    eq(file, { path: root("one.txt"), exists: true, created: false, dirty: false, removed: false });
+    eq(result, "two");
+
+    await{ _.fs.exists(root("cache"), _.plumb(defer(result), thrw)); }
+    ok(result);
+
+    calls++;
+}
+
+function testStages(beforeExit){
+
+    var calls = 0;
+    var expectedCalls = 1;
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+
+    function thrw(x){ _.p(x.stack); throw(x); }
+
+    var b = _.builder({
+        clean: true
+    });
+
+    b.stages.before("build", "prebuild");
+    b.stages.after("build", "postbuild");
+
+    var prebuildHit = false;
+    b.stage("prebuild", function(next, results){
+        results["prebuild-one"] = true;
+        setTimeout(next, 50);
+        prebuildHit = true;
+    });
+
+    b.stage("prebuild", function(next, results){
+        results["prebuild-two"] = true;
+        setTimeout(next, 150);
+        prebuildHit = true;
+    });
+
+    b.stage("build", function(next, results){
+        results["build-one"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+    });
+
+    b.stage("build", function(next, results){
+        results["build-two"] = true;
+        setTimeout(next, 150);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-one"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-two"] = true;
+        setTimeout(next, 150);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    var results = {};
+
+    await{ b.run(results, _.plumb(defer(), thrw)); }
+
+    ok(results["prebuild-one"]);
+    ok(results["prebuild-two"]);
+    ok(results["build-one"]);
+    ok(results["build-two"]);
+    ok(results["postbuild-one"]);
+    ok(results["postbuild-two"]);
+    b.measurer.displayLast("builder");
+
+    calls++;
+}
+
+function testError(beforeExit){
+
+    var calls = 0;
+    var expectedCalls = 1;
+
+    beforeExit(function(){ eq(calls, expectedCalls); });
+
+    function thrw(x){ _.p(x.stack); throw(x); }
+
+    var b = _.builder({
+        clean: true
+    });
+
+    b.stages.before("build", "prebuild");
+    b.stages.after("build", "postbuild");
+
+    var prebuildHit = false;
+    b.stage("prebuild", function(next, results){
+        results["prebuild-one"] = true;
+        setTimeout(next, 50);
+        prebuildHit = true;
+    });
+
+    b.stage("prebuild", function(next, results){
+        results["prebuild-two"] = true;
+        setTimeout(next, 150);
+        prebuildHit = true;
+    });
+
+    b.stage("build", function(next, results){
+        results["build-one"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+    });
+
+    b.stage("build", function(next, results){
+        results["build-two"] = true;
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        setTimeout(function(){
+            next(_.error("ExpectedError", "Expected error."));
+        }, 150);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-one"] = true;
+        setTimeout(next, 50);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    b.stage("postbuild", function(next, results){
+        results["postbuild-two"] = true;
+        setTimeout(next, 150);
+        ok(results["prebuild-one"]);
+        ok(results["prebuild-two"]);
+        ok(results["build-one"]);
+        ok(results["build-two"]);
+    });
+
+    var results = {};
+
+    await{ b.run(results, defer(var err, res)); }
+
+    eq(res, undefined);
+    ok(_.error.eq("ExpectedError", err));
+
+    ok(results["prebuild-one"]);
+    ok(results["prebuild-two"]);
+    ok(results["build-one"]);
+    ok(results["build-two"]);
+
+    calls++;
+}
+
