@@ -111,20 +111,6 @@ exports.testAsyncLockComplex = function(beforeExit){
     beforeExit(function(){ assert.eql(runs, 2); });
 }
 
-exports.testJoin = function(){
-    assert.eql(_.join_path('a'), "a");
-    assert.eql(_.join_path('a', ""), "a");
-    assert.eql(_.join_path('a/'), "a/");
-    assert.eql(_.join_path('/a/'), "/a/");
-    assert.eql(_.join_path('a','b'), "a/b");
-    assert.eql(_.join_path('/a','b'), "/a/b");
-    assert.eql(_.join_path('a','b/'), "a/b/");
-    assert.eql(_.join_path('/a','b/'), "/a/b/");
-    assert.eql(_.join_path('a','b','c'), "a/b/c");
-    assert.eql(_.join_path('/a','b','c'), "/a/b/c");
-    assert.eql(_.join_path('/a','b','c/'), "/a/b/c/");
-};
-
 exports.testIsObject = function(){
 
     assert.ok(!_.isObject(null));

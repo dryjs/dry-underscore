@@ -419,7 +419,7 @@ function testReadDir(beforeExit){
     });
     
     _.fs.readDir(testDir + "parent/parent.file.doesnotexist", { fullPath: true }, function(err, names){
-        ok(_.ecode.noEnt(err));
+        ok(_.error.noent(err));
         eq(undefined, names);
         n++;
     });
@@ -483,13 +483,13 @@ function testDirectories(beforeExit){
     });
     
     _.fs.directories(testDir + "parent/parent.file", function(err, names){
-        ok(_.ecode.notDir(err));
+        ok(_.error.notdir(err));
         eq(undefined, names);
         n++;
     });
     
     _.fs.directories(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.ecode.noEnt(err));
+        ok(_.error.noent(err));
         eq(undefined, names);
         n++;
     });
@@ -514,13 +514,13 @@ function testDirectories(beforeExit){
     }, false);
     
     _.fs.directories(testDir + "parent/parent.file", function(err, names){
-        ok(_.ecode.notDir(err));
+        ok(_.error.notdir(err));
         eq(undefined, names);
         n++;
     }, false);
     
     _.fs.directories(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.ecode.noEnt(err));
+        ok(_.error.noent(err));
         eq(undefined, names);
         n++;
     }, false);
@@ -551,13 +551,13 @@ function testFiles(beforeExit){
     });
     
     _.fs.files(testDir + "parent/parent.file", function(err, names){
-        ok(_.ecode.notDir(err));
+        ok(_.error.notdir(err));
         eq(undefined, names);
         n++;
     });
     
     _.fs.files(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.ecode.noEnt(err));
+        ok(_.error.noent(err));
         eq(undefined, names);
         n++;
     });
@@ -581,13 +581,13 @@ function testFiles(beforeExit){
     }, false);
     
     _.fs.files(testDir + "parent/parent.file", function(err, names){
-        ok(_.ecode.notDir(err));
+        ok(_.error.notdir(err));
         eq(undefined, names);
         n++;
     }, false);
     
     _.fs.files(testDir + "parent/parent.file.doesnotexist", function(err, names){
-        ok(_.ecode.noEnt(err));
+        ok(_.error.noent(err));
         eq(undefined, names);
         n++;
     }, false);

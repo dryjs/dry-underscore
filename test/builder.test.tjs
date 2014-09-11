@@ -20,7 +20,7 @@ function testBuilder(beforeExit){
 
     function thrw(x){ _.p(x.stack); throw(x); }
 
-    await{ _.fs.deleteFile(root("cache"), _.plumb(defer(), thrw, _.ecode.noEnt)); }
+    await{ _.fs.deleteFile(root("cache"), _.plumb(defer(), thrw, _.error.noent)); }
     await{ _.fs.exists(root("cache"), _.plumb(defer(result), thrw)); }
     ok(!result);
 

@@ -1,1 +1,1 @@
-/Users/kendrick/Dropbox/Projects/dry/dry-underscore/test/fs-data/mv1.txt
+/Volumes/Finity/Dropbox/Projects/dry/dry-underscore/test/fs-data/mv1.txt

@@ -45,7 +45,7 @@ var __tame_fn_0 = function (__tame_k) {
                             line : 23,
                             file : "./test/builder.test.tjs"
                         } )
-                        , thrw , _ . ecode . noEnt ) ) ;
+                        , thrw , _ . error . noent ) ) ;
                         tame.callChain([__tame_k]);
                         tame.setActiveCb (null);
                     };
