@@ -21,6 +21,12 @@ exports.testGlob = testGlob;
 exports.testFun = testFun;
 exports.testObject = testObject;
 
+exports.testResolve = testResolve;
+
+function testResolve(){
+    eq(_.path.resolve('/foo/bar', './baz'), '/foo/bar/baz');
+}
+
 function testPrepend(){
     eq("a/b", _.path.prepend('a', "/b"));
     eq("/a/b", _.path.prepend('/a', "b"));
