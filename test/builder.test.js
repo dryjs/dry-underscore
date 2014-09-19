@@ -38,7 +38,7 @@ var __tame_fn_0 = function (__tame_k) {
                     var __tame_defers = new tame.Deferrals (__tame_k);
                     var __tame_fn_3 = function (__tame_k) {
                         tame.setActiveCb (__tame_defer_cb);
-                        _ . fs . deleteFile ( root ( "cache" ) , _ . plumb (
+                        _ . fs . rm ( root ( "cache" ) , _ . plumb (
                         __tame_defers.defer ( { 
                             func_name : "testBuilder",
                             parent_cb : __tame_defer_cb,
