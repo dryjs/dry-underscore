@@ -26,6 +26,7 @@ exports.testFor = testFor;
 exports.testTimeout = testTimeout;
 exports.testPlumber = testPlumber;
 exports.testOmap = testOmap;
+exports.testError = testError;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -84,6 +85,45 @@ function testPlumber(beforeExit){
     throws(_.plumb(expectsError, invalidCall, [returnsFalse, returnsTrue]));
 
     beforeExit(function(){ eq(calls, expectedCalls); });
+}
+
+function testError(){
+
+    ok(!_.error.noent(null));
+    ok(!_.error.notdir(null));
+    ok(_.error.noent({code:"ENOENT"}));
+    ok(_.error.noent({code:"MODULE_NOT_FOUND"}));
+    ok(_.error.notdir({code:"ENOTDIR"}));
+    ok(!_.error.noent({code:"ENOTDIR"}));
+
+    var e = _.error("ACode", "AMessage");
+
+    eq(e.code, "ACode");
+    eq(e.message, "AMessage");
+
+    ok(_.error.eq(e, e));
+    ok(_.error.eq("ACode", e));
+    ok(_.error.eq(e, "ACode"));
+    ok(!_.error.eq(e, "BCode"));
+    ok(!_.error.eq("BCode", e));
+
+
+    var foo = _.error("FooCode", "FooMessage", { message: "BarMessage", code: "BarCode", barExtra: "BarExtra" });
+
+    eq(foo.code, "FooCode");
+    eq(foo.message, "FooMessage");
+    eq(foo.originalMessage, "BarMessage");
+    eq(foo.originalCode, "BarCode");
+    eq(foo.barExtra, "BarExtra");
+
+    var zoo = _.error("ZooCode", { message: "ZooMessage", code: "NewZooCode", zooExtra: "ZooExtra" }, { message: "BarMessage", code: "BarCode", barExtra: "BarExtra" });
+
+    eq(zoo.code, "ZooCode");
+    eq(zoo.message, "ZooMessage");
+    eq(zoo.originalMessage, "BarMessage");
+    eq(zoo.originalCode, "BarCode");
+    eq(zoo.zooExtra, "ZooExtra");
+    eq(zoo.barExtra, "BarExtra");
 }
 
 function testRmap(){
