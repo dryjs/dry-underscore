@@ -20,7 +20,7 @@ function testBuilder(beforeExit){
 
     function thrw(x){ _.p(x.stack); throw(x); }
 
-    await{ _.fs.rm(root("cache"), _.plumb(defer(), thrw, _.error.noent)); }
+    await{ _.fs.rm(root("cache"), _.plumb(defer(), thrw, _.code.noent)); }
     await{ _.fs.exists(root("cache"), _.plumb(defer(result), thrw)); }
     ok(!result);
 
@@ -262,7 +262,7 @@ function testError(beforeExit){
     await{ b.run(results, defer(var err, res)); }
 
     eq(res, undefined);
-    ok(_.error.eq("ExpectedError", err));
+    ok(_.code(err, "ExpectedError"));
 
     ok(results["prebuild-one"]);
     ok(results["prebuild-two"]);

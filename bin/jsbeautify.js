@@ -12,5 +12,5 @@ if(!filePath){
 
 filePath = path.normalize(filePath);
 
-_.code.beautify(filePath, function(){});
+_.source.beautify(filePath, function(){});
 

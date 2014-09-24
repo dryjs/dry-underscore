@@ -38,7 +38,7 @@ exports.testBasic = function(done){
     var b = { b: 0 };
 
     h.serial("event", [a, b], function(err, a, b){
-        ok(_.error.eq("TestError", err));
+        ok(_.code("TestError", err));
         eq(a, { a: expected });
         eq(b, { b: expected });
         eq(actual, expected);

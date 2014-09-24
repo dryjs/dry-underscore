@@ -45,7 +45,7 @@ var __tame_fn_0 = function (__tame_k) {
                             line : 23,
                             file : "./test/builder.test.tjs"
                         } )
-                        , thrw , _ . error . noent ) ) ;
+                        , thrw , _ . code . noent ) ) ;
                         tame.callChain([__tame_k]);
                         tame.setActiveCb (null);
                     };
@@ -699,7 +699,7 @@ var __tame_fn_0 = function (__tame_k) {
                 var __tame_fn_50 = function (__tame_k) {
                     tame.setActiveCb (__tame_defer_cb);
                     eq ( res , undefined ) ;
-                    ok ( _ . error . eq ( "ExpectedError" , err ) ) ;
+                    ok ( _ . code ( err , "ExpectedError" ) ) ;
                     
                     ok ( results [ "prebuild-one" ] ) ;
                     ok ( results [ "prebuild-two" ] ) ;

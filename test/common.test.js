@@ -27,6 +27,9 @@ exports.testTimeout = testTimeout;
 exports.testPlumber = testPlumber;
 exports.testOmap = testOmap;
 exports.testError = testError;
+exports.testCode = testCode;
+exports.testBail = testBail;
+exports.testPropertyComparerMaker = testPropertyComparerMaker;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -37,6 +40,26 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testBail(beforeExit){
+    var bailCalls = 0;
+    (_.bail(function(){
+        eq(arguments.length, 0);
+        bailCalls += 1;
+   }, function(){
+        eq(arguments.length, 0);
+        bailCalls += 2;
+   }, function(a, b){
+        eq(a, "a");
+        eq(b, "b");
+        bailCalls += 4;
+   }))("a", "b");
+
+    beforeExit(function(){ 
+        eq(bailCalls, 7);
+    });
+}
+
 
 function testOmap(){
     var o = { a: 'a', b: 'b', c: 'c' };
@@ -62,7 +85,7 @@ function testPlumber(beforeExit){
     function returnsFalse(){ return(false); }
     function returnsTrue(){ return(true); };
 
-    var expectsError = function(err){ ok(_.error.eq("BadError", err)); eq(arguments.length, 1); calls++; }
+    var expectsError = function(err){ ok(_.code("BadError", err)); eq(arguments.length, 1); calls++; }
     var expectsGood = function(err, a, b, c){ ok(!err); eq(a, 'a'); eq(b, 'b'); eq(c, 'c'); calls++; }
 
     throws(_.plumb(invalidCall, expectsError));
@@ -87,25 +110,63 @@ function testPlumber(beforeExit){
     beforeExit(function(){ eq(calls, expectedCalls); });
 }
 
-function testError(){
+function testPropertyComparerMaker(){
+    var comp = _.propertyComparerMaker("z");
 
-    ok(!_.error.noent(null));
-    ok(!_.error.notdir(null));
-    ok(_.error.noent({code:"ENOENT"}));
-    ok(_.error.noent({code:"MODULE_NOT_FOUND"}));
-    ok(_.error.notdir({code:"ENOTDIR"}));
-    ok(!_.error.noent({code:"ENOTDIR"}));
+    var foo = {z: "foo"}
+    var bar = {z: "bar"}
+    var baz = {z: "baz"}
+
+    eq(comp(foo), "foo");
+    ok(comp(foo, "foo"));
+    ok(!comp(foo, "bar"));
+    ok(comp(foo, "foo", "bar"));
+    ok(comp(foo, "bar", "foo"));
+    ok(comp(foo, "bar", "baz", "foo"));
+
+    ok(!comp());
+    ok(!comp(null));
+    ok(!comp(false));
+    ok(comp("foo", foo));
+    ok(comp(foo, foo));
+    ok(comp(bar, baz, bar));
+    ok(comp(foo, baz, "foo", bar));
+    ok(!comp(bar, baz, "foo", foo));
+    ok(!comp(bar, baz, foo));
+}
+
+function testCode(){
+
+    var foo = {z: "foo"}
+    var bar = {z: "bar"}
+    var baz = {z: "baz"}
+
+    ok(!_.code.noent(null));
+    ok(!_.code.notdir(null));
+    ok(_.code.noent({code:"ENOENT"}));
+    ok(_.code.noent({code:"MODULE_NOT_FOUND"}));
+    ok(_.code.notdir({code:"ENOTDIR"}));
+    ok(!_.code.noent({code:"ENOTDIR"}));
+    ok(!_.type("error", {code:"ENOTDIR"}));
+    ok(!_.type("exception", {code:"ENOTDIR"}));
+    ok(!_.type("exception",  {type:'error', code:"foo"}));
+    ok(_.type("exception",  {type:'exception', code:"foo"}));
+    ok(!_.type("exception", {type:'error', code:"foo"}));
+    ok(!_.type('exception', {type:'error', code:"foo"}, bar, baz));
+}
+
+function testError(){
 
     var e = _.error("ACode", "AMessage");
 
     eq(e.code, "ACode");
     eq(e.message, "AMessage");
 
-    ok(_.error.eq(e, e));
-    ok(_.error.eq("ACode", e));
-    ok(_.error.eq(e, "ACode"));
-    ok(!_.error.eq(e, "BCode"));
-    ok(!_.error.eq("BCode", e));
+    ok(_.code(e, e));
+    ok(_.code("ACode", e));
+    ok(_.code(e, "ACode"));
+    ok(!_.code(e, "BCode"));
+    ok(!_.code("BCode", e));
 
 
     var foo = _.error("FooCode", "FooMessage", { message: "BarMessage", code: "BarCode", barExtra: "BarExtra" });

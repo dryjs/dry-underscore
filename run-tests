@@ -1,6 +1,6 @@
 #!/bin/bash
 
 ./node_modules/tamejs/lib/main.js ./test/async.test.tjs > ./test/async.test.js &&
-./node_modules/tamejs/lib/main.js ./test/build.test.tjs > ./test/build.test.js && 
+./node_modules/tamejs/lib/main.js ./test/fs.test.tjs > ./test/fs.test.js && 
 ./node_modules/tamejs/lib/main.js ./test/builder.test.tjs > ./test/builder.test.js && ./node_modules/expresso/bin/expresso
 

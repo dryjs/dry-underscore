@@ -10,7 +10,7 @@ exports.testVerbose = testVerbose;
 
 function testVerbose(){
 
-    var log = _.log.make();
+    var log = _.log.make({ level: 'debug', verboseLevel: 'debug' });
 
     ok(log.verbose());
 
@@ -51,7 +51,7 @@ function testLog(){
     var tt = new testTransport();
     tt.writeFunction(function(log, logLevel, timestamp, message){ called++; eq(message, this._expected); });
 
-    var log = _.log.make();
+    var log = _.log.make({ level: 'debug', verboseLevel: 'debug' });
     log.transports([tt]);
 
     tt.expected("foo");
@@ -79,7 +79,6 @@ function testLog(){
     log.crit("foo");
     log.emerg("foo");
 
-
     eq(called, 8);
 }
 
@@ -94,7 +93,7 @@ function testChild(){
     var childTransport = new testTransport();
     childTransport.writeFunction(function(log, logLevel, timestamp, message){ childCalled++; eq(message, this._expected); });
 
-    var parent = _.log.make();
+    var parent = _.log.make({ level: 'debug', verboseLevel: 'debug' });
     parent.namespace("parent");
     parent.transports([parentTransport]);
 
