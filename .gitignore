@@ -5,3 +5,4 @@ test/builder-data/cache
 test/build.test.js
 test/builder.test.js
 test/async.test.js
+private
