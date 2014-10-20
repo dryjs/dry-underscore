@@ -1,6 +1,6 @@
 {
     "name": "dry-underscore",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "main": "./lib/index.js",
     "description": "The DRY Undescore Library",
     "author": {
@@ -26,13 +26,13 @@
         "expresso": "0.9.2"
     },
     "dependencies":{ 
-          "tamejs" : "0.4.14"
-        , "formidable":"1.0.9"
-        , "tosource" : "0.1.1"
-        , "minimatch" : "0.2.11"
-        , "superagent" : "0.15.4"
-        , "moment" : "2.5.1"
-        , "handlebars" : "2.0.0"
-        , "keypress": "0.2.1"
+          "tamejs" : ""
+        , "formidable":""
+        , "tosource" : ""
+        , "minimatch" : ""
+        , "superagent" : ""
+        , "moment" : ""
+        , "handlebars" : ""
+        , "keypress": ""
     }
 }
