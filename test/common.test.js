@@ -30,6 +30,8 @@ exports.testError = testError;
 exports.testCode = testCode;
 exports.testBail = testBail;
 exports.testPropertyComparerMaker = testPropertyComparerMaker;
+exports.testPartial = testPartial;
+exports.testEach = testEach;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -40,6 +42,33 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testEach(){
+
+    function f(){}
+
+    f.prop = true;
+
+    var seen = false;
+    _.each(f, function(val, key){
+        if(key === "prop" && val === true){
+            seen = true;
+        }
+    });
+        
+    ok(seen);
+}
+
+
+function testPartial(){
+
+    function a(){ return(arguments); }
+
+    var f = _.partial(a, 1, _, 3);
+
+    eq(_.a(f(2)),[1, 2, 3]);
+}
+
 
 function testBail(beforeExit){
     var bailCalls = 0;

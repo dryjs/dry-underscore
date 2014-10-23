@@ -9,11 +9,11 @@ for example from [Dive Into JavaScript][d].
 [d]: http://www.diveintojavascript.com/core-javascript-reference/the-string-object
 
 
-As name states this an extension for [Underscore.js][u], but it can be used
+As name states this an extension for [Underscore.js][u] (and [Lo-Dash](http://lodash.com/)), but it can be used
 independently from **_s**-global variable. But with Underscore.js you can
 use Object-Oriented style and chaining:
 
-[u]: http://documentcloud.github.com/underscore/
+[u]: http://underscorejs.org/
 
 ```javascript
 _("   epeli  ").chain().trim().capitalize().value()
