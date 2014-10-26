@@ -28,7 +28,9 @@ exports.testBasic = function(done){
         foo: { expected_call: false }
     });
 
-    _.test.throws(_.bind(no_call_bad.check, no_call_bad));
+    no_call_bad.check();
+
+    _.test.throws(_.bind(no_call_bad.foo, no_call_bad));
 
     var call_bad = _.mock({
         foo: { expected_call: true }
