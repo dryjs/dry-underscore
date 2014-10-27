@@ -36,7 +36,37 @@ exports.testBasic = function(done){
         foo: { expected_call: true }
     });
 
-    _.test.throws(_.bind(call_bad.check, no_call_bad));
+    _.test.throws(_.bind(call_bad.check, call_bad));
+
+    var call_bad_only_args = _.mock({
+        foo: { expected_args: [1, 2] }
+    });
+
+    _.test.throws(_.bind(call_bad_only_args.check, call_bad_only_args));
+
+    var call_bad_args = _.mock({
+        foo: { expected_args: [1, 2] }
+    });
+
+    var threw = false;
+    try{
+       call_bad_args.foo(1, 3);
+    }catch(e){
+        threw = true;
+        eq(e.expected, "2"); 
+        eq(e.actual, "3"); 
+    }
+
+    ok(threw);
+    
+
+
+    var test_good_only_args = _.mock({
+        foo: { expected_args: [1, 2] }
+    });
+
+    test_good_only_args.foo(1, 2);
+    test_good_only_args.check();
 
     var call_good = _.mock({
         foo: { expected_call: true }
