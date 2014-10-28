@@ -32,6 +32,7 @@ exports.testBail = testBail;
 exports.testPropertyComparerMaker = testPropertyComparerMaker;
 exports.testPartial = testPartial;
 exports.testEach = testEach;
+exports.testSeconds = testSeconds;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -42,6 +43,14 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testSeconds(){
+
+    eq("0:00:01", _.seconds.durationString(1));
+    eq("0:01:01", _.seconds.durationString(61));
+    eq("1:01:01", _.seconds.durationString(3661));
+
+}
 
 function testEach(){
 
