@@ -2925,6 +2925,20 @@ function (_){
         return(n * _.ms.day(7));
     };
 
+    _.seconds = function(n){
+        if(n === undefined){ return(0); }
+        else{ return(n); }
+    };
+
+    _.seconds.durationString = function(secs){
+        var minutes = Math.floor(secs / 60);          
+        secs = secs % 60;
+        var str = _.minutes.durationString(minutes);
+        if(secs < 10){ secs = "0" + secs; }
+        str = str + ":" + secs;
+        return(str);
+    };
+
     _.minutes = function(n){
         if(n === undefined){ return(0); }
         else{ return(n); }
@@ -2940,6 +2954,15 @@ function (_){
     _.minutes.week = function(n){ 
         if(n === undefined){ n = 1; }
         return(n * _.minutes.day(7));
+    };
+    _.minutes.durationString = function(min){
+        var hours = Math.floor(min / 60);          
+        var minutes = min % 60;
+        if(minutes < 10){
+            minutes = "0" + minutes;
+        }
+
+        return(hours + ":" + minutes);
     };
     _.minutes.timeString = function(min){
         var hours = Math.floor(min / 60);          
@@ -3098,7 +3121,7 @@ function (_){
         return(_.parse(_.stringify(o)));
     };
 
-    _.regex = function(str){ return(new RegExp(str)); };
+    _.regex = function(str, flags){ return(new RegExp(str, flags)); };
 
     _.onceEvery = function(val, mod, hit, miss){
         if((val % mod) === 0 && hit){ hit(); }
