@@ -33,6 +33,7 @@ exports.testPropertyComparerMaker = testPropertyComparerMaker;
 exports.testPartial = testPartial;
 exports.testEach = testEach;
 exports.testSeconds = testSeconds;
+exports.testErrors = testErrors;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
 //exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
@@ -43,6 +44,48 @@ exports.testRequest = function(){
     });
 };
 */
+
+function testErrors(){
+
+    var errors = _.errors();
+
+    errors.add("failure", "failure");
+    errors.add("error", "error");
+
+
+    eq(_.code(errors.failure()), "failure");
+    eq(errors.failure().message, "failure");
+
+    eq(_.code(errors.error()), "error");
+    eq(errors.error().message, "error");
+
+    eq(_.code(errors.error("new message")), "error");
+    eq(errors.error("new message").message, "new message");
+
+    var e = errors.error("new message", { message: "foo", code: "foo", extra: 'extra' });
+
+    eq(_.code(e), "error");
+    eq(e.message, "new message");
+    eq(e.extra, "extra");
+
+    var z = errors.error({ message: "foo", code: "foo", extra: 'extra' });
+
+    eq(_.code(z), "error");
+    eq(z.message, "error");
+    eq(z.extra, "extra");
+
+    eq(errors.hash(), { 
+        failure: "failure",
+        error: "error" 
+    });
+
+    errors.hash({ foo: "foo" });
+
+    eq(_.code(errors.foo()), "foo");
+    eq(errors.foo().message, "foo");
+
+}
+
 
 function testSeconds(){
 

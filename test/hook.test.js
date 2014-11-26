@@ -3,83 +3,242 @@
 var assert = require('assert');
 var _ = require('../');
 
-function hooker(){};
-_.hook(hooker.prototype);
-
 var eq = _.test.eq;
 var ok = _.test.ok;
 
-exports.testBasic = function(done){
-
-    var calls = 0;
-    var expectedCalls = 0;
-
+function test_hooker(count){
 
     var h = _.hook();
 
-    var actual = 0;
-    var expected = 2;
-    // var actualError = 0;
-    // var expectedError = 2;
-
-    h.hook("event", function(next, a, b){
-        actual++; a.a++; b.b++;
+    var push_index = function(next, a, b){
+        if(a){ a.push(a.length); }
+        if(b){ b.push(b.length); }
         next();
-    });
-    h.hook("event", function(next, a, b){
-        actual++; a.a++; b.b++;
-        next(_.error("TestError", "A test error."));
-    });
-    h.hook("event", function(next, a, b){
-        actual++; a.a++; b.b++;
+    };
+
+    _.for(count, function(){
+        h.hook("push_index", push_index);
     });
 
-    var a = { a: 0 };
-    var b = { b: 0 };
+    return(h);
+}
 
-    h.serial("event", [a, b], function(err, a, b){
-        ok(_.code("TestError", err));
-        eq(a, { a: expected });
-        eq(b, { b: expected });
-        eq(actual, expected);
-        expectedCalls++;
-    }, 1000);
+exports.testBasic = function(done){
+
+    var h = test_hooker(3);
+
+    var called = false;
+
+    h.bite("push_index", [[],[]], function(err, a, b){
+        eq(null, err);
+        eq(a, [0, 1, 2]);
+        eq(b, [0, 1, 2]);
+        called = true;
+    });
 
     done(function(){
-        eq(expectedCalls, 1);
+        ok(called);
     });
 };
 
-exports.testCall = function(done){
+exports.testPrototype = function(done){
 
-    var callbacks = 0;
-    
-    function test(hooker){
-        var calls = 0;
-        var expectedCalls = 2;
-        
-        var handler = function(next){ calls++; next(); }
-        
-        hooker.hook('test', handler);
-        hooker.hook('test', handler);
-        
-        hooker.serial('test', [1, 2, 3], function(){
-            eq(this, null);
-            callbacks++;
-        });
-        
-        eq(calls, expectedCalls);
-    }
-    
-    test(new hooker());
+    function hooker(){};
+    _.hook(hooker.prototype);
+
+    hooker.prototype.test = _.hook.event_function("test");
+
+    var h = new hooker();
+
+    function handler(next, a){ a.push(a.length); next(); }
+
+    h.test(handler);
+    h.test(handler);
+
+    var called = false;
+    h.bite("test", [[]], function(err, a){
+        called = true;
+        ok(!err);
+        eq(a, [0, 1]);
+    });
 
     done(function(){
-        eq(callbacks, 1);
+        ok(called);
     });
+};
+
+exports.testError = function(done){
+
+    var h = test_hooker(3);
+
+    h.hook("push_index", function(next){
+        next(_.error("TestError", "A test error."));
+    });
+
+    var function_after_error_called = false;
+    h.hook("push_index", function(next){
+        function_after_error_called = true;
+    });
+
+    var called = false;
+
+    h.bite("push_index", [[],[]], function(err, a, b){
+        eq(_.code(err), "TestError");
+        eq(a, undefined);
+        eq(b, undefined);
+        eq(function_after_error_called, false);
+        called = true;
+    });
+
+    done(function(){ ok(called); });
+
+};
+
+exports.testErrorHandlersSimple = function(done){
+
+    var h = test_hooker(3);
+
+    h.hook("push_index", function(next){
+        next(_.error("TestError", "A test error."));
+    });
+
+    var no_catch_called = false;
+    h.hook("push_index", function(next){
+        no_catch_called = true;
+    });
+
+    var catch_called = false;
+    h.hook("push_index", function(err, next){
+        catch_called = true;
+        eq(_.code(err), "TestError");
+        next(err);
+    }, true);
+
+    var called = false;
+
+    h.bite("push_index", [[],[]], function(err, a, b){
+        called = true;
+        eq(_.code(err), "TestError");
+        ok(!err.rewritten);
+        ok(!err.swallowed);
+        eq(a, undefined);
+        eq(b, undefined);
+    });
+
+    ok(catch_called);
+    ok(!no_catch_called);
+
+    done(function(){ ok(called); });
+};
+
+exports.testErrorRewrite = function(done){
+
+    var h = test_hooker(3);
+
+    h.hook("push_index", function(next){
+        next(_.error("TestError", "A test error."));
+    });
+
+    var no_catch_called = false;
+    h.hook("push_index", function(next){
+        no_catch_called = true;
+    });
+
+    var catch_called = false;
+    h.hook("push_index", function(err, next){
+        catch_called = true;
+        eq(_.code(err), "TestError");
+        next(_.error("RewriteError", "", err));
+    }, true);
+
+    var called = false;
+
+    h.bite("push_index", [[],[]], function(err, a, b){
+        called = true;
+        eq(_.code(err), "RewriteError");
+        ok(err.rewritten);
+        eq(_.code(err.original), "TestError");
+        eq(a, undefined);
+        eq(b, undefined);
+    });
+
+    ok(catch_called);
+    ok(!no_catch_called);
+
+    done(function(){ ok(called); });
+};
+
+exports.testErrorHandlersComplex = function(done){
+
+    var h = test_hooker(3);
+
+    h.hook("push_index", function(next){
+        next(_.error("TestError", "A test error."));
+    });
+
+    var no_catch_called = false;
+    h.hook("push_index", function(next){
+        no_catch_called = true;
+    });
+
+    var catch_called = false;
+    h.hook("push_index", function(err, next){
+        catch_called = true;
+        eq(_.code(err), "TestError");
+        next(err);
+    }, true);
+
+   var second_catch_called = false;
+    h.hook("push_index", function(err, next){
+        second_catch_called = true;
+        eq(_.code(err), "TestError");
+        next();
+    }, true);
+
+    var no_catch_called_after_swallow = false;
+    h.hook("push_index", function(next){
+        no_catch_called_after_swallow = true;
+    });
+
+    var called = false;
+
+    h.bite("push_index", [[],[]], function(err, a, b){
+        eq(_.code(err), "TestError");
+        ok(err.swallowed);
+        eq(a, undefined);
+        eq(b, undefined);
+        called = true;
+    });
+
+    ok(catch_called);
+    ok(!no_catch_called);
+    ok(second_catch_called);
+    ok(!no_catch_called_after_swallow);
+
+    done(function(){ eq(called, true); });
+};
+
+exports.testTimeout = function(done){
+    var h = test_hooker(3);
+
+    h.hook("push_index", function(next, a, b){ });
+
+    var called = false;
+
+    h.bite("push_index", [[],[]], function(err, a, b){
+        called = true;
+        eq(_.code(err), "Timeout");
+        eq(a, undefined);
+        eq(b, undefined);
+    }, 200);
+
+    done(function(){ ok(called); });
 };
 
 exports.testRemove = function(done){
-    
+    function hooker(){};
+    _.hook(hooker.prototype);
+ 
     var callbacks = 0;
 
     function test(hooker){
@@ -93,14 +252,14 @@ exports.testRemove = function(done){
         hooker.hook('test', handler);
         hooker.hook('test', function(next){ calls++; next(); });
         
-        hooker.serial('test', function(){
+        hooker.bite('test', function(){
             eq(calls, beforeCalls);
 
             calls = 0;
 
             hooker.unhook('test', handler);
 
-            hooker.serial('test', function(){
+            hooker.bite('test', function(){
                 eq(calls, afterCalls);
                 callbacks++;
             });
@@ -117,6 +276,8 @@ exports.testRemove = function(done){
 };
 
 exports.testAppendToObject = function(done){
+    function hooker(){};
+    _.hook(hooker.prototype);
     
     var callbacks = 0;
 
@@ -139,7 +300,7 @@ exports.testAppendToObject = function(done){
         hooker.hook('test', function(next){ calls++; next(); });
         hooker.hook('test', function(next){ calls++; next(); });
         
-        hooker.serial('test', [e, f], function(err){
+        hooker.bite('test', [e, f], function(err){
             eq(calls, 3);
 
             eq(e, [0, 1]);
