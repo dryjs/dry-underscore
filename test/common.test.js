@@ -36,14 +36,6 @@ exports.testSeconds = testSeconds;
 exports.testErrors = testErrors;
 //exports.hashTest = hashTest;
 //exports.testFatal = testFatal;
-//exports.random = function(){ _.stderr(_.sha256(_.uuid())); };
-/*
-exports.testRequest = function(){
-    _.request('localhost/test', function(req){
-        _.stderr(req);
-    });
-};
-*/
 
 function testErrors(){
 

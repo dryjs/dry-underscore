@@ -3,12 +3,6 @@
 echo "(function(){"
 cat ./deps/underscore/underscore.js
 
-echo "(function(){"
-cat ./deps/superagent/superagent.js 
-echo "})();" 
-echo "_.request = superagent;" 
-echo "delete this.superagent;" 
-
 cat ./deps/moment/min/moment.min.js 
 echo "_.moment = moment;" 
 echo "delete this.moment;" 
@@ -22,6 +16,18 @@ echo "})();"
 #cat ./deps/underscore.string/dist/underscore.string.min.js 
 echo "(" 
 node -e "console.log(require('./lib/common.js').mixin.toString())" 
+echo ")(_);" 
+
+echo "_.format = (" 
+node -e "console.log(require('./lib/format.js').library.toString())" 
+echo ")(_);" 
+
+echo "_.uuid = (" 
+node -e "console.log(require('./lib/uuid.js').library.toString())" 
+echo ")(_);" 
+
+echo "_.sha256 = (" 
+node -e "console.log(require('./lib/sha256.js').library.toString())" 
 echo ")(_);" 
 
 echo "_.dry = (" 

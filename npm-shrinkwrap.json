@@ -1,6 +1,6 @@
 {
   "name": "dry-underscore",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "dependencies": {
     "formidable": {
       "version": "1.0.9",
@@ -79,41 +79,6 @@
       "version": "2.5.1",
       "from": "moment@",
       "resolved": "https://registry.npmjs.org/moment/-/moment-2.5.1.tgz"
-    },
-    "superagent": {
-      "version": "0.15.4",
-      "from": "superagent@",
-      "dependencies": {
-        "qs": {
-          "version": "0.6.5",
-          "from": "qs@0.6.5",
-          "resolved": "https://registry.npmjs.org/qs/-/qs-0.6.5.tgz"
-        },
-        "formidable": {
-          "version": "1.0.14",
-          "from": "formidable@1.0.14",
-          "resolved": "https://registry.npmjs.org/formidable/-/formidable-1.0.14.tgz"
-        },
-        "emitter-component": {
-          "version": "1.0.0",
-          "from": "emitter-component@1.0.0",
-          "resolved": "https://registry.npmjs.org/emitter-component/-/emitter-component-1.0.0.tgz"
-        },
-        "methods": {
-          "version": "0.0.1",
-          "from": "methods@0.0.1",
-          "resolved": "https://registry.npmjs.org/methods/-/methods-0.0.1.tgz"
-        },
-        "cookiejar": {
-          "version": "1.3.0",
-          "from": "cookiejar@1.3.0",
-          "resolved": "https://registry.npmjs.org/cookiejar/-/cookiejar-1.3.0.tgz"
-        },
-        "debug": {
-          "version": "0.7.2",
-          "from": "debug@~0.7.2"
-        }
-      }
     },
     "tamejs": {
       "version": "0.4.14",
