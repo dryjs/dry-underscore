@@ -18,6 +18,10 @@ echo "("
 node -e "console.log(require('./lib/common.js').mixin.toString())" 
 echo ")(_);" 
 
+echo "_.log = (" 
+node -e "console.log(require('./lib/log.js').mixin.toString())" 
+echo ")(_);" 
+
 echo "_.format = (" 
 node -e "console.log(require('./lib/format.js').library.toString())" 
 echo ")(_);" 
@@ -30,14 +34,26 @@ echo "_.sha256 = ("
 node -e "console.log(require('./lib/sha256.js').library.toString())" 
 echo ")(_);" 
 
+echo "_.test = (" 
+node -e "console.log(require('./lib/test.js').library.toString())" 
+echo ")(_);" 
+
+echo "_.url = (" 
+node -e "console.log(require('./lib/url.js').library.toString())" 
+echo ")(_);" 
+
+echo "_.querytstring = (" 
+node -e "console.log(require('./lib/querystring.js').library.toString())" 
+echo ")(_);" 
+
+echo "_.http = (" 
+node -e "console.log(require('./lib/http.client.js').library.toString())" 
+echo ")(_);" 
+
 echo "_.dry = (" 
 node -e "console.log(require('./lib/dry.js').mixin.toString())" 
 echo ")(_);" 
 #echo "_.mixin(_.string.exports());" 
-
-echo "_.log = (" 
-node -e "console.log(require('./lib/log.js').mixin.toString())" 
-echo ")(_);" 
 
 echo "(" 
 node -e "console.log(require('./lib/client.js').mixin.toString())" 

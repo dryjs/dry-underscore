@@ -500,7 +500,7 @@ function testTest(){
     _.test.eq([null], [null]);
     try{ _.test.eq([0], [false]); }catch(e){ n++; }
     try{ _.test.eq([0], [null]); }catch(e){ n++; }
-    _.test.equal(n, 3);
+    _.test.eq(n, 3);
 }
 
 

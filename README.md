@@ -13,7 +13,7 @@ sometimes, like ```_.http``` the semantics are the same, but the underlying libr
 
 Basically I hate all the other http request libraries I've seen. I really just want strings in, strings out. I hate content type parsers. They always cause problems.
 
-This \*will\* work on both the server and client sides, with the exact same api. We don't deliver the body in pieces, we deliver it in one chunk.
+This works on both the server and client sides, with the exact same api. We don't deliver the body in pieces, we deliver it in one chunk.
 
 ```
 _.http.get("http://www.google.com", function(err, res, body){
@@ -41,4 +41,4 @@ writer.end();
 **License**
 
 See the LICENSE file in the root of the repo for license information.
-
+2900713402
