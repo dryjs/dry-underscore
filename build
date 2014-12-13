@@ -1,3 +1,2 @@
 #!/bin/bash
-./buildFile.sh > dry.underscore.js
-
+./run build

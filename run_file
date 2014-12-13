@@ -1,0 +1,24 @@
+
+from subprocess import call
+
+port = "8000"
+
+import os
+
+def _shell(cmd):
+    return call(cmd, shell=True)
+
+def _call(cmd):
+    return call(cmd.split())
+
+#def test(args):
+#   return _call('./node_modules/dry-test/bin/dry-test ' + " ".join(args))
+
+def test(args):
+    return _call('bash ./run_tests')
+
+def build(args):
+    return _shell('bash ./client_file > ./dry.underscore.js')
+
+def default(args):
+    return test(args)

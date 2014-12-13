@@ -16,7 +16,6 @@ We support both _.camelCaseFunctionNames and _.underscored_function_names, we pr
 
 We shoot for 100% coverage, we use tamejs in some of our code, so until we punchup a coverage tool that instruments properly, we're flying a little blind. We test the client side functions when they differ from the server side functions in phantomjs, and you can run the whole kit and kaboodle with ```./run-tests```.
 
-
 *_.http (http request)*
 
 **Introduction**

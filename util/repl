@@ -2,7 +2,7 @@
 
 var repl = require('repl');
 repl.start({
-  prompt: "node via stdin> ",
+  prompt: "(_ is actually __ in the repl): ",
   input: process.stdin,
   output: process.stdout
-}).context._ = require('./');
+}).context.__ = require('../');

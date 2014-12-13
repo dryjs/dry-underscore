@@ -23,13 +23,12 @@ exports.testRmap = testRmap;
 exports.testRfilter = testRfilter;
 exports.testMemoizeAsync = testMemoizeAsync;
 exports.testFor = testFor;
-exports.testTimeout = testTimeout;
 exports.testPlumber = testPlumber;
 exports.testOmap = testOmap;
 exports.testError = testError;
 exports.testCode = testCode;
 exports.testBail = testBail;
-exports.testPropertyComparerMaker = testPropertyComparerMaker;
+exports.testPropertyComparer = testPropertyComparer;
 exports.testPartial = testPartial;
 exports.testEach = testEach;
 exports.testSeconds = testSeconds;
@@ -183,8 +182,8 @@ function testPlumber(beforeExit){
     beforeExit(function(){ eq(calls, expectedCalls); });
 }
 
-function testPropertyComparerMaker(){
-    var comp = _.propertyComparerMaker("z");
+function testPropertyComparer(){
+    var comp = _.propertyComparer("z");
 
     var foo = {z: "foo"}
     var bar = {z: "bar"}
@@ -333,49 +332,6 @@ function testMemoizeAsync(beforeExit){
         eq(expensiveCalled, 2);
         eq(called, 5);
     });
-}
-
-function testTimeout(beforeExit){
-
-    var successCalled = 0;
-    var errorCalled = 0;
-    var totalCalled = 0;
-
-    function expectError(err){
-        ok(err);
-        errorCalled++;
-        totalCalled++;
-    }
-
-    function expectSuccess(err){
-        ok(!err);
-        successCalled++;
-        totalCalled++;
-    }
-
-    setTimeout(_.timeout(expectSuccess, 100), 20);
-    setTimeout(_.timeout(expectError, 100), 200);
-
-    function withArgs(callback, t){ 
-        setTimeout(function(){
-            callback(null, 1, 2, 3);
-        }, t);
-    }
-
-    withArgs(_.timeout(
-        _.plumb(function(a, b, c){ 
-            eq(a, 1); eq(b, 2); eq(c, 3);
-            successCalled++; totalCalled++;
-        }, function(err){ ok(!err) }), 
-    100), 20);
-    setTimeout(_.timeout(function(err){ ok(err); errorCalled++; ok(err.add); totalCalled++ }, 100, {add: true}), 200);
-
-    beforeExit(function(){ 
-        eq(successCalled, 2);
-        eq(errorCalled, 2);
-        eq(totalCalled, 4);
-    });
-
 }
 
 function testFor(){

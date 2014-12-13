@@ -1,0 +1,87 @@
+#!/usr/bin/python
+
+import os
+import os.path
+import sys
+import imp
+import inspect
+
+verbose = False
+# verbose = True
+
+
+def find_run_file(file_path):
+    global verbose
+
+    test_path = os.path.join(file_path, "run_file")
+    if(verbose): print("test_path: " + test_path)
+
+    if os.path.exists(test_path):
+        if(verbose): print("found run_file: " + test_path)
+        return(test_path, file_path)
+    else:
+        if(file_path == "/"):
+            return(None, None)
+
+        (parent_tree, current_dir) = os.path.split(file_path)
+
+        if(parent_tree == ""):
+            parent_tree = "/"
+
+        return find_run_file(parent_tree)
+
+
+def use(run_file, run_file_path, usage):
+    args = sys.argv[1:]
+
+    if len(args) == 0:
+        function_name = 'default'
+    else:
+        function_name = args[0]
+
+    for name, fun in inspect.getmembers(run_file, inspect.isfunction):
+        if fun.__name__ == function_name:
+            return fun(args[1:])
+
+
+    # we only get here if we don't find the function
+
+    exit_code = 0
+
+    if len(args) > 0:
+        if args[0] != 'help':
+            print("command '" + args[0] + "' was not found in run_file: " + run_file_path)
+            exit_code = 1
+
+    print(usage)
+    print("available commands: ")
+    print('  ' + 'help')
+
+    for name, fun in inspect.getmembers(run_file, inspect.isfunction):
+        if(fun.__name__[0] != "_" and fun.__name__ != "default"):
+            print('  ' + fun.__name__)
+
+    return(exit_code)
+
+
+def main():
+
+    (run_file_path, run_file_root) = find_run_file(os.getcwd())
+
+    if(run_file_path == None):
+        print('"run_file" not found in this directory, or any of it\'s parent directories.')
+        sys.exit(1)
+
+    sys.dont_write_bytecode = True
+    run_file = imp.load_source("run_file", run_file_path)
+    sys.dont_write_bytecode = False
+
+    
+    saved_cwd = os.getcwd()
+    os.chdir(run_file_root)
+    exit_code = use(run_file, run_file_path, "usage: <command> [<arg1> <arg2> ...]")
+    os.chdir(saved_cwd)
+    sys.exit(exit_code)
+
+main()
+
