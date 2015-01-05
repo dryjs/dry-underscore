@@ -4433,37 +4433,6 @@ function library(){
         writer.end();
     };
 
-
-    request_manager.prototype.connect_writer = function(call, callback){
-
-        callback = callback || _.noop;
-
-        var req = http.request(call, function(res) {
-            var body = "";
-            
-            res.setEncoding('utf8');
-            res.on('data', function (chunk) { body += chunk; });
-            res.on('end', function(){
-                var client_response = {
-                    body: body,
-                    status: res.statusCode
-                };
-                callback(null, client_response, body);
-            });
-        });
-
-        var dead = false;
-        req.on('error', function(err){ 
-            dead = true;
-            return callback(err);
-        });
-
-        return({
-            end: function(d){ if(!dead){ req.write(d); } req.end(); },
-            write: function(d){ if(!dead){ req.write(d); } }
-        });
-    };
-
     request_manager.prototype.connect_writer = function(call, callback){
         var xhr = getXHR();
 
