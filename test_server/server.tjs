@@ -1,0 +1,81 @@
+
+var _ = require('dry-underscore');
+var eq = _.test.eq;
+var ok = _.test.ok;
+
+var root = _.path.fun(__dirname);
+
+var fs = require('fs');
+var http = require('http');
+var https = require('https');
+
+var express = require('express');
+
+var http_server = null;
+var https_server = null;
+
+function add_handlers(app, name){
+
+    // we need to serve the files for the client tests
+    // this doesn't do anything for the node.http tests
+    app.use("/", express.static(root("../test_client")));
+
+    app.get('/get', function(req, res){
+
+        var count = 0;
+
+        function write_count(){ res.write("" + count++); }
+        _.nextTick(write_count);
+        _.nextTick(write_count);
+        _.nextTick(write_count);
+        _.nextTick(write_count);
+        _.nextTick(function(){ res.end(); });
+    });
+
+    app.post('/post', function(req, res){
+        var body = "";
+        req.on('data', function(chunk){ body += chunk; });
+        req.on('end', function(){ eq(body, "hello"); });
+        res.status(202);
+        res.write("good");
+        res.end();
+    });
+
+    app.get('/headers', function(req, res){ res.end(_.stringify(req.headers)); });
+    app.post('/headers', function(req, res){ res.end(_.stringify(req.headers)); });
+}
+
+exports.start_server = function start_server(callback){
+
+    var http_app = express();
+    var https_app = express();
+
+    var ssl_options = {
+        key : fs.readFileSync(root("ssl/test.key"), 'utf8'),
+        cert : fs.readFileSync(root("ssl/test.cert"), 'utf8'),
+        ca: []
+    }
+
+    add_handlers(http_app, "http");
+    add_handlers(https_app, "https");
+
+    http_server = http.createServer(http_app);
+    https_server = https.createServer(ssl_options, https_app);
+
+    https_server.listen(9998, function(){
+        _.p('server running on: 9998');
+        http_server.listen(9999, function(){
+        _.p('server running on: 9999');
+            callback();
+        });
+    });
+};
+
+exports.stop_server = function stop_server(callback){
+    http_server.close(); 
+    https_server.close(); 
+    callback();
+};
+
+
+

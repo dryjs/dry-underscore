@@ -4361,8 +4361,109 @@ function library(_){
     return(QueryString);
 }
 )(_);
+_.http_base = (
+function library(_){
+
+    function http_base(){ }
+
+    http_base.prototype.process_headers = function(headers){
+        var new_headers = {};
+
+        // http spec, headers are not case sensitive
+        // lowercase so we can compare
+        _.each(headers, function(val, key){
+            new_headers[key.toLowerCase()] = val;
+        });
+        return(new_headers);
+    };
+
+    http_base.prototype.make_call = function(options, method){
+
+        var url = null;
+
+        if(_.isString(options)){
+            url = options;
+            options = {};
+        }else if(_.isObject(options)){
+            url = options.url;
+        }
+
+        if(!url){ _.fatal("You must provide a url to connect to."); }
+        if(!method){ _.fatal("You must provide a method (http verb)."); }
+
+        // http spec, verbs are uppercase and case sensitive
+        method = method.toUpperCase();
+
+        var host = _.url.parse(url);
+        var secure = (host.protocol && host.protocol === "https:") || host.port === 443;
+
+        var headers = this.process_headers(options.headers || {});
+
+        if(!headers["content-type"]){ headers["content-type"] = "text/plain"; }
+
+        var call = {
+            url: url,
+            secure: secure,
+            host: host.hostname,
+            port: host.port || (secure ? 443 : 80),
+            path: host.pathname + (host.search ? host.search : ""),
+            method: method,
+            headers : headers,
+        };
+
+
+        return(call);
+    };
+
+    http_base.prototype.get = function(options, callback){
+
+        var call = this.make_call(options, "GET");
+
+        return this.connect(call, "", callback);
+    };
+
+    http_base.prototype.post = function(options, data, callback){
+
+        var use_writer = false;
+        if(_.isFunction(data)){
+            callback = data;
+            data = null;
+            use_writer = true;
+        }
+
+        var call = this.make_call(options, "POST");
+
+        if(use_writer){
+            return this.connect_writer(call, callback);
+        }else{
+            return this.connect(call, data, callback);
+        }
+    };
+
+    http_base.prototype.connect = function(call, data, callback){
+
+        callback = callback || _.noop;
+
+        var writer = this.connect_writer(call, callback);
+
+        if(data){ writer.write(data); }
+
+        writer.end();
+    };
+
+    var lib = http_base;
+    lib.library = library;
+
+    return(lib);
+}
+)(_);
 _.http = (
 function library(){
+
+    function request_manager(){
+        _.http_base.call(this);
+    }
+    _.inherit(request_manager, _.http_base);
 
     function getXHR() {
         if (window.XMLHttpRequest && ('file:' != window.location.protocol || !window.ActiveXObject)) {
@@ -4375,63 +4476,6 @@ function library(){
         }
         return null;
     }
-
-    function request_manager(){}
-
-    request_manager.prototype.base_options = function(url, method){
-
-        var host = _.url.parse(url);
-        
-        var options = {
-            host: host.hostname,
-            port: host.port || 80,
-            path: host.pathname + (host.search ? host.search : ""),
-            url : url,
-            method: method,
-            headers : {}
-        };
-
-        return(options);
-    };
-
-    request_manager.prototype.get = function(url, callback){
-
-        var call = this.base_options(url, "GET");
-
-        return this.connect(call, "", callback);
-    };
-
-    request_manager.prototype.post = function(url, data, callback){
-
-        var use_writer = false;
-        if(_.isFunction(data)){
-            callback = data;
-            data = null;
-            use_writer = true;
-        }
-
-        var call = this.base_options(url, "POST");
-
-        call.headers["Content-type"] = "text/plain";        
-        call.headers["Connection"] = "close";
-
-        if(use_writer){
-            return this.connect_writer(call, callback);
-        }else{
-            return this.connect(call, data, callback);
-        }
-    };
-
-    request_manager.prototype.connect = function(call, data, callback){
-
-        callback = callback || _.noop;
-
-        var writer = this.connect_writer(call, callback);
-
-        if(data){ writer.write(data); }
-
-        writer.end();
-    };
 
     request_manager.prototype.connect_writer = function(call, callback){
         var xhr = getXHR();
@@ -4454,11 +4498,13 @@ function library(){
             end: function(d){ 
                 if(d !== undefined){ data += d; }
                 xhr.open(call.method, call.url, true);
+                _.each(call.headers, function(val, key){
+                    xhr.setRequestHeader(key, val);
+                });
                 xhr.send(data);
             }
         });
     };
-
 
     var lib = new request_manager();
     lib.library = library;

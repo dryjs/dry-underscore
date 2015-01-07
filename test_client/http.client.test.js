@@ -1,18 +1,8 @@
-"use strict";
 
-var _ = require('dry-underscore');
-
-var root = _.path.fun(__dirname);
-
-var eq = _.test.eq;
 var ok = _.test.ok;
+var eq = _.test.eq;
 
-suite('request');
-
-var test_server = require('../test_server/server.tjs');
-
-before(test_server.start_server);
-after(test_server.stop_server);
+suite('http');
 
 test("get", function(done){
     _.http.get("http://localhost:9999/get", function(err, res, body){
@@ -25,11 +15,9 @@ test("get", function(done){
     });
 });
 
-test("get https", function(done){
-
-    _.http.unsafe = true;
-    _.http.get("https://localhost:9998/get", function(err, res, body){
-        eq(err, null);
+test("get", function(done){
+    _.http.get("http://localhost:9999/get", function(err, res, body){
+        ok(!err);
         ok(res);
         eq(res.body, "0123");
         eq(res.status, 200);
@@ -38,34 +26,12 @@ test("get https", function(done){
     });
 });
 
-test("post", function(done){
+test("echo", function(done){
     _.http.post("http://localhost:9999/post", "hello", function(err, res, body){
         eq(res.status, 202);
         eq(body, "good");
         done();
     });
-});
-
-test("post https", function(done){
-    _.http.post("https://localhost:9998/post", "hello", function(err, res, body){
-        eq(res.status, 202);
-        eq(body, "good");
-        done();
-    });
-});
-
-test("post writer", function(done){
-    var r = _.http.post("http://localhost:9999/post", function(err, res, body){
-        eq(body, "good");
-        eq(res.status, 202);
-        done();
-    });
-
-    r.write('he');
-    r.write('ll');
-    r.write('o');
-
-    r.end();
 });
 
 test("get headers", function(done){

@@ -53,6 +53,10 @@ echo "_.querytstring = ("
 node -e "console.log(require('./lib/querystring.js').library.toString())" 
 echo ")(_);" 
 
+echo "_.http_base = (" 
+node -e "console.log(require('./lib/http_base.js').library.toString())" 
+echo ")(_);" 
+
 echo "_.http = (" 
 node -e "console.log(require('./lib/http.client.js').library.toString())" 
 echo ")(_);" 
