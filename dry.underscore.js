@@ -1852,27 +1852,26 @@ function (_){
         return(Math.abs(a-b) < acceptableDiff);
     };
 
-    _.get = function(obj, key, defaultValue){
-        if(_.isFunction(obj) && !key){ return(obj()); }
-        if(key === undefined){ return(obj); }
-        if(defaultValue !== undefined){
-            if(!obj[key]){
-                obj[key] = defaultValue;
-                return(obj[key]);
-            }else{
-                return(obj[key]);
+    _.get = function(obj, key){
+
+        if(obj[key] !== undefined){ return obj[key]; }
+
+        for (var prop in obj){
+            if(_.has(obj, prop) && prop.toLowerCase() === key.toLowerCase()){
+                return obj[prop];
             }
         }
-        if(obj[key] !== undefined){
-            if(_.isFunction(obj[key])){ return(obj[key]()); }
-            else{ return(obj[key]); }
+
+        return undefined;
+    };
+
+    _.define = _.def = function(obj, key, defaultValue){
+        if(key === undefined){ return(obj); }
+        if(obj[key] === undefined){
+            obj[key] = defaultValue;
+            return(obj[key]);
         }else{
-            for (var prop in obj){
-                if(_.has(obj, prop) && prop.toLowerCase() === key.toLowerCase()){
-                    return obj[prop];
-                }
-            }
-            return undefined;
+            return(obj[key]);
         }
     };
 
@@ -4366,17 +4365,6 @@ function library(_){
 
     function http_base(){ }
 
-    http_base.prototype.process_headers = function(headers){
-        var new_headers = {};
-
-        // http spec, headers are not case sensitive
-        // lowercase so we can compare
-        _.each(headers, function(val, key){
-            new_headers[key.toLowerCase()] = val;
-        });
-        return(new_headers);
-    };
-
     http_base.prototype.make_call = function(options, method){
 
         var url = null;
@@ -4397,9 +4385,9 @@ function library(_){
         var host = _.url.parse(url);
         var secure = (host.protocol && host.protocol === "https:") || host.port === 443;
 
-        var headers = this.process_headers(options.headers || {});
+        var headers = options.headers || {};
 
-        if(!headers["content-type"]){ headers["content-type"] = "text/plain"; }
+        if(!_.get(headers, "content-type")){ headers["content-type"] = "text/plain"; }
 
         var call = {
             url: url,
@@ -4901,9 +4889,9 @@ function (_){
     measurer.prototype.parent = function(){ return(this._parent); };
 
     measurer.prototype.runningTotalTransport = function(measurement){
-        var measurements = _.get(this, "_measurements", {});
-        var category = _.get(measurements, measurement.category, {});
-        var measurements = _.get(category, measurement.name, {});
+        var measurements = _.def(this, "_measurements", {});
+        var category = _.def(measurements, measurement.category, {});
+        var measurements = _.def(category, measurement.name, {});
         if(measurements[measurement.duration] === undefined){
             measurements[measurement.duration] = 0;
         }
@@ -4920,8 +4908,8 @@ function (_){
         if(this.parent()){ this.parent().transport(measurement); }
     };
 
-    measurer.prototype.transportsSync = function(){ return(_.get(this, "_transportsSync", [])); };
-    measurer.prototype.transportsAsync = function(){ return(_.get(this, "_transportsAsync", [])); };
+    measurer.prototype.transportsSync = function(){ return(_.def(this, "_transportsSync", [])); };
+    measurer.prototype.transportsAsync = function(){ return(_.def(this, "_transportsAsync", [])); };
 
     measurer.prototype.measure = function(categoryName, measurementName){
         var self = this;
@@ -4943,9 +4931,9 @@ function (_){
     };
 
     measurer.prototype.start = function(categoryName, measurementName){
-        var pendingMeasurements = _.get(this, "_pendingMeasurements", {});
-        var category = _.get(pendingMeasurements, categoryName, {});
-        var measurements = _.get(category, measurementName, {});
+        var pendingMeasurements = _.def(this, "_pendingMeasurements", {});
+        var category = _.def(pendingMeasurements, categoryName, {});
+        var measurements = _.def(category, measurementName, {});
         var newMeasurement = { type: 'measurement', category: categoryName, name: measurementName, token: _.uuid() };
         newMeasurement.start = _.timestamp();
 
@@ -4966,9 +4954,9 @@ function (_){
             token = tokenObj.token;
         }
 
-        var pendingMeasurements = _.get(this, "_pendingMeasurements", {});
-        var category = _.get(pendingMeasurements, categoryName, {});
-        var measurements = _.get(category, measurementName, {});
+        var pendingMeasurements = _.def(this, "_pendingMeasurements", {});
+        var category = _.def(pendingMeasurements, categoryName, {});
+        var measurements = _.def(category, measurementName, {});
         
         var measurement = null;
 
@@ -4995,22 +4983,22 @@ function (_){
     };
 
     measurer.prototype.measurements = function(categoryName, measurementName){
-        var measurements = _.get(this, "_measurements", {})
+        var measurements = _.def(this, "_measurements", {})
         
         if(!categoryName){
             return(measurements);
         }else if(!measurementName){
-            return(_.get(measurements, categoryName));
+            return(_.def(measurements, categoryName));
         }else{
-            var category = _.get(measurements, categoryName);
-            if(category){ return(_.get(category, measurementName)); }
+            var category = _.def(measurements, categoryName);
+            if(category){ return(_.def(category, measurementName)); }
             else{ return(undefined); }
         }
     };
 
     measurer.prototype.last = function(categoryName, measurementName){
-        var measurements = _.get(this, "_measurements", {})
-        var category = _.get(measurements, categoryName);
+        var measurements = _.def(this, "_measurements", {})
+        var category = _.def(measurements, categoryName);
         
         if(!measurementName){
             var result = {};
@@ -5019,7 +5007,7 @@ function (_){
             });
             return(result);
         }else{
-            if(category){ return(_.get(category, measurementName).last); }
+            if(category){ return(_.def(category, measurementName).last); }
             else{ return(undefined); }
         }
     };

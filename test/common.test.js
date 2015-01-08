@@ -11,8 +11,6 @@ exports.testHasType = testHasType;
 exports.testHasTypes = testHasTypes;
 //exports.testIterateAsync = testIterateAsync;
 exports.testEmptyIterate = testEmptyIterate;
-exports.testGet = testGet;
-exports.testTest = testTest;
 exports.testFormat = testFormat;
 exports.testConcat = testConcat;
 exports.testMoment = testMoment;
@@ -445,36 +443,6 @@ function testFormat(){
 
 function testConcat(){
     assert.deepEqual(_.concat(['a'], 'b', 'c', ['d', 'e']), ['a', 'b', 'c', 'd', 'e']);
-}
-
-function testTest(){
-    var n = 0;
-
-    _.test.eq(['a', 'b', 'c'], ['a', 'b', 'c']);
-    _.test.eq(['a', 'b', 'c'], ['a', 'b', 'c']);
-    try{ _.test.eq(['c', 'c', 'c'], ['a', 'b', 'c']); }catch(e){ n++; }
-    _.test.eq([null], [null]);
-    try{ _.test.eq([0], [false]); }catch(e){ n++; }
-    try{ _.test.eq([0], [null]); }catch(e){ n++; }
-    _.test.eq(n, 3);
-}
-
-
-function testGet(){
-
-    assert.strictEqual(_.get(function(){ return('a'); }), 'a');
-    assert.strictEqual(_.get('a'), 'a');
-    assert.strictEqual(_.get({ 'a': 'b'}, 'a'), 'b');
-    assert.strictEqual(_.get({ 'a': function(){ return('b'); }}, 'a'), 'b');
-    assert.strictEqual(_.get({ 'A': 'b'}, 'a'), 'b');
-    assert.strictEqual(_.get(['a', 'b'], 1), 'b');
-    assert.strictEqual(_.get(['a', 'b'], 1), 'b');
-    assert.strictEqual(_.get({ 'A': 'b'}, 'c'), undefined);
-    assert.strictEqual(_.get(function(){ return('a'); }), 'a');
-
-    var z = {'a': 'b'};
-    _.get(z, 'c', {}).c = 'c';
-    assert.deepEqual(z, {'a' : 'b', 'c' : {'c' : 'c'}});
 }
 
 function testEmptyIterate(beforeExit){
