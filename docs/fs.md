@@ -98,3 +98,23 @@ var cb = function (err, result) {
 };
 fs.readJsonFile('baz.json', cb);
 ```
+
+**evalFile** `fs.evalFile(path, callback)`
+
+* `path` String
+* `callback` Function
+
+Asynchronously evaluate the contents a file. The callback function takes 2 parameters: `err` (can be null) and `data` ('utf8' encoded data). The callback is called on an error or after the file has been read and evaluated.
+
+```javascript
+// four.js
+console.log(2 + 2);
+
+// outputs the following: 
+// 4
+// console.log(2 + 2);
+fs.evalFile('four.js', function(err, data) {
+  if (err) { throw err; }
+  console.log(data);
+});
+```
