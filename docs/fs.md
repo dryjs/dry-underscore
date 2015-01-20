@@ -118,3 +118,8 @@ fs.evalFile('four.js', function(err, data) {
   console.log(data);
 });
 ```
+
+**evalFile.sync** `fs.evalFile.sync(path)`
+
+Synchronous version of `fs.evalFile`
+
