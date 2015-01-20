@@ -12,6 +12,16 @@ fs.moveFile("foo/f1.js", "bar/f1.js", function(err) {
 });
 ```
 
+**moveFile.sync** `fs.moveFile.sync(oldPath, newPath)`
+
+Move a file synchronously, given its source and destination path.
+
+```javascript
+// move file f1.js from foo/ to bar/
+
+fs.moveFile.sync("foo/f1.js", "bar/f1.js");
+```
+
 **moveFiles** `fs.moveFiles(list, callback)`
 
 Move a list of files, given their source and destination paths. The `list` argument is a list of path objects that contain 'src' and 'dest' properties. The `callback` is called on error or when all files have successfully been moved. The files are moved sequentially, if there is an error, the process is halted and the error is returned, all files before the one that caused the error will be moved.
