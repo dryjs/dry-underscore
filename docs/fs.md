@@ -1,3 +1,4 @@
+
 # A modified version Node's 'fs' module
 
 **moveFile** `fs.moveFile(oldPath, newPath, callback)`
@@ -34,6 +35,27 @@ var filePaths = [ { src: "foo/f1.js", dest: "bar/f1.js" },
 
 fs.moveFiles(filePaths, function(err){
     if(err){ throw(err); }
+});
+```
+
+**writeFile** `fs.writeFile(filename, data, [options], callback)`
+
+* `filename` String
+* `data` String or Buffer
+* `options` Object
+  * `encoding` String or Null, default = 'utf8'
+  * `mode` Number, default = 438 (aka 0666 in Octal)
+  * `flag` String, default = 'w'
+* `callback` Function
+
+Asynchronously writes data to a file, replacing the file if it already exists. The `data` can be a string or a buffer. The `encoding` option is ignored if `data` is a buffer.
+
+```javascript
+// write 'Hello Dry' to a file
+
+fs.writeFile('hello.txt', 'Hello Dry', function(err) {
+  if (err) throw(err);
+  console.log('file has been saved');
 });
 ```
 
