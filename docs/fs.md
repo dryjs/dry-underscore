@@ -63,6 +63,22 @@ fs.writeFile('hello.txt', 'Hello Dry', function(err) {
 
 Synchronous version of `fs.writeFile`
 
+**readFile** `fs.readFile(filePath, callback)`
+
+* `filePath` String
+* `callback` Function
+
+Asynchronously reads the contents of a file into memory. The callback function is passed two arguments, `err` (null if no error), and `data` (contents of the file). Encoding is set to 'utf8'.
+
+```javascript
+// reads log file into memory and prints contents to the console
+
+fs.readFile('log.txt', function(err, data) {
+  if (err) { throw(err); }
+  console.log(data);
+});
+```
+
 **readJsonFile** `fs.readJsonFile(path, callback)`
 
 Read and parse a JSON file into memory given a file path (as a string). The callback function takes 2 parameters: `err` (can be null) and a `result` (JSON object). The callback is called on error or after the file has been read and parsed.
