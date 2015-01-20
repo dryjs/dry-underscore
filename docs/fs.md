@@ -59,6 +59,10 @@ fs.writeFile('hello.txt', 'Hello Dry', function(err) {
 });
 ```
 
+**writeFile.sync** `fs.writeFile.sync(filename, data, [options])`
+
+Synchronous version of `fs.writeFile`
+
 **readJsonFile** `fs.readJsonFile(path, callback)`
 
 Read and parse a JSON file into memory given a file path (as a string). The callback function takes 2 parameters: `err` (can be null) and a `result` (JSON object). The callback is called on error or after the file has been read and parsed.
