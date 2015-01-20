@@ -3,6 +3,10 @@
 
 **moveFile** `fs.moveFile(oldPath, newPath, callback)`
 
+* `oldPath` String
+* `newPath` String
+* `callback` Function
+
 Move a file, given its source and destination path. The callback is called on error or when the file has successfully been moved. No arguments other than a possible exception are given to the completion callback.
 
 ```javascript
