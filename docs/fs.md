@@ -54,7 +54,7 @@ Asynchronously writes data to a file, replacing the file if it already exists. T
 // write 'Hello Dry' to a file
 
 fs.writeFile('hello.txt', 'Hello Dry', function(err) {
-  if (err) throw(err);
+  if (err) { throw(err); }
   console.log('file has been saved');
 });
 ```
@@ -98,4 +98,3 @@ var cb = function (err, result) {
 };
 fs.readJsonFile('baz.json', cb);
 ```
-
