@@ -133,3 +133,24 @@ fs.evalFile('four.js', function(err, data) {
 
 Synchronous version of `fs.evalFile`
 
+
+**renderFile** `fs.renderFile(path, hash, callback)`
+
+* `path` String
+* `hash` Object
+* `callback` Function
+
+Asynchronously renders a template file, at `path`, with data from a given `hash` file (set of key value pairs). The `callback` is called on error or after the `hash` values have been applied to the template. The `callback` function takes two arguments: `err` (can be null) and `result`, the result of rendering the template at the `path` location with the `hash`.
+
+```javascript
+// person.hbs
+<p>{{greeting}}, {{name}}</p>
+
+// outputs '<p>Hello, Joe</p>'
+var data = { name: 'Joe', greeting: 'Hello' }
+fs.renderFile(path, data, function(err, result) {
+  if (err) { throw err; }
+  console.log(result);
+});
+```
+
