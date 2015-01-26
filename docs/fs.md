@@ -154,3 +154,36 @@ fs.renderFile(path, data, function(err, result) {
 });
 ```
 
+**renderFolder** `fs.renderFolder(src, dest, hash, ignoreFile, processFileName, callback)`
+
+* `src` String
+* `dest` String
+* `hash` Object
+* `ignoreFile` Function
+  * `fileName` String
+* `processFileName` Function
+  * `fileName` String
+* `callback` Function
+  * `err` Error
+  * `result` String
+
+Asynchronously render a directory of files, placing the rendered files into the `dest` directory. The `ignoreFile` function (user supplied) must return a boolean (`true` if `fileName` is to be ignored and not rendered). The `processFile` function (user supplied) must return a new file name as a String. This function is used to add any additional characters to the file name to help categorize or differentiate it from the source or other files. The `callback` is called on error or after all of the files in the folder have been rendered.
+
+```javascript
+var data = {}
+var ignore = function (fileName) {
+
+};
+var process = function (fileName) {
+
+};
+var cb = function(err, result) {
+  if (err) { throw err; }
+  //... do some thing with result
+};
+
+// folder
+//
+
+fs.renderFolder('foo/src', 'foo/dest', data, ignore, process, cb);
+```
