@@ -154,3 +154,11 @@ fs.renderFile(path, data, function(err, result) {
 });
 ```
 
+**isDirectoryEmpty** `fs.isDirectoryEmpty(path, [ignore], callback)`
+
+* `path` String
+* `ignore` Array (optional)
+* `callback` Function
+
+Asynchronously check contents of a directory to see if it is empty and returns a boolean, `true` or `false`. The optional `ignore` argument is a list of files to ignore, an array of strings. If any of the files in the ignore list are present, and the directory contains no other files, the function will return `true`. The `callback` takes two arguments: `err` (can be null), and `result` (a boolean, `true` or `false`).  
+
