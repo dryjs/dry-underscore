@@ -4696,6 +4696,8 @@ var hooker = function(f){
 
     if(f === undefined){ f = {}; }
         
+    f.hook_parent = _.rw("_hook_parent");
+
     f.hook = function(event, callback, is_error_handler){
         var self = this;
         if(!event || !callback){ _.fatal("You must provide an event name and a function."); }
@@ -4736,12 +4738,19 @@ var hooker = function(f){
         }
         event = event.toLowerCase();
         
-        if(!self._hooks || !self._hooks[event]){
-            return callback.apply(null, _.concat(null, args));
+        var hooks = [];
+
+        var parent = self.hook_parent();
+        if(parent && parent._hooks && parent._hooks[event]){
+            hooks = parent._hooks[event];
+        }
+
+        if(self._hooks && self._hooks[event]){
+            hooks = _.concat(hooks, self._hooks[event]);
         }
 
         var error = null;
-        _.each.async(self._hooks[event], function(val, key, next, end){
+        _.each.async(hooks, function(val, key, next, end){
             // var to = _.timeout("Hook for event: " + event + " doesn't return in a timely manner, it probably forgot to call next.", 5000);
 
             if(error && !val.is_error_handler){ return next(); }
