@@ -1618,22 +1618,87 @@ function (_){
         });
     };
 
-    var oldMax = _.max;
-    _.max = function(a, b){
-        if(_.isNumber(a) && _.isNumber(b)){
-            if(a > b){ return(a); }
-            else{ return(b); }
-        }else{ return(oldMax.apply(_, arguments)); }
+
+    _._min = _.min;
+    _._max = _.max;
+
+    var min_value = function(a, b){
+        if(a < b){ return(a); }
+        else{ return(b); }
     };
 
-    var oldMin = _.min;
-    _.min = function(a, b){
-        if(_.isNumber(a) && _.isNumber(b)){
-            if(a < b){ return(a); }
-            else{ return(b); }
-        }else{ return(oldMin.apply(_, arguments)); }
+    var max_value = function(a, b){
+        if(a > b){ return(a); }
+        else{ return(b); }
     };
- 
+
+    var array_compare = function(a, comp_f, converter_f){
+        var val = null;
+        var converted_val = null;
+
+        _.each(a, function(new_val){
+            var converted_new_val = converter_f(new_val);
+
+            if(val === null){ 
+                val = new_val;
+                converted_val = converted_new_val;
+            }
+
+            var result = comp_f(converted_val, converted_new_val);
+            if(result === converted_new_val){
+                val = new_val;
+                converted_val = converted_new_val;
+            }
+        });
+
+        return(val);
+    }
+
+    var get_converter_function = function(v){
+        var converter_f = null;
+        if(_.isString(v)){ converter_f = _.property(v); }
+        else if(_.isFunction(v)){ converter_f = v; }
+        else{ converter_f = function(a){ return(a); }; }
+        return(converter_f);
+    };
+
+    _.isComparable = function(a){ return(_.isString(a) || _.isNumber(a)); }
+
+    _.max = function(a, b, converter_f){
+        if(_.isArray(a)){
+            converter_f = get_converter_function(b);
+            return(array_compare(a, max_value, converter_f));
+        }else{
+
+            converter_f = get_converter_function(converter_f);
+            var converted_a = converter_f(a);
+            var converted_b = converter_f(b);
+
+            if(!_.isComparable(converted_a) || !_.isComparable(converted_b)){ return(null); }
+
+            if(converted_a === max_value(converted_a, converted_b)){ return(a); }
+            else{ return(b); }
+        }
+    };
+
+    _.min = function(a, b, converter_f){
+        var max_val = null;
+
+        if(_.isArray(a)){
+            converter_f = get_converter_function(b);
+            return(array_compare(a, min_value, converter_f));
+        }else{
+            converter_f = get_converter_function(converter_f);
+            var converted_a = converter_f(a);
+            var converted_b = converter_f(b);
+
+            if(!_.isComparable(converted_a) || !_.isComparable(converted_b)){ return(null); }
+
+            if(converted_a === min_value(converted_a, converted_b)){ return(a); }
+            else{ return(b); }
+        }
+    };
+
     _.omap = function(o, f){
         var result = {};
         _.each(o, function(val, key, callback){
@@ -2202,6 +2267,8 @@ function (_){
         childConstructor.prototype = Object.create(parentConstructor.prototype);
         childConstructor.prototype.constructor = childConstructor;
     };
+
+    _._toNumber = _.toNumber;
 
     _.toNumber = _.to_number = function(n){
         n = n - 0; 
@@ -4708,6 +4775,18 @@ var hooker = function(f){
         self._hooks[event].push({ handler: callback, is_error_handler: is_error_handler });
     };
 
+    f.hooks = function(event){
+        var hooks = [];
+        var parent = this.hook_parent();
+        if(parent){ hooks = parent.hooks(event); }
+
+        if(this._hooks && this._hooks[event]){
+            hooks = _.concat(hooks, this._hooks[event]);
+        }
+
+        return(hooks);
+    };
+
     f.unhook = function(event, callback){
         var self = this;
         
@@ -4738,16 +4817,7 @@ var hooker = function(f){
         }
         event = event.toLowerCase();
         
-        var hooks = [];
-
-        var parent = self.hook_parent();
-        if(parent && parent._hooks && parent._hooks[event]){
-            hooks = parent._hooks[event];
-        }
-
-        if(self._hooks && self._hooks[event]){
-            hooks = _.concat(hooks, self._hooks[event]);
-        }
+        var hooks = self.hooks(event);
 
         var error = null;
         _.each.async(hooks, function(val, key, next, end){
