@@ -4949,6 +4949,7 @@ return(eventEmitter);
 
 }
 )(_);
+_.event_emitter = _.eventEmitter;
 _.events = {};
 _.eventEmitter(_.events);
 _.measurer = (

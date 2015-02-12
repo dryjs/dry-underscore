@@ -81,6 +81,7 @@ echo ")(_);"
 echo "_.eventEmitter = (" 
 node -e "console.log(require('./lib/eventEmitter.js').mixin.toString())" 
 echo ")(_);" 
+echo "_.event_emitter = _.eventEmitter;" 
 echo "_.events = {};" 
 echo "_.eventEmitter(_.events);" 
 
