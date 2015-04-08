@@ -49,7 +49,7 @@ echo "_.url = ("
 node -e "console.log(require('./lib/url.js').library.toString())" 
 echo ")(_);" 
 
-echo "_.querytstring = (" 
+echo "_.querystring = (" 
 node -e "console.log(require('./lib/querystring.js').library.toString())" 
 echo ")(_);" 
 

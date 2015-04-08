@@ -41,6 +41,11 @@ function add_handlers(app, name){
         res.end();
     });
 
+    app.get('/query', function(req, res){
+        res.end(_.stringify(req.query));
+    });
+
+
     app.get('/headers', function(req, res){ res.end(_.stringify(req.headers)); });
     app.post('/headers', function(req, res){ res.end(_.stringify(req.headers)); });
 }

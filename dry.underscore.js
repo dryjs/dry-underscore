@@ -4292,7 +4292,7 @@ function library(_){
     return(lib);
 }
 )(_);
-_.querytstring = (
+_.querystring = (
 function library(_){
     
     var QueryString = {};
@@ -4470,8 +4470,29 @@ function library(_){
         return(call);
     };
 
-    http_base.prototype.get = function(options, callback){
+    http_base.prototype.get = function(options, data, callback){
+        /*
+        var url = "https://graph.facebook.com/me?" + _.querystring.stringify({ access_token : access_token });
+        _.p(url);
+        */
 
+        if(_.isFunction(data)){
+            callback = data;
+            data = null;
+        }
+
+        if(data){
+            var querystring = _.querystring.stringify(data);
+            if(querystring){ querystring = "?" + querystring; }
+            else{ querystring = ""; }
+
+            if(_.isObject(options)){
+                options.url = options.url + querystring;
+            }else if(_.isString(options)){
+                options = options + querystring;
+            }
+        }
+ 
         var call = this.make_call(options, "GET");
 
         return this.connect(call, "", callback);
@@ -4715,6 +4736,39 @@ function (_){
         });
     };
 
+
+    _.container = function(root){
+
+        root.container = function(selector, change_callback){ 
+            this._container_selector = selector;
+            this._change_callback = change_callback;
+            return(this);
+        };
+
+        root.show = function(flag){ 
+            if(flag === false){ return this.hide.apply(this, _.concat(true, _.rest(arguments))); }
+            if(this._container_selector){ 
+                $(this._container_selector).removeClass("hide");
+                if(this._change_callback){ 
+                    this._change_callback.apply(null, _.concat(true, _.rest(arguments)));
+                }
+            }
+        };
+
+        root.hide = function(flag){ 
+            if(flag === false){ return this.show.apply(this, _.concat(true, _.rest(arguments))); }
+            if(this._container_selector){ 
+                $(this._container_selector).addClass("hide");
+                if(this._change_callback){ 
+                    this._change_callback.apply(null, _.concat(false, _.rest(arguments)));
+                }
+            }
+        };
+
+        root.$ = function(selector, no_space){
+            return($(this._container_selector + (no_space ? "" : " ") + (selector ? selector : "")));
+        };
+    };
 
     return(_);
 

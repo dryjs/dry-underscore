@@ -9,8 +9,6 @@ var ok = _.test.ok;
 
 exports.testHasType = testHasType;
 exports.testHasTypes = testHasTypes;
-//exports.testIterateAsync = testIterateAsync;
-exports.testEmptyIterate = testEmptyIterate;
 exports.testFormat = testFormat;
 exports.testConcat = testConcat;
 exports.testMoment = testMoment;
@@ -28,7 +26,6 @@ exports.testCode = testCode;
 exports.testBail = testBail;
 exports.testPropertyComparer = testPropertyComparer;
 exports.testPartial = testPartial;
-exports.testEach = testEach;
 exports.testSeconds = testSeconds;
 exports.testErrors = testErrors;
 //exports.hashTest = hashTest;
@@ -82,22 +79,6 @@ function testSeconds(){
     eq("0:01:01", _.seconds.durationString(61));
     eq("1:01:01", _.seconds.durationString(3661));
 
-}
-
-function testEach(){
-
-    function f(){}
-
-    f.prop = true;
-
-    var seen = false;
-    _.each(f, function(val, key){
-        if(key === "prop" && val === true){
-            seen = true;
-        }
-    });
-        
-    ok(seen);
 }
 
 
@@ -443,57 +424,6 @@ function testFormat(){
 
 function testConcat(){
     assert.deepEqual(_.concat(['a'], 'b', 'c', ['d', 'e']), ['a', 'b', 'c', 'd', 'e']);
-}
-
-function testEmptyIterate(beforeExit){
-
-    var called = 0;
-
-    _.each.async([], function(){ }, function(){ called++; });
-
-    beforeExit(function(){ assert.eql(called, 1); });
-}
-
-function testIterateAsync(){
-    // stack buster test
-
-    var a = [0];
-    var start = a;
-    var stackSize = 10000;
-    for(var i = 1; i < stackSize; i++){
-        var  z = [i];
-        start.push(z);
-        start = z;
-    }
-    try{
-        recursiveIterate(a, function(result){
-            // console.log(JSON.stringify(result));
-            // console.log(JSON.stringify(a));
-            assert.deepEqual(result, a);
-        });
-    }catch(e){
-        console.dir(e.message);
-        // throw(e);
-    }
-}
-
-function recursiveIterate(a, callback){
-    // iterate and recreate array
-    var z = [];
-    process.nextTick(function() { 
-        _.each.async(a, function(index, val, next){
-            if(Array.isArray(val)){
-                recursiveIterate(val, function(r){
-                    z.push(r);
-                    next();
-                });
-            }else{
-                z.push(val);
-                // console.log(val);
-                next();
-            }
-        }, function(){ callback(z) } );
-    });
 }
 
 function testHasType(){
