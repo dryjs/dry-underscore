@@ -4471,10 +4471,6 @@ function library(_){
     };
 
     http_base.prototype.get = function(options, data, callback){
-        /*
-        var url = "https://graph.facebook.com/me?" + _.querystring.stringify({ access_token : access_token });
-        _.p(url);
-        */
 
         if(_.isFunction(data)){
             callback = data;
