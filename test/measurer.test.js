@@ -14,27 +14,27 @@ exports.testDefault = function(beforeExit){
         
         measurer.measure("timeout", "one");
         setTimeout(function(){ 
-            ok(_.within(measurer.measure("timeout", "one").duration, 40, 10));
+            ok(_.within(measurer.measure("timeout", "one").duration, 80, 10));
             calls++;
-        }, 40);
+        }, 80);
         
         measurer.measure("timeout", "two");
         setTimeout(function(){ 
-            ok(_.within(measurer.measure("timeout", "two").duration, 60, 10));
+            ok(_.within(measurer.measure("timeout", "two").duration, 100, 10));
             calls++;
-        }, 60);
+        }, 100);
 
         var token = measurer.measure("token", "one")
         setTimeout(function(){ 
-            ok(_.within(measurer.measure(token).duration, 80, 10));
+            ok(_.within(measurer.measure(token).duration, 120, 10));
             calls++;
-        }, 80);
+        }, 120);
 
         var tokenTwo = measurer.measure();
         setTimeout(function(){ 
-            ok(_.within(measurer.measure(tokenTwo).duration, 100, 10));
+            ok(_.within(measurer.measure(tokenTwo).duration, 200, 10));
             calls++;
-        }, 100);
+        }, 200);
         
 
         /*
