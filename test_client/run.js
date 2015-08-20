@@ -1,6 +1,6 @@
 "use strict";
 
-var _ = require('dry-underscore');
+var _ = require('../');
 var root = _.path.fun(__dirname);
 
 var test_server = require('../test_server/server.tjs');

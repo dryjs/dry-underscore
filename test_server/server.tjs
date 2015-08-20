@@ -1,5 +1,5 @@
 
-var _ = require('dry-underscore');
+var _ = require('../');
 var eq = _.test.eq;
 var ok = _.test.ok;
 
