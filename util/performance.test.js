@@ -14,11 +14,11 @@ function testLogPerformance(){
     // var n = 1; 
     var n = .1 * 1000 * 1000;
 
-    _.time("make log");
+    var timer = _.time("make log");
     _.for(n, function(){ 
         _.log.make();
     });
-    _.time("make log", true);
+    timer();
 }
 
 function testForPerformance(){
@@ -26,23 +26,23 @@ function testForPerformance(){
     var n = 10 * 1000 * 1000;
     var strN = "10M";
 
-    _.time("for loop " + strN);
+    var timer = _.time("for loop " + strN);
     for(var i = 0; i < n; i++){
         _.noop();
     }
-    _.time("for loop " + strN, true);
-    _.time("for loop " + strN);
+    timer();
+    timer = _.time("for loop " + strN);
     for(i = 0; i < n; i++){
         _.noop();
     }
-    _.time("for loop " + strN, true);
+    timer();
 
-    _.time("for function " + strN);
+    timer = _.time("for function " + strN);
     _.for(n, function(){ });
-    _.time("for function " + strN, true);
-    _.time("for function " + strN);
+    timer();
+    timer = _.time("for function " + strN);
     _.for(n, function(){ });
-    _.time("for function " + strN, true);
+    timer();
 }
 
 function testMakeClassPerformance(){
@@ -78,39 +78,39 @@ function testMakeClassPerformance(){
     // I know the timing is high the first time and constant
     // the other times
 
-    _.time("native");
+    var timer = _.time("native");
     _.for(n, function(){ 
         var ci = new c(1, 2);
         ci.y = ci.x + ci.y;
     });
-    _.time("native", true);
-    _.time("native");
+    timer();
+    timer = _.time("native");
     _.for(n, function(){ 
         var ci = new c(1, 2);
         ci.y = ci.x + ci.y;
     });
-    _.time("native", true);
+    timer();
 
-    _.time("nativeWrap");
+    timer = _.time("nativeWrap");
     _.for(n, function(){ var ci = cwrap(1, 2); });
-    _.time("nativeWrap", true);
-    _.time("nativeWrap");
+    timer();
+    timer = _.time("nativeWrap");
     _.for(n, function(){ var ci = cwrap(1, 2); });
-    _.time("nativeWrap", true);
+    timer();
 
-    _.time("makeClassFast");
+    timer = _.time("makeClassFast");
     _.for(n, function(){ var ci = new makeCF(1, 2); });
-    _.time("makeClassFast", true);
-    _.time("makeClassFast");
+    timer();
+    timer = _.time("makeClassFast");
     _.for(n, function(){ var ci = new makeCF(1, 2); });
-    _.time("makeClassFast", true);
+    timer();
 
-    _.time("makeClass");
+    timer = _.time("makeClass");
     _.for(n, function(){ var ci = new makeC(1, 2); });
-    _.time("makeClass", true);
-    _.time("makeClass");
+    timer();
+    timer = _.time("makeClass");
     _.for(n, function(){ var ci = new makeC(1, 2); });
-    _.time("makeClass", true);
+    timer();
 }
 
 

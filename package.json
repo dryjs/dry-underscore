@@ -1,6 +1,6 @@
 {
     "name": "dry-underscore",
-    "version": "0.11.6",
+    "version": "0.12.0",
     "main": "./lib/index.js",
     "description": "The DRY Undescore Library",
     "author": {

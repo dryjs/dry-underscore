@@ -1781,18 +1781,6 @@ function (_){
         });
     };
 
-    _.bail = function(){
-        var args = _.a(arguments);
-        return(function(){
-            var bailArgs = arguments;
-            _.each(args, function(f, i){
-                if(i === args.length-1){
-                    return(f.apply(null, bailArgs));
-                }else{ f(); }
-            });
-        });
-    };
-
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
     _.fatal = function(){ throw(_.exception("Fatal", "fatal: " + _.format.apply(null, arguments))); };
     _.error = function(code, message, extra){
@@ -1855,6 +1843,12 @@ function (_){
 
     _.errors = function(h){ return(new errors_obj(h)); };
 
+    // comp(obj) -> obj[prop]
+    // comp(obj, val) -> obj[prop] === val
+    // comp(obj_one, obj_two) -> obj_one[prop] === obj_two[prop]
+    // comp(val, obj) -> obj[prop] === val
+    // comp(obj, val_one, val_two, val_three) -> obj[prop] === val_one || obj[prop] === val_two || obj[prop] === val_three
+    // comp(obj_one, obj_two, val_one, obj_three) -> obj_one[prop] === obj_two[prop] || obj_one[prop] === val_one || obj_one[prop] === obj_three[prop]
     _.propertyComparer = _.property_comparer = function(property){
         return(function comparer(a, b){
             var args = _.a(arguments);
@@ -1874,13 +1868,91 @@ function (_){
                 args.shift();
                 return(_.find(args, function(val, i){
                     return(comparer(a, val));
-                }));
+                }) !== undefined);
             }
         });
     };
 
-    _.type = _.property_comparer("type");
     _.code = _.property_comparer("code");
+
+    _.basicType = _.basic_type = function(o){
+        if(o === undefined){ return("undefined"); }
+        if(o === null){ return("null"); }
+        if(_.isArray(o)){ return("array"); }
+        if(_.isString(o)){ return("string"); }
+        if(_.isNumber(o)){ return("number"); }
+        if(_.isObject(o)){ return("object"); }
+    };
+
+    _.dryType = _.dry_type = function(o){
+        var t = _.basic_type(o);
+        if(t === "object" && _.isString(o["type"])){
+            return(o["type"]);
+        }else{ return(t); }
+    };
+
+    _.dryTypes = _.dry_types = function(o, recursive){
+        if(!_.isArray(o)){ return(_.dry_type(o)); }
+        var types = [];
+        _.each(o, function(elem){
+            if(recursive && _.isArray(elem)){
+                types.push(_.dry_types(elem, recursive));
+            }else{
+                var type = _.dry_type(elem);
+                if(!_.contains(types, type)){ types.push(type); }
+            }
+        });
+        return(types);
+    };
+
+    var type_comparer = _.property_comparer("type");
+
+    _.type = function(o){
+        if(arguments.length <= 1){ return(_.dry_type(o)); }
+        else{ return(_.type_match.apply(this, arguments)); }
+    };
+
+    _.type_match = function(o){
+        var type = _.dry_type(o);
+        return(_.find(_.rest(arguments), function(test_type){
+            if(test_type === "*"){ return(true); }
+            return(type === test_type);
+        }) !== undefined);
+    };
+
+    _.types = function(o){
+        if(arguments.length <= 1){ return(_.dry_types(o)); }
+        if(arguments.length === 2 && _.last(arguments) === true){ return(_.dry_types(o, true)); }
+        if(arguments.length === 2 && _.last(arguments) === false){ return(_.dry_types(o, false)); }
+        else{ return(_.types_match.apply(this, arguments)); }
+    };
+
+    _.types_match = function(o){
+        var tests = _.rest(arguments);
+        var recursive = _.last(tests) === true;
+        if(recursive){ tests.pop(); }
+
+        if(!_.isArray(o)){ return(_.type_match.apply(this, arguments)); }
+
+        return(_.find(tests, function(test){
+            if(!_.isArray(test)){ return(false); }
+            return(_.every(o, function(elem){
+
+                var type = _.dry_type(elem);
+
+                return(_.find(test, function(test_type){
+                    if(recursive && _.isArray(elem)){ 
+                        return(_.types_match.call(null, elem, test_type, recursive));
+                    }else{
+                        return(type === test_type || test_type === "*");
+                    }
+                }) !== undefined);
+            }));
+        }) !== undefined);
+    };
+
+    _.isModel = _.is_model = function(m){ return(_.isObject(m) && m.type && _.isFunction(m.instantiated)); };
+    _.isModelHash = _.is_model_hash = function(m){ return(_.isObject(m) && m.type && !_.isFunction(m.instantiated)); };
 
     _.jclone = function(o){ 
         return(_.parse(_.stringify(o)));
@@ -1950,6 +2022,8 @@ function (_){
     };
 
     _.within = function(a, b, acceptableDiff){
+        a = Math.abs(a);
+        b = Math.abs(b);
         return(Math.abs(a-b) < acceptableDiff);
     };
 
@@ -1976,18 +2050,14 @@ function (_){
         }
     };
 
-    _.time = function(str, log){
-        if(str === undefined){ return(new Date().getTime()); }
-
-        if(!_.time.hash){ _.time.hash = {}; }
-        var time = new Date().getTime();
-        if(_.time.hash[str]){
-            var t2 = _.time.hash[str];
-            _.time.hash[str] = undefined;
-            var val = time - t2;
-            if(log){ _.stderr(str + ": ", val + "ms"); }
-            return(val);
-        }else{ _.time.hash[str] = time; }
+    _.time = function(log_str){
+        var start_time = (new Date()).getTime();
+        return(function(quiet){
+            var end_time = (new Date()).getTime();
+            var elapsed_time = end_time - start_time;
+            if(!quiet){ _.stderr(log_str + ": ", elapsed_time + "ms"); }
+            return(elapsed_time);
+        });
     };
     
     // an order of magnitued cheaper than _.times
@@ -2196,51 +2266,6 @@ function (_){
         return(results);
     };
 
-    _.memoize.async = function(f, cache){
-        cache = cache || {};
-        if(!cache.results){ cache.results = {}; }
-        if(!cache.pending){ cache.pending = {}; }
-
-        return(function(){
-            var args = _.toArray(arguments);
-            var callback = null;
-            var hashKey = "";
-
-            function sendResults(){
-                cache.results[hashKey] = arguments;
-
-                var pendingCallback = null;
-                while(cache.pending[hashKey].length){
-                    pendingCallback = cache.pending[hashKey].pop();
-                    if(_.isFunction(pendingCallback)){
-                        pendingCallback.apply(null, arguments);
-                    }
-                }
-            }
-
-            args = _.rmap(args, function(arg){
-                if(_.isFunction(arg) && !callback){
-                    callback = arg;
-                    return(sendResults);
-                }else{ 
-                    hashKey += _.s(arg) + "|";
-                    return(arg);
-                }
-            });
-
-            if(cache.results[hashKey]){
-                return callback.apply(null, arguments);
-            }else if(cache.results[hashKey] === undefined){
-                cache.results[hashKey] = null;
-                cache.pending[hashKey] = [];
-                cache.pending[hashKey].push(callback);
-                f.apply(null, args);
-            }else{
-                cache.pending[hashKey].push(callback);
-            }
-        });
-    };
- 
     _.exists = function(col, target, insensitive){
         if(insensitive){
             return(_.any(col, function(a){ return(a.toLowerCase() === target.toLowerCase()); }));
@@ -2304,13 +2329,17 @@ function (_){
         childConstructor.prototype.constructor = childConstructor;
     };
 
-    _._toNumber = _.toNumber;
+    _.toNumber = _.to_number = function(n, rnd){
+        if(_.is_string(n)){ n = _.trim(n); }
+        else if(!_.is_number(n)){ return(null); }
 
-    _.toNumber = _.to_number = function(n){
+        if(n === ""){ return(null); }
+
         n = n - 0; 
         if(isNaN(n)){ return(null); }
-        else{ return(n); }
+        else{ return(_.str.toNumber(n, rnd)); }
     };
+
     _.n = function(n){ return(_.toNumber(n)); };
     _.s = function(n){ 
         if(arguments.length === 1 && _.isNumber(n)){
@@ -2330,6 +2359,140 @@ function (_){
         }
         return x1 + x2;
     };
+
+    _.numbers = function(str_or_a){
+        var numbers = _.filter(str_or_a, function(char){ return(_.to_number(char) !== null); });
+        if(_.is_string(str_or_a)){
+            return(numbers.join(""));
+        }else{ return(numbers); }
+    };
+
+    (function(){
+        var pSlice = Array.prototype.slice;
+        var objectKeys =  _.keys;
+        var isArguments = {}; 
+        (function(){
+            var supportsArgumentsClass = (function(){
+                return Object.prototype.toString.call(arguments)
+            })() == '[object Arguments]';
+
+            isArguments = supportsArgumentsClass ? supported : unsupported;
+
+            isArguments.supported = supported;
+            function supported(object) {
+                return Object.prototype.toString.call(object) == '[object Arguments]';
+            };
+
+            isArguments.unsupported = unsupported;
+            function unsupported(object){
+                return object &&
+            typeof object == 'object' &&
+            typeof object.length == 'number' &&
+            Object.prototype.hasOwnProperty.call(object, 'callee') &&
+            !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
+            false;
+            };
+        })();
+
+        var deepEqual = null;
+        (function(){
+            deepEqual = function (actual, expected, opts) {
+                if (!opts) opts = {};
+                // 7.1. All identical values are equivalent, as determined by ===.
+                if (actual === expected) {
+                    return true;
+
+                } else if (actual instanceof Date && expected instanceof Date) {
+                    return actual.getTime() === expected.getTime();
+
+                    // 7.3. Other pairs that do not both pass typeof value == 'object',
+                    // equivalence is determined by ==.
+                } else if (typeof actual != 'object' && typeof expected != 'object') {
+                    return opts.strict ? actual === expected : actual == expected;
+
+                    // 7.4. For all other Object pairs, including Array objects, equivalence is
+                    // determined by having the same number of owned properties (as verified
+                    // with Object.prototype.hasOwnProperty.call), the same set of keys
+                    // (although not necessarily the same order), equivalent values for every
+                    // corresponding key, and an identical 'prototype' property. Note: this
+                    // accounts for both named and indexed properties on Arrays.
+                } else {
+                    return objEquiv(actual, expected, opts);
+                }
+            }
+
+            function isUndefinedOrNull(value) {
+                return value === null || value === undefined;
+            }
+
+            function isBuffer (x) {
+                if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
+                if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
+                    return false;
+                }
+                if (x.length > 0 && typeof x[0] !== 'number') return false;
+                return true;
+            }
+
+            function objEquiv(a, b, opts) {
+                var i, key;
+                if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
+                    return false;
+                // an identical 'prototype' property.
+                if (a.prototype !== b.prototype) return false;
+                //~~~I've managed to break Object.keys through screwy arguments passing.
+                //   Converting to array solves the problem.
+                if (isArguments(a)) {
+                    if (!isArguments(b)) {
+                        return false;
+                    }
+                    a = pSlice.call(a);
+                    b = pSlice.call(b);
+                    return deepEqual(a, b, opts);
+                }
+                if (isBuffer(a)) {
+                    if (!isBuffer(b)) {
+                        return false;
+                    }
+                    if (a.length !== b.length) return false;
+                    for (i = 0; i < a.length; i++) {
+                        if (a[i] !== b[i]) return false;
+                    }
+                    return true;
+                }
+                try {
+                    var ka = objectKeys(a),
+                        kb = objectKeys(b);
+                } catch (e) {//happens when one is a string literal and the other isn't
+                    return false;
+                }
+                // having the same number of owned properties (keys incorporates
+                // hasOwnProperty)
+                if (ka.length != kb.length)
+                    return false;
+                //the same set of keys (although not necessarily the same order),
+                ka.sort();
+                kb.sort();
+                //~~~cheap key test
+                for (i = ka.length - 1; i >= 0; i--) {
+                    if (ka[i] != kb[i])
+                        return false;
+                }
+                //equivalent values for every corresponding key, and
+                //~~~possibly expensive deep test
+                for (i = ka.length - 1; i >= 0; i--) {
+                    key = ka[i];
+                    if (!deepEqual(a[key], b[key], opts)) return false;
+                }
+                return true;
+            }
+        })();
+
+        _.deep_equal = function(actual, expected, strict){
+            return(deepEqual(actual, expected, { strict: strict !== false }));
+        };
+    })();
+
 }
 )(_);
 _.log = (
@@ -3394,127 +3557,8 @@ function library(_){
 
     var test = {};
 
-    var pSlice = Array.prototype.slice;
-    var objectKeys =  _.keys;
-    var isArguments = {}; 
-    (function(){
-        var supportsArgumentsClass = (function(){
-            return Object.prototype.toString.call(arguments)
-        })() == '[object Arguments]';
-
-        isArguments = supportsArgumentsClass ? supported : unsupported;
-
-        isArguments.supported = supported;
-        function supported(object) {
-            return Object.prototype.toString.call(object) == '[object Arguments]';
-        };
-
-        isArguments.unsupported = unsupported;
-        function unsupported(object){
-            return object &&
-        typeof object == 'object' &&
-        typeof object.length == 'number' &&
-        Object.prototype.hasOwnProperty.call(object, 'callee') &&
-        !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
-        false;
-        };
-    })();
-    var deepEqual = null;
-    (function(){
-        deepEqual = function (actual, expected, opts) {
-            if (!opts) opts = {};
-            // 7.1. All identical values are equivalent, as determined by ===.
-            if (actual === expected) {
-                return true;
-
-            } else if (actual instanceof Date && expected instanceof Date) {
-                return actual.getTime() === expected.getTime();
-
-                // 7.3. Other pairs that do not both pass typeof value == 'object',
-                // equivalence is determined by ==.
-            } else if (typeof actual != 'object' && typeof expected != 'object') {
-                return opts.strict ? actual === expected : actual == expected;
-
-                // 7.4. For all other Object pairs, including Array objects, equivalence is
-                // determined by having the same number of owned properties (as verified
-                // with Object.prototype.hasOwnProperty.call), the same set of keys
-                // (although not necessarily the same order), equivalent values for every
-                // corresponding key, and an identical 'prototype' property. Note: this
-                // accounts for both named and indexed properties on Arrays.
-            } else {
-                return objEquiv(actual, expected, opts);
-            }
-        }
-
-        function isUndefinedOrNull(value) {
-            return value === null || value === undefined;
-        }
-
-        function isBuffer (x) {
-            if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
-            if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
-                return false;
-            }
-            if (x.length > 0 && typeof x[0] !== 'number') return false;
-            return true;
-        }
-
-        function objEquiv(a, b, opts) {
-            var i, key;
-            if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-                return false;
-            // an identical 'prototype' property.
-            if (a.prototype !== b.prototype) return false;
-            //~~~I've managed to break Object.keys through screwy arguments passing.
-            //   Converting to array solves the problem.
-            if (isArguments(a)) {
-                if (!isArguments(b)) {
-                    return false;
-                }
-                a = pSlice.call(a);
-                b = pSlice.call(b);
-                return deepEqual(a, b, opts);
-            }
-            if (isBuffer(a)) {
-                if (!isBuffer(b)) {
-                    return false;
-                }
-                if (a.length !== b.length) return false;
-                for (i = 0; i < a.length; i++) {
-                    if (a[i] !== b[i]) return false;
-                }
-                return true;
-            }
-            try {
-                var ka = objectKeys(a),
-                    kb = objectKeys(b);
-            } catch (e) {//happens when one is a string literal and the other isn't
-                return false;
-            }
-            // having the same number of owned properties (keys incorporates
-            // hasOwnProperty)
-            if (ka.length != kb.length)
-                return false;
-            //the same set of keys (although not necessarily the same order),
-            ka.sort();
-            kb.sort();
-            //~~~cheap key test
-            for (i = ka.length - 1; i >= 0; i--) {
-                if (ka[i] != kb[i])
-                    return false;
-            }
-            //equivalent values for every corresponding key, and
-            //~~~possibly expensive deep test
-            for (i = ka.length - 1; i >= 0; i--) {
-                key = ka[i];
-                if (!deepEqual(a[key], b[key], opts)) return false;
-            }
-            return true;
-        }
-    })();
-
     test.eq = function(actual, expected){
-        if(deepEqual(actual, expected, {strict: true})){
+        if(_.deep_equal(actual, expected)){
             return(true);
         }else{
             if(_.isString(actual) && _.isString(expected)){
@@ -4624,9 +4668,6 @@ _.dry = (
 function (_){
 
 var dry = {};
-
-dry.isModelHash = function(m){ return(_.isObject(m) && m.Type && !_.isFunction(m.Instantiated)); };
-dry.isModel = function(m){ return(_.isObject(m) && m.Type && _.isFunction(m.Instantiated)); };
 
 dry.hasType = hasType;
 
