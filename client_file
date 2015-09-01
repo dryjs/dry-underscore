@@ -61,9 +61,6 @@ echo "_.http = ("
 node -e "console.log(require('./lib/http.client.js').library.toString())" 
 echo ")(_);" 
 
-echo "_.dry = (" 
-node -e "console.log(require('./lib/dry.js').mixin.toString())" 
-echo ")(_);" 
 #echo "_.mixin(_.string.exports());" 
 
 echo "(" 
