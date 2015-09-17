@@ -1960,6 +1960,23 @@ function (_){
 
     _.regex = function(str, flags){ return(new RegExp(str, flags)); };
 
+    function make_regex_special_character_matcher(){
+        // order matters for the first 3
+        // order doesn't matter for the rest
+        var specials = [ "-" , "[" , "]" , "/" , "{" , "}" , "(" , ")" , "*" , "+" , "?" , "." , "\\" , "^" , "$" , "|" ];
+
+        // I choose to escape every character with '\'
+        // even though only some strictly require it when inside of []
+        var special_character_matcher = _.regex('[' + specials.join('\\') + ']', 'g');
+        return(special_character_matcher);
+    }
+
+    var regex_special_character_matcher = make_regex_special_character_matcher();
+
+    _.escapeRegex = _.escape_regex = function(str){
+        return str.replace(regex_special_character_matcher, "\\$&");
+    };
+
     _.onceEvery = _.once_every = function(val, mod, hit, miss){
         if((val % mod) === 0 && hit){ hit(); }
         else if(miss){ miss(); }
