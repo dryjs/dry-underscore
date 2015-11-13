@@ -1,6 +1,6 @@
 {
   "name": "dry-underscore",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "dependencies": {
     "formidable": {
       "version": "1.0.9",
@@ -75,10 +75,17 @@
         }
       }
     },
-    "moment": {
-      "version": "2.5.1",
-      "from": "moment@",
-      "resolved": "https://registry.npmjs.org/moment/-/moment-2.5.1.tgz"
+    "moment-timezone": {
+      "version": "0.4.1",
+      "from": "moment-timezone@",
+      "resolved": "https://registry.npmjs.org/moment-timezone/-/moment-timezone-0.4.1.tgz",
+      "dependencies": {
+        "moment": {
+          "version": "2.10.6",
+          "from": "moment@>= 2.6.0",
+          "resolved": "https://registry.npmjs.org/moment/-/moment-2.10.6.tgz"
+        }
+      }
     },
     "tamejs": {
       "version": "0.4.14",

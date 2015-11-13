@@ -3,7 +3,7 @@
 echo "(function(){"
 cat ./deps/underscore/underscore.js
 
-cat ./deps/moment/min/moment.min.js 
+cat ./deps/moment.min.js 
 echo "_.moment = moment;" 
 echo "delete this.moment;" 
 

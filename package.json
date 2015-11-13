@@ -1,6 +1,6 @@
 {
     "name": "dry-underscore",
-    "version": "0.12.2",
+    "version": "0.13.0",
     "main": "./lib/index.js",
     "description": "The DRY Undescore Library",
     "author": {
@@ -35,7 +35,7 @@
         , "formidable":""
         , "tosource" : ""
         , "minimatch" : ""
-        , "moment" : ""
+        , "moment-timezone" : ""
         , "handlebars" : ""
         , "keypress": ""
     }
