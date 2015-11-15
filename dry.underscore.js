@@ -1521,7 +1521,7 @@ function (_){
         if(_.isNumber(d)){ return(_.timestamp() + d); }
 
         if(d === undefined){ d = _.date(); }
-        return(d.getTime());
+        return(d.valueOf());
     };
 
     _.lc = function(s){
@@ -2071,9 +2071,9 @@ function (_){
     };
 
     _.time = function(log_str){
-        var start_time = (new Date()).getTime();
+        var start_time = (new Date()).valueOf();
         return(function(quiet){
-            var end_time = (new Date()).getTime();
+            var end_time = (new Date()).valueOf();
             var elapsed_time = end_time - start_time;
             if(!quiet){ _.stderr(log_str + ": ", elapsed_time + "ms"); }
             return(elapsed_time);
@@ -2423,7 +2423,7 @@ function (_){
                     return true;
 
                 } else if (actual instanceof Date && expected instanceof Date) {
-                    return actual.getTime() === expected.getTime();
+                    return actual.valueOf() === expected.valueOf();
 
                     // 7.3. Other pairs that do not both pass typeof value == 'object',
                     // equivalence is determined by ==.
