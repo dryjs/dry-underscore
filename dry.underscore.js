@@ -2375,7 +2375,8 @@ function (_){
 
         n = n - 0; 
         if(isNaN(n)){ return(null); }
-        else{ return(_.str.toNumber(n, rnd)); }
+        if(rnd !== undefined){ return(_.str.toNumber(n, rnd)); }
+        else{ return(n); }
     };
 
     _.n = function(n){ return(_.toNumber(n)); };
