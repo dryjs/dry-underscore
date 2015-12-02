@@ -2379,7 +2379,7 @@ function (_){
         else{ return(n); }
     };
 
-    _.n = function(n){ return(_.toNumber(n)); };
+    _.n = _.to_number;
     _.s = function(n){ 
         if(arguments.length === 1 && _.isNumber(n)){
             return(n + "");
