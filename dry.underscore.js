@@ -2387,6 +2387,14 @@ function (_){
             return(_.format.apply(null, arguments));
         }
     };
+    _.sorn = function(s){ 
+        if(_.is_string(s) || _.is_number(s)){
+            return(s + "");
+        }else{
+            return(null);
+        }
+    };
+
     _.formatNumber = _.format_number = function(nStr){
         nStr += '';
         var x = nStr.split('.');
