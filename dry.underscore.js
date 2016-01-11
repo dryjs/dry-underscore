@@ -1531,9 +1531,13 @@ function (_){
     _.isoDate = _.iso_date = function(d){ 
         if(d === undefined){ d = _.date(); }
         if(_.isString(d)){
-            var m = _.moment(d, "YYYY-MM-DD");
-            if(m.isValid()){ return(m); }
-            else{ return(null); }
+            if(_.moment.tz && _.moment.tz.zone(d)){
+                return(_.moment.tz(d).format("YYYY-MM-DD"));
+            }else{
+                var m = _.moment(d, "YYYY-MM-DD", true);
+                if(m.isValid()){ return(m); }
+                else{ return(null); }
+            }
         }
         return(_.moment(d).format("YYYY-MM-DD"));
     };

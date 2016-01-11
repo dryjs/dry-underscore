@@ -4,6 +4,8 @@ from subprocess import call
 port = "8000"
 
 import os
+import json
+from pprint import pprint
 
 def _shell(cmd):
     return call(cmd, shell=True)
@@ -22,3 +24,21 @@ def build(args):
 
 def default(args):
     return test(args)
+
+def publish(args):
+
+    print("not working yet")
+    sys.exit(1)
+
+    with open('./package.json') as package_file:    
+        package = json.load(package_file)
+
+    _call("npm shrinkwrap")
+    if _call("git status") > 0:
+        print("You must commit all your changes.")
+        sys.exit(1)
+
+    _call("git tag -a " + package["version"] + ' -m "created new version: ' + package["version"] + "" )
+    _call("git push")
+    _call("git push --tags")
+    _call("npm publish")
