@@ -2379,7 +2379,7 @@ function (_){
 
         n = n - 0; 
         if(isNaN(n)){ return(null); }
-        if(rnd !== undefined){ return(_.str.toNumber(n, rnd)); }
+        if(rnd !== undefined){ return(n.toFixed(rnd)); }
         else{ return(n); }
     };
 
