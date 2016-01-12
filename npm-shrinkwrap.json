@@ -54,10 +54,6 @@
       "from": "keypress@",
       "resolved": "https://registry.npmjs.org/keypress/-/keypress-0.2.1.tgz"
     },
-    "mime": {
-      "version": "1.2.5",
-      "from": "mime@1.2.5"
-    },
     "minimatch": {
       "version": "0.2.11",
       "from": "minimatch@",
