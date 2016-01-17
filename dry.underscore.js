@@ -2035,27 +2035,33 @@ function (_){
 
         var unit = "B";
 
-        if(val > 1024){
+        if(val >= 1024){
             val /= 1024;
             unit = "K"
         }
-        if(val > 1024){
+        if(val >= 1024){
             val /= 1024;
             unit = "M"
         }
-        if(val > 1024){
+        if(val >= 1024){
             val /= 1024;
             unit = "G"
         }
-        if(val > 1024){
+        if(val >= 1024){
             val /= 1024;
             unit = "T"
         }
+        if(val >= 1024){
+            val /= 1024;
+            unit = "P"
+        }
+
+        if(unit === "B"){ return(val + unit); }
 
         if(fixed !== undefined){
-            return(_.n(val, fixed) + " " + unit);
+            return(_.n(val, fixed) + unit);
         }else{
-            return(_.round(val, 2) + " " + unit);
+            return(_.round(val, -1) + unit);
         }
     };
     _.stringify = function(){ return(JSON.stringify.apply(null, arguments)); };
