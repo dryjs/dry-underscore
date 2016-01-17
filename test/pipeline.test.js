@@ -34,7 +34,7 @@ function testPipeline(beforeExit){
     p.before("9", "8");
 
     try{ p.order(); }
-    catch(e){ ok(_.code(e, "DanglingStep")); }
+    catch(e){ ok(_.code(e, "dangling_step")); }
 
     p.after("7", "8");
 

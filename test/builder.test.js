@@ -638,7 +638,7 @@ var __tame_fn_0 = function (__tame_k) {
                 ok ( results [ "prebuild-two" ] ) ;
                 setTimeout (
                 function  () {
-                    next ( _ . error ( "ExpectedError" , "Expected error." ) ) ;
+                    next ( _ . error ( "expected_error" , "Expected error." ) ) ;
                 }
                 , 150 ) ;
             }
@@ -699,7 +699,7 @@ var __tame_fn_0 = function (__tame_k) {
                 var __tame_fn_50 = function (__tame_k) {
                     tame.setActiveCb (__tame_defer_cb);
                     eq ( res , undefined ) ;
-                    ok ( _ . code ( err , "ExpectedError" ) ) ;
+                    ok ( _ . code ( err , "expected_error" ) ) ;
                     
                     ok ( results [ "prebuild-one" ] ) ;
                     ok ( results [ "prebuild-two" ] ) ;

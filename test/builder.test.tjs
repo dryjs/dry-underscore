@@ -235,7 +235,7 @@ function testError(beforeExit){
         ok(results["prebuild-one"]);
         ok(results["prebuild-two"]);
         setTimeout(function(){
-            next(_.error("ExpectedError", "Expected error."));
+            next(_.error("expected_error", "Expected error."));
         }, 150);
     });
 
@@ -262,7 +262,7 @@ function testError(beforeExit){
     await{ b.run(results, defer(var err, res)); }
 
     eq(res, undefined);
-    ok(_.code(err, "ExpectedError"));
+    ok(_.code(err, "expected_error"));
 
     ok(results["prebuild-one"]);
     ok(results["prebuild-two"]);
