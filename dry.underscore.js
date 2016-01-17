@@ -2031,25 +2031,32 @@ function (_){
     _.render.templates = {};
 
     _.noop =  function(){};
-    _.byteUnits = _.byte_units = function(val){
+    _.byteUnits = _.byte_units = function(val, fixed){
+
         var unit = "B";
+
         if(val > 1024){
             val /= 1024;
-            unit = "KB"
+            unit = "K"
         }
         if(val > 1024){
             val /= 1024;
-            unit = "MB"
+            unit = "M"
         }
         if(val > 1024){
             val /= 1024;
-            unit = "GB"
+            unit = "G"
         }
         if(val > 1024){
             val /= 1024;
-            unit = "TB"
+            unit = "T"
         }
-        return(val + " " + unit);
+
+        if(fixed !== undefined){
+            return(_.n(val, fixed) + " " + unit);
+        }else{
+            return(_.round(val, 2) + " " + unit);
+        }
     };
     _.stringify = function(){ return(JSON.stringify.apply(null, arguments)); };
     _.parse = function(){ return(JSON.parse.apply(null, arguments)); };
