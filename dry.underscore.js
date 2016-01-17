@@ -1563,15 +1563,15 @@ function (_){
     }
 
     _.round = function(value, exp) {
-        return decimalAdjust('round', value, exp);
+        return decimalAdjust('round', value, (exp ? -exp : 0));
     };
 
     _.floor = function(value, exp) {
-        return decimalAdjust('floor', value, exp);
+        return decimalAdjust('floor', value, (exp ? -exp : 0));
     };
 
     _.ceil = function(value, exp) {
-        return decimalAdjust('ceil', value, exp);
+        return decimalAdjust('ceil', value, (exp ? -exp : 0));
     };
 
     _.ms = function(n){
@@ -2059,9 +2059,9 @@ function (_){
         if(unit === "B"){ return(val + unit); }
 
         if(fixed !== undefined){
-            return(_.n(val, fixed) + unit);
+            return(_.format.number(val, { fixed: fixed }) + unit);
         }else{
-            return(_.round(val, -1) + unit);
+            return(_.format.number(val, { max: 1 }) + unit);
         }
     };
     _.stringify = function(){ return(JSON.stringify.apply(null, arguments)); };
@@ -2417,7 +2417,7 @@ function (_){
 
         n = n - 0; 
         if(isNaN(n)){ return(null); }
-        if(rnd !== undefined){ return(n.toFixed(rnd)); }
+        if(rnd !== undefined){ return(_.round(n, rnd)); }
         else{ return(n); }
     };
 
@@ -2437,17 +2437,38 @@ function (_){
         }
     };
 
-    _.formatNumber = _.format_number = function(nStr){
-        nStr += '';
-        var x = nStr.split('.');
-        var x1 = x[0];
-        var x2 = x.length > 1 ? '.' + x[1] : '';
-        var rgx = /(\d+)(\d{3})/;
-        while (rgx.test(x1)) {
-                x1 = x1.replace(rgx, '$1' + ',' + '$2');
-        }
-        return x1 + x2;
+    _.str.pop = function(str, count){
+        str = _.sorn(str);
+        if(count === undefined){ count = 1; }
+        if(str === null){ return(null); }
+        return(str.substr(0, (str.length - count)));
     };
+
+    _.decimals = function(num, count, fixed){
+        num = _.n(num);
+        if(num === null){ return(null); }
+        fixed = (fixed !== false)
+
+        num = num.toFixed(count);
+        if(!fixed){
+            num = num.replace(_.regex("0+$"), "");
+            num = num.replace(_.regex("[.]$"), "");
+        }
+        return(num);
+    }
+ 
+    _.decimalCount = _.decimal_count = function (num) {
+        num = _.n(num);
+        if(num === null){ return(null); }
+        var match = (''+num).match(/(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/);
+        if (!match) { return 0; }
+        return Math.max(
+            0,
+            // Number of digits right of decimal point.
+            (match[1] ? match[1].length : 0)
+            // Adjust for scientific notation.
+            - (match[2] ? +match[2] : 0));
+    }
 
     _.numbers = function(str_or_a){
         var numbers = _.filter(str_or_a, function(char){ return(_.to_number(char) !== null); });
@@ -3335,6 +3356,38 @@ function library(_){
             return(number.substr(0, 1) + "-" + number.substr(1, 3) + "-" + number.substr(4, 3) + "-" + number.substr(7, 4));
         }else{ return(number); }
     }
+
+    format.number = function(num, round, use_fixed){
+        var options = {
+            decimal: ".",
+            order: ","
+        }
+
+        num = _.n(num);
+        if(num === null){ return(null); }
+
+        if(_.isObject(round)){
+            options = _.extend(options, round);
+        }else{
+            if(use_fixed === false){
+                options.max = _.n(round);
+            }else{
+                options.fixed = _.n(round);
+            }
+        }
+
+        var decimal_count = _.decimal_count(num);
+
+        if(options.fixed){ 
+            decimal_count = options.fixed;
+        }else if(options.max){
+            decimal_count = _.min(decimal_count, options.max);
+        }
+
+        if(decimal_count < 0){ decimal_count = 0; }
+
+        return(_.str.numberFormat(num, decimal_count, options.decimal, options.order));
+    };
 
     format.library = library;
 
