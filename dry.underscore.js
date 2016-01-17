@@ -2104,7 +2104,7 @@ function (_){
     
     // an order of magnitued cheaper than _.times
     // effectively as cheap as a for loop
-    _.for = function(times, f){
+    _.f = _.for = function(times, f){
         for(var i = 0; i < times; i++){ 
             if(f(i) === false){ break; }
         }

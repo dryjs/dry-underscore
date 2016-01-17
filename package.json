@@ -24,7 +24,7 @@
     },
     "devDependencies": {
           "expresso": "0.9.2"
-        , "dry-test": "0.1.5"
+        , "dry-test": "0.1.6"
         , "express": "4.13.3"
         , "mocha-phantomjs": "4.0.2"
         , "phantomjs": ""
