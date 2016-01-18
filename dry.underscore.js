@@ -2030,8 +2030,13 @@ function (_){
     
     _.render.templates = {};
 
+    _.abs = function(n){ return(Math.abs(n)); }
+
     _.noop =  function(){};
     _.byteUnits = _.byte_units = function(val, fixed){
+
+        var is_negative = (val < 0);
+        if(is_negative){ val = _.abs(val); }
 
         var unit = "B";
 
@@ -2055,6 +2060,8 @@ function (_){
             val /= 1024;
             unit = "P"
         }
+
+        if(is_negative){ val *= -1; }
 
         if(unit === "B"){ return(val + unit); }
 
