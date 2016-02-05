@@ -1,6 +1,6 @@
 {
   "name": "dry-underscore",
-  "version": "0.16.2",
+  "version": "0.17.0",
   "dependencies": {
     "formidable": {
       "version": "1.0.17",
