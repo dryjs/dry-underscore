@@ -80,3 +80,16 @@ test("post headers", function(done){
     });
 });
 
+test("get headers", function(done){
+    _.http.get("http://localhost:9999/send-headers", {}, function(err, res, body){
+        ok(!err);
+        ok(res);
+        eq(body, "body");
+        eq(res.body, "body");
+        eq(res.status, 200);
+        eq(_.pick(res.headers, "foo", "bar"), { "foo": "foo", "bar": "bar" });
+        done();
+    });
+});
+
+

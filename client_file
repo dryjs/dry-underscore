@@ -82,8 +82,8 @@ echo "_.event_emitter = _.eventEmitter;"
 echo "_.events = {};" 
 echo "_.eventEmitter(_.events);" 
 
-echo "_.measurer = (" 
-node -e "console.log(require('./lib/measurer.js').mixin.toString())" 
+echo "_.timer = (" 
+node -e "console.log(require('./lib/timer.js').library.toString())" 
 echo ")(_);" 
  
 echo "})();" 

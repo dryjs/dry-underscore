@@ -48,6 +48,8 @@ function add_handlers(app, name){
 
     app.get('/headers', function(req, res){ res.end(_.stringify(req.headers)); });
     app.post('/headers', function(req, res){ res.end(_.stringify(req.headers)); });
+
+    app.get('/send-headers', function(req, res){ res.setHeader("foo", "foo"); res.setHeader("bar", "bar");  res.end("body"); });
 }
 
 exports.start_server = function start_server(callback){

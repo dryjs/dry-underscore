@@ -2112,15 +2112,7 @@ function (_){
         }
     };
 
-    _.time = function(log_str){
-        var start_time = (new Date()).valueOf();
-        return(function(quiet){
-            var end_time = (new Date()).valueOf();
-            var elapsed_time = end_time - start_time;
-            if(!quiet){ _.stderr(log_str + ": ", elapsed_time + "ms"); }
-            return(elapsed_time);
-        });
-    };
+    _.time = function(cat, key){ return _.timer.time(cat, key); };
     
     // an order of magnitued cheaper than _.times
     // effectively as cheap as a for loop
@@ -2479,7 +2471,7 @@ function (_){
 
     _.numbers = function(str_or_a){
         var numbers = _.filter(str_or_a, function(char){ return(_.to_number(char) !== null); });
-        if(_.is_string(str_or_a)){
+        if(_.is_string(str_or_a) || str_or_a === undefined){
             return(numbers.join(""));
         }else{ return(numbers); }
     };
@@ -2513,8 +2505,7 @@ function (_){
 
         var deepEqual = null;
         (function(){
-            deepEqual = function (actual, expected, opts) {
-                if (!opts) opts = {};
+            deepEqual = function (actual, expected) {
                 // 7.1. All identical values are equivalent, as determined by ===.
                 if (actual === expected) {
                     return true;
@@ -2524,8 +2515,10 @@ function (_){
 
                     // 7.3. Other pairs that do not both pass typeof value == 'object',
                     // equivalence is determined by ==.
+                }else if(typeof actual !== typeof expected){ 
+                    return(false); 
                 } else if (typeof actual != 'object' && typeof expected != 'object') {
-                    return opts.strict ? actual === expected : actual == expected;
+                    return(actual === expected);
 
                     // 7.4. For all other Object pairs, including Array objects, equivalence is
                     // determined by having the same number of owned properties (as verified
@@ -2534,46 +2527,43 @@ function (_){
                     // corresponding key, and an identical 'prototype' property. Note: this
                     // accounts for both named and indexed properties on Arrays.
                 } else {
-                    return objEquiv(actual, expected, opts);
+                    return objEquiv(actual, expected);
                 }
             }
 
             function isUndefinedOrNull(value) {
-                return value === null || value === undefined;
+                return(value === null || value === undefined);
             }
 
             function isBuffer (x) {
                 if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
                 if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
-                    return false;
+                    return(false);
                 }
-                if (x.length > 0 && typeof x[0] !== 'number') return false;
+                if (x.length > 0 && typeof x[0] !== 'number'){ return false; }
+
                 return true;
             }
 
-            function objEquiv(a, b, opts) {
+            function objEquiv(a, b) {
                 var i, key;
-                if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-                    return false;
+                if (isUndefinedOrNull(a) || isUndefinedOrNull(b)){ return false; }
+
                 // an identical 'prototype' property.
-                if (a.prototype !== b.prototype) return false;
+                if (a.prototype !== b.prototype){ return false; }
                 //~~~I've managed to break Object.keys through screwy arguments passing.
                 //   Converting to array solves the problem.
                 if (isArguments(a)) {
-                    if (!isArguments(b)) {
-                        return false;
-                    }
+                    if (!isArguments(b)) { return false; }
                     a = pSlice.call(a);
                     b = pSlice.call(b);
-                    return deepEqual(a, b, opts);
+                    return deepEqual(a, b);
                 }
                 if (isBuffer(a)) {
-                    if (!isBuffer(b)) {
-                        return false;
-                    }
-                    if (a.length !== b.length) return false;
+                    if (!isBuffer(b)) { return false; }
+                    if (a.length !== b.length){ return false; }
                     for (i = 0; i < a.length; i++) {
-                        if (a[i] !== b[i]) return false;
+                        if (a[i] !== b[i]){ return false; }
                     }
                     return true;
                 }
@@ -2585,28 +2575,26 @@ function (_){
                 }
                 // having the same number of owned properties (keys incorporates
                 // hasOwnProperty)
-                if (ka.length != kb.length)
-                    return false;
+                if (ka.length != kb.length){ return false; }
                 //the same set of keys (although not necessarily the same order),
                 ka.sort();
                 kb.sort();
                 //~~~cheap key test
                 for (i = ka.length - 1; i >= 0; i--) {
-                    if (ka[i] != kb[i])
-                        return false;
+                    if (ka[i] != kb[i]){ return false; }
                 }
                 //equivalent values for every corresponding key, and
                 //~~~possibly expensive deep test
                 for (i = ka.length - 1; i >= 0; i--) {
                     key = ka[i];
-                    if (!deepEqual(a[key], b[key], opts)) return false;
+                    if (!deepEqual(a[key], b[key])){ return false; }
                 }
                 return true;
             }
         })();
 
-        _.deep_equal = function(actual, expected, strict){
-            return(deepEqual(actual, expected, { strict: strict !== false }));
+        _.deep_equal = function(actual, expected){
+            return(deepEqual(actual, expected));
         };
     })();
 
@@ -3670,8 +3658,6 @@ function library(_){
 )(_);
 _.string_builder = (
 function library(_){
-
-    var lib = {};
 
     function string_builder_class(){
         this._str = "";
@@ -4793,15 +4779,32 @@ function library(){
         return null;
     }
 
+    request_manager.prototype._parse_headers = function(headers_string){
+        
+       var headers = {};
+       var header_lines = headers_string.split("\r\n");
+
+       _.each(header_lines, function(line){
+           line = line.split(":");
+           if(line.length !== 2){ return _.log.warning("malformed header: ", line); }
+           headers[_.trim(line[0])] = _.trim(line[1]);
+       });
+
+       return(headers);
+    };
+
     request_manager.prototype.connect_writer = function(call, callback){
+        var self = this;
+
         var xhr = getXHR();
 
         xhr.onreadystatechange = function(){
             if (xhr.readyState !== 4){ return; }
-
+    
             var client_response = {
-                body: xhr.responseText,
-                status: xhr.status
+                status: xhr.status,
+                headers: self._parse_headers(xhr.getAllResponseHeaders()),
+                body: xhr.responseText
             };
 
             return callback(null, client_response, client_response.body);
@@ -5186,33 +5189,12 @@ return(eventEmitter);
 _.event_emitter = _.eventEmitter;
 _.events = {};
 _.eventEmitter(_.events);
-_.measurer = (
-function (_){
+_.timer = (
+function library(_){
 
-    // TODO: I need to refactor this, make it better.
 
-    function measurer(options){
-
-        options = options || {};
-
-        this._parent = options.parent || null;
-        this._transportsAsync = [];
-        this._transportsSync = [this.runningTotalTransport];
-    }
-
-    measurer.prototype.parent = function(){ return(this._parent); };
-
-    measurer.prototype.runningTotalTransport = function(measurement){
-        var measurements = _.def(this, "_measurements", {});
-        var category = _.def(measurements, measurement.category, {});
-        var measurements = _.def(category, measurement.name, {});
-        if(measurements[measurement.duration] === undefined){
-            measurements[measurement.duration] = 0;
-        }
-        measurements[measurement.duration]++;
-        measurements.last = measurement.duration;
-    };
-
+    // TODO: add transports, parents
+    /*
     measurer.prototype.transport = function(measurement){
         var self = this;
 
@@ -5221,135 +5203,96 @@ function (_){
 
         if(this.parent()){ this.parent().transport(measurement); }
     };
+    */
 
-    measurer.prototype.transportsSync = function(){ return(_.def(this, "_transportsSync", [])); };
-    measurer.prototype.transportsAsync = function(){ return(_.def(this, "_transportsAsync", [])); };
+    function timer(options){
+        if(_.isFunction(options)){ options = { out: options }; }
+        options = options || {};
 
-    measurer.prototype.measure = function(categoryName, measurementName){
-        var self = this;
-
-        if(_.undef(categoryName) && _.undef(measurementName)){
-            categoryName = "default";
-            measurementName = _.uuid();
-        }
-
-        if(measurementName !== undefined || _.isObject(categoryName)){ 
-            var stopped = self.stop(categoryName, measurementName);
-            if(stopped){ return(stopped); }
-            else{ return(self.start(categoryName, measurementName)); }
-        }
-    };
-     
-    measurer.prototype.child = function(options){
-        return(new measurer(_.defaults(options, { parent: this })));
-    };
-
-    measurer.prototype.start = function(categoryName, measurementName){
-        var pendingMeasurements = _.def(this, "_pendingMeasurements", {});
-        var category = _.def(pendingMeasurements, categoryName, {});
-        var measurements = _.def(category, measurementName, {});
-        var newMeasurement = { type: 'measurement', category: categoryName, name: measurementName, token: _.uuid() };
-        newMeasurement.start = _.timestamp();
-
-        measurements[newMeasurement.token] = newMeasurement;
-            
-        return(newMeasurement);
-    };
-
-    measurer.prototype.stop = function(categoryName, measurementName){
-        var self = this;
-        var end = _.timestamp();
-        var token = "";
-
-        if(_.isObject(categoryName) && categoryName.type === 'measurement'){
-            var tokenObj = categoryName;
-            categoryName = tokenObj.category;
-            measurementName = tokenObj.name;
-            token = tokenObj.token;
-        }
-
-        var pendingMeasurements = _.def(this, "_pendingMeasurements", {});
-        var category = _.def(pendingMeasurements, categoryName, {});
-        var measurements = _.def(category, measurementName, {});
-        
-        var measurement = null;
-
-        if(token){
-            measurement = measurements[token];
-            delete measurements[token];
-        }else if(_.keys(measurements).length === 1){
-            measurement = measurements[_.keys(measurements)[0]];
-            delete measurements[_.keys(measurements)[0]];
-        }
-
-        // if(!measurement){ throw(_.exception("NoMeasurement", "No measurement found to stop.")); }
-
-        if(measurement){
-            measurement.end = end;
-            measurement.duration = measurement.end - measurement.start;
-
-            self.transport(measurement);
-
-            return(measurement);
-
-        }else{ return(null); }
-
-    };
-
-    measurer.prototype.measurements = function(categoryName, measurementName){
-        var measurements = _.def(this, "_measurements", {})
-        
-        if(!categoryName){
-            return(measurements);
-        }else if(!measurementName){
-            return(_.def(measurements, categoryName));
-        }else{
-            var category = _.def(measurements, categoryName);
-            if(category){ return(_.def(category, measurementName)); }
-            else{ return(undefined); }
-        }
-    };
-
-    measurer.prototype.last = function(categoryName, measurementName){
-        var measurements = _.def(this, "_measurements", {})
-        var category = _.def(measurements, categoryName);
-        
-        if(!measurementName){
-            var result = {};
-            _.each(category, function(measurements, measurementName){
-                result[measurementName] = measurements.last;
-            });
-            return(result);
-        }else{
-            if(category){ return(_.def(category, measurementName).last); }
-            else{ return(undefined); }
-        }
-    };
-
-    measurer.prototype.displayLast = function(categoryName, writer){
-        writer = writer || _.stderr;
-        var measurements = this.last(categoryName);
-
-        var sorted = _.map(measurements, function(value, name){
-            return({ value: value, name: name});
-        });
-
-        // sorted.sort(function(a, b){ return(a.value - b.value); });
-
-        _.each(sorted, function(measurement){
-            writer(measurement.name + ": " + measurement.value + "ms");
-        });
-    };
-
-    measurer.prototype.make = function(root, options){
-        root = root || {};
-
-        root.measurer = new measurer(options);
-
-        return(root.measurer);
+        this._out = options.out || _.stderr;
+        this._times = {};
     }
 
-    return(new measurer());
+    timer.prototype.time = function(event_category, event_name){
+        var self = this;
+
+        if(!event_name){ 
+            event_name = event_category;
+            event_category = "uncategorized";
+
+            if(event_name){
+                var event_split = event_name.split(".");
+                if(event_split.length > 1){
+                    event_category = event_split[0];
+                    event_name = event_split[1];
+                }
+            }
+        }
+
+        var start_time = (new Date()).valueOf();
+        var elapsed_time = null;
+
+        return(function(log_str){
+            if(elapsed_time === null){
+
+                var end_time = (new Date()).valueOf();
+                elapsed_time = end_time - start_time;
+
+                if(event_category && event_name){
+                    if(!self._times[event_category]){ self._times[event_category] = {}; }
+                    if(!self._times[event_category][event_name]){ self._times[event_category][event_name] = []; }
+                    self._times[event_category][event_name].push(elapsed_time);
+                };
+            }
+
+            if(log_str){ self._out(log_str + ": ", elapsed_time + "ms"); }
+
+            return(elapsed_time);
+        });
+    }
+
+    timer.prototype.last = function(category_name){
+        var last = {};
+        if(!this._times[category_name]){ return last; }
+
+        _.each(this._times[category_name], function(times, key){
+            last[key] = _.last(times);
+        });
+
+        return(last);
+    };
+
+    timer.prototype.print_last = function(category_name){
+        var self = this;
+        _.each(self.last(category_name), function(time, key){
+            self._out(key + ": " + time + "ms");
+        });
+    };
+
+    timer.prototype.times = function(event_category, event_name){
+
+        if(!event_category){ return(this._times); }
+
+        var event_split = event_category.split(".");
+        if(event_split.length > 1){
+            event_category = event_split[0];
+            event_name = event_split[1];
+        }
+
+        else if(!this._times[event_category]){ return({}); }
+
+        if(!event_name){ return(this._times[event_category]); }
+        else if(!this._times[event_category][event_name]){ return([]); }
+
+        return(this._times[event_category][event_name]);
+    };
+
+    timer.prototype.make = function(options){ return(new timer(options)); };
+
+    timer.prototype.library = library;
+    timer.prototype.class = timer;
+
+    return(new timer());
 }
 )(_);
 })();
