@@ -3,9 +3,8 @@ node_modules
 .*.tjs.*.cache
 .*.test.js
 csd
-test/builder-data/cache
+lib/zandbox/builder-data/cache
 test/build.test.js
-test/builder.test.js
 test/async.test.js
 private
 zandbox/fs-data/mvtest
