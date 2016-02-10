@@ -4786,8 +4786,8 @@ function library(){
 
        _.each(header_lines, function(line){
            line = line.split(":");
-           if(line.length !== 2){ return _.log.warning("malformed header: ", line); }
-           headers[_.trim(line[0])] = _.trim(line[1]);
+           if(line.length < 2){ return _.log.warning("malformed header: ", line); }
+           headers[_.trim(_.first(line))] = _.trim(_.rest(line).join(":"));
        });
 
        return(headers);
