@@ -2089,17 +2089,27 @@ function (_){
         return(Math.abs(a-b) < acceptableDiff);
     };
 
-    _.get = function(obj, key){
+    _.get = function(obj, key, call_f){
 
-        if(obj[key] !== undefined){ return obj[key]; }
+        function get_val(v){
+            if(!call_f){ return(v); }
+            else if(_.isFunction(v)){ return(v()); }
+            else{ return(v); }
+        }
+
+        if(obj[key] !== undefined){ return get_val(obj[key]); }
 
         for (var prop in obj){
             if(_.has(obj, prop) && prop.toLowerCase() === key.toLowerCase()){
-                return obj[prop];
+                return get_val(obj[prop]);
             }
         }
 
         return undefined;
+    };
+
+    _.val = function(obj, key){
+        return _.get(obj, key, true);
     };
 
     _.define = _.def = function(obj, key, defaultValue){
@@ -3666,7 +3676,7 @@ function library(_){
 
     string_builder_class.prototype.addLine = function(){
         this.add(this._indent, " ");
-        this._str += _.toArray(arguments).join("") + "\n";
+        this._str += _.format.apply(null, arguments) + "\n";
     };
     string_builder_class.prototype.add_line = string_builder_class.prototype.addLine;
 
