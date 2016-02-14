@@ -1,20 +1,29 @@
 #!/bin/bash
 
 echo "(function(){"
-cat ./deps/underscore/underscore.js
 
+cat ./deps/underscore.js
+
+echo "(function(){"
 cat ./deps/moment.min.js 
 echo "_.moment = moment;" 
 echo "delete this.moment;" 
+echo "})();"
 
 echo "(function(){"
-cat ./deps/handlebars/dist/handlebars.min.js
+cat ./deps/handlebars.min.js
 echo "_.hb = Handlebars;" 
 echo "delete this.Handlebars;" 
 echo "})();"
 
 echo "(function(){"
-cat ./deps/underscore.string/dist/underscore.string.min.js 
+cat ./deps/deep-diff.min.js
+echo "_.diff = DeepDiff;" 
+echo "delete this.DeepDiff;" 
+echo "})();"
+
+echo "(function(){"
+cat ./deps/underscore.string.min.js 
 echo "})();"
 
 echo "(" 

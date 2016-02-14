@@ -9,4 +9,9 @@ test("moment", function(){
     eq(_.iso_date(), _.moment().format("YYYY-MM-DD"));
     eq(_.iso_date(_.iso_date(_.moment().format("YYYY-MM-DD"))), _.moment().format("YYYY-MM-DD"));
 });
+
+test("str", function(){
+    eq(_.str.capitalize("hello"), "Hello");
+});
+ 
  

@@ -53,8 +53,8 @@ exports.testBasic = function(done){
        call_bad_args.foo(1, 3);
     }catch(e){
         threw = true;
-        eq(e.expected, "2"); 
-        eq(e.actual, "3"); 
+        eq(e.expected, 2); 
+        eq(e.actual, 3); 
     }
 
     ok(threw);
