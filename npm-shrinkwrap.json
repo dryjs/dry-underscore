@@ -1,7 +1,12 @@
 {
   "name": "dry-underscore",
-  "version": "0.17.2",
+  "version": "0.17.3",
   "dependencies": {
+    "deep-diff": {
+      "version": "0.3.3",
+      "from": "deep-diff@",
+      "resolved": "https://registry.npmjs.org/deep-diff/-/deep-diff-0.3.3.tgz"
+    },
     "formidable": {
       "version": "1.0.17",
       "from": "formidable@1.0.17",

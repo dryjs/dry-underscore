@@ -37,5 +37,6 @@
         , "moment-timezone" : ""
         , "handlebars" : ""
         , "keypress": ""
+        , "deep-diff": ""
     }
 }
