@@ -1842,14 +1842,7 @@ function (_){
     };
 
     _.exception = function(code, message, extra){
-        if(message === undefined && extra === undefined){ return(_.type(code, 'exception')); }
-        extra = extra || {};
-        if(extra.message){ extra.originalMessage = extra.message; }
-        if(extra.code){ extra.originalCode = extra.code; }
-        return(_.extend({
-            type: 'exception',
-            stack: (new Error(message)).stack
-        }, extra, { code: code, message: message }));
+        return(_.error(code, message, _.extend({}, extra, { type: 'exception' })));
     };
 
     function errors_obj(h){ 
@@ -3624,14 +3617,28 @@ function library(_){
         }
     };
 
-    test.throws = function(f){
+    test.throws = function(f, filter, filter_message){
         var threw = false;
 
+        filter = filter || function(){ return(true); };
+
         try{ f(); }
-        catch(e){ threw = true; }
+        catch(e){ 
+            threw = true;
+
+            if(_.isString(filter)){
+                var filter_string = filter;
+                filter = function(err){ return(_.code(err, filter_string)); }
+                filter_message = filter_message || "Function threw an error, but the code was unexpected. actual code: " + _.code(e) + " expected code: " + filter_string;
+            }
+
+            if(!filter(e)){ 
+                throw(_.exception("wrong_code", filter_message || "Function threw an error, but the code was unexpected. actual code: " + _.code(e)));
+            }
+        }
 
         if(!threw){
-            throw(_.exception("NoThrow", "Expected function to throw an error, it didn't."));
+            throw(_.exception("no_throw", "Expected function to throw an error, it didn't."));
         }
     };
 
