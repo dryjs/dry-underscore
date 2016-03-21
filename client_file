@@ -30,6 +30,10 @@ echo "("
 node -e "console.log(require('./lib/common.js').mixin.toString())" 
 echo ")(_);" 
 
+echo "(" 
+node -e "console.log(require('./lib/lodash.js').mixin.toString())" 
+echo ")(_);" 
+
 echo "_.log = (" 
 node -e "console.log(require('./lib/log.js').mixin.toString())" 
 echo ")(_);" 
