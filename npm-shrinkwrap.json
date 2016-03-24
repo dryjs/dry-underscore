@@ -1,6 +1,6 @@
 {
   "name": "dry-underscore",
-  "version": "0.17.8",
+  "version": "0.17.9",
   "dependencies": {
     "deep-diff": {
       "version": "0.3.3",
