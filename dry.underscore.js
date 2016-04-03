@@ -2375,8 +2375,8 @@ function (_){
     _.gt = _.curry(function(value, other){ return(value > other); });
     _.gte = _.curry(function(value, other){ return(value >= other); });
 
-    _.propCompare = _.prop_compare = _.propertyCompare = _.property_compare = _.curry(function(comparer, key, value){ 
-        return(_.compose(comparer(value), _.property(key)));
+    _.propCompare = _.prop_compare = _.propertyCompare = _.property_compare = _.curry(function(comparer, key, value, obj){ 
+        return(comparer(value, obj[key]));
     });
 
     _.id = _.identity;
