@@ -22,6 +22,10 @@ echo "_.diff = DeepDiff;"
 echo "delete this.DeepDiff;" 
 echo "})();"
 
+echo "(" 
+node -e "console.log(require('./lib/diff.js').library.toString())" 
+echo ")(_);" 
+
 echo "(function(){"
 cat ./deps/underscore.string.min.js 
 echo "})();"
