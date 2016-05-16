@@ -2405,6 +2405,14 @@ function (_){
         return(_.diff(actual, expected) === undefined);
     };
 
+    _.sum = function(a){ 
+        return(_.reduce(a, function(memo, num){ 
+            num = _.n(num);
+            if(num === null){ return(memo); }
+            else{ return(memo + num); }
+        }, 0));
+    };
+
     _.eq = _.curry(_.deep_equal);
     _.ne = _.curry(function(a, b){ return(!_.deep_equal(a, b)); });
     _.lt = _.curry(function(value, other){ return(value < other); });
@@ -3605,7 +3613,7 @@ function library(_){
             var args = arguments;
             var len = args.length;
             var str = String(f).replace(formatRegExp, function(x) {
-                if (x === '%') return '%';
+                if (x === '%%') return '%';
                 if (i >= len) return x;
                 switch (x) {
                     case '%s': return String(args[i++]);
