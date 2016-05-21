@@ -7,6 +7,7 @@ cat ./deps/underscore.js
 echo "(function(){"
 cat ./deps/moment.min.js 
 echo "_.moment = moment;" 
+cat ./deps/moment-duration-format.js
 echo "delete this.moment;" 
 echo "})();"
 
