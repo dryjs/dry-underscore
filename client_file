@@ -7,8 +7,10 @@ cat ./deps/underscore.js
 echo "(function(){"
 cat ./deps/moment.min.js 
 echo "_.moment = moment;" 
-cat ./deps/moment-duration-format.js
 echo "delete this.moment;" 
+echo "(" 
+node -e "console.log(require('./deps/moment-duration-format.js').library.toString())" 
+echo ")(_.moment);" 
 echo "})();"
 
 echo "(function(){"
@@ -76,13 +78,13 @@ node -e "console.log(require('./lib/http_base.js').library.toString())"
 echo ")(_);" 
 
 echo "_.http = (" 
-node -e "console.log(require('./lib/http.client.js').library.toString())" 
+node -e "console.log(require('./lib/client/http.js').library.toString())" 
 echo ")(_);" 
 
 #echo "_.mixin(_.string.exports());" 
 
 echo "(" 
-node -e "console.log(require('./lib/client.js').mixin.toString())" 
+node -e "console.log(require('./lib/client/client.js').mixin.toString())" 
 echo ")(_);" 
 
 echo "_.ns = (" 

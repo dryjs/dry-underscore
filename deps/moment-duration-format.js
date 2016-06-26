@@ -9,7 +9,7 @@
  *  Released under the MIT license
  */
 
-(function (root, undefined) {
+exports.library = function (moment, undefined) {
 
 	// repeatZero(qty)
 	// returns "0" repeated qty times
@@ -182,23 +182,8 @@
 		return a;
 	}
 			
-	// define internal moment reference
-	var moment;
-
-	if (typeof require === "function") {
-		try { moment = require('moment'); } 
-		catch (e) {
-                    try { moment = require('moment-timezone'); } 
-                    catch (e) {}
-                }
-	} 
-	
-	if (!moment && root.moment) {
-		moment = root.moment;
-	}
-	
 	if (!moment) {
-		throw "Moment Duration Format cannot find Moment.js";
+            throw "Moment Duration Format cannot find Moment.js";
 	}
 	
 	// moment.duration.format([template] [, precision] [, settings])
@@ -482,4 +467,4 @@
 		}
 	};
 
-})(this);
+};

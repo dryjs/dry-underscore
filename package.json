@@ -1,7 +1,7 @@
 {
     "name": "dry-underscore",
-    "version": "0.17.13",
-    "main": "./lib/index.js",
+    "version": "0.18.0",
+    "main": "./index/node.index.js",
     "description": "The DRY Undescore Library",
     "author": {
         "name": "Kendrick Taylor",
