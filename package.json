@@ -1,7 +1,7 @@
 {
-    "name": "dry-underscore",
+    "name": "dry-underscore-react-native",
     "version": "0.18.0",
-    "main": "./index/node.index.js",
+    "main": "./index/react_native.index.js",
     "description": "The DRY Undescore Library",
     "author": {
         "name": "Kendrick Taylor",
