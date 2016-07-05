@@ -3787,7 +3787,7 @@ function (_){
             return(str + Array(n-str.length).join(" "));
         }else{ return(str); }
     };
-    _.remove = function(array, from, to) {
+    _.remove = function(array, from, to){
         var rest = array.slice((to || from) + 1 || array.length);
         array.length = from < 0 ? array.length + from : from;
         return array.push.apply(array, rest);
@@ -3803,7 +3803,7 @@ function (_){
             });
         });
     };
-    _.trim = function trim(str) {
+    _.trim = function trim(str){
         if(String.prototype.trim){
             return(String.prototype.trim.call(str)); 
         }else{
@@ -3815,47 +3815,91 @@ function (_){
         }
     };
 
-    _.getter = function (variable_name){
-        return(function(){
-            return(this[variable_name]);
-        });
+    _.getter = function(hash_name, variable_name){
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(){
+                return(this[hash_name][variable_name]);
+            });
+        }else{
+            return(function(){
+                return(this[hash_name]);
+            });
+        }
     };
 
-    _.getterKey = _.getter_key = function (variable_name){
-        return(function(key){
-            if(key === undefined){ return(this[variable_name]); }
-            else{ return(this[variable_name][key]); }
-        });
+    _.getterKey = _.getter_key = function(hash_name, variable_name){
+
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(key){
+                if(key === undefined){ return(this[hash_name][variable_name]); }
+                return(this[hash_name][variable_name][key]);
+            });
+        }else{
+            return(function(key){
+                if(key === undefined){ return(this[hash_name]); }
+                else{ return(this[hash_name][key]); }
+            });
+        }
     };
 
 
-    _.getterSetter = _.getter_setter = function (variable_name){
-        return(function(val){
-            if(val === undefined){ return(this[variable_name]); }
-            else{
-                this[variable_name] = val;
-                return(this);
-            }
-        });
-    };
-
-    _.getterSetterKey = _.getter_setter_key = function(variable_name, locked){
-        return(function(key, val){
-            if(key === undefined){ return(this[variable_name]); }
-            else{
-                if(val === undefined){
-                    if(!locked && (_.isObject(key) || _.isArray(key))){
-                        return(this[variable_name] = key);
-                        return(this);
-                    }else{
-                        return(this[variable_name][key]);
-                    }
-                }else{
-                    this[variable_name][key] = val;
+    _.getterSetter = _.getter_setter = function(hash_name, variable_name){
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(val){
+                if(val === undefined){ return(this[hash_name][variable_name]); }
+                else{
+                    this[hash_name][variable_name] = val;
                     return(this);
                 }
-            }
-        });
+            });
+        }else{
+            return(function(val){
+                if(val === undefined){ return(this[hash_name]); }
+                else{
+                    this[hash_name] = val;
+                    return(this);
+                }
+            });
+        }
+    };
+
+    _.getterSetterKey = _.getter_setter_key = function(hash_name, variable_name, locked){
+        if(_.isBoolean(variable_name)){ locked = variable_name; variable_name = undefined; }
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(key, val){
+                if(key === undefined){ return(this[hash_name][variable_name]); }
+                else{
+                    if(val === undefined){
+                        if(!locked && (_.isObject(key) || _.isArray(key))){
+                            this[hash_name][variable_name] = key;
+                            return(this);
+                        }else{
+                            return(this[hash_name][variable_name][key]);
+                        }
+                    }else{
+                        this[hash_name][variable_name][key] = val;
+                        return(this);
+                    }
+                }
+            });
+        }else{
+            return(function(key, val){
+                if(key === undefined){ return(this[hash_name]); }
+                else{
+                    if(val === undefined){
+                        if(!locked && (_.isObject(key) || _.isArray(key))){
+                            return(this[hash_name] = key);
+                            return(this);
+                        }else{
+                            return(this[hash_name][key]);
+                        }
+                    }else{
+                        this[hash_name][key] = val;
+                        return(this);
+                    }
+                }
+            });
+        }
     };
 
     _.r = _.getter;
