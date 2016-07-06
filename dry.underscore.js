@@ -3330,12 +3330,14 @@ function (_){
         if(_.isObject(o)){ return("object"); }
     };
 
+    _.basic_type.types = ["undefined", "null", "boolean", "array", "string", "number", "object"];
+
     _.dryType = _.dry_type = function(o){
         var t = _.basic_type(o);
         if(t === "object" && _.isString(o["type"])){
             var t = o["type"];
 
-            if(_.contains(["undefined", "null", "boolean", "array", "string", "number", "object"], t)){
+            if(_.contains(_.basic_type.types, t)){
                 return("object");
             }else{
                 return(o["type"]);
@@ -3364,7 +3366,8 @@ function (_){
     };
 
     _.type_match = function(o, types, map_types){
-        var type = _.dry_type(o);
+        var dry_type = _.dry_type(o);
+        var basic_type = _.basic_type(o);
 
         if(arguments.length !== 3 || !_.isArray(types) || !map_types){
             types = _.rest(arguments);
@@ -3372,7 +3375,9 @@ function (_){
 
         return(_.find(types, function(test_type){
             if(test_type === "*"){ return(true); }
-            return(type === test_type);
+            if(_.contains(_.basic_type.types, test_type) && test_type === basic_type){
+                return(true);
+            }else{ return(dry_type === test_type); }
         }) !== undefined);
     };
 
