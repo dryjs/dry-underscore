@@ -3330,10 +3330,19 @@ function (_){
         if(_.isObject(o)){ return("object"); }
     };
 
+    _.basic_type.types = ["undefined", "null", "boolean", "array", "string", "number", "object"];
+
     _.dryType = _.dry_type = function(o){
         var t = _.basic_type(o);
         if(t === "object" && _.isString(o["type"])){
-            return(o["type"]);
+            var t = o["type"];
+
+            if(_.contains(_.basic_type.types, t)){
+                return("object");
+            }else{
+                return(o["type"]);
+            }
+
         }else{ return(t); }
     };
 
@@ -3356,11 +3365,19 @@ function (_){
         else{ return(_.type_match.apply(this, arguments)); }
     };
 
-    _.type_match = function(o){
-        var type = _.dry_type(o);
-        return(_.find(_.rest(arguments), function(test_type){
+    _.type_match = function(o, types, map_types){
+        var dry_type = _.dry_type(o);
+        var basic_type = _.basic_type(o);
+
+        if(arguments.length !== 3 || !_.isArray(types) || !map_types){
+            types = _.rest(arguments);
+        }
+
+        return(_.find(types, function(test_type){
             if(test_type === "*"){ return(true); }
-            return(type === test_type);
+            if(_.contains(_.basic_type.types, test_type) && test_type === basic_type){
+                return(true);
+            }else{ return(dry_type === test_type); }
         }) !== undefined);
     };
 
@@ -3775,7 +3792,7 @@ function (_){
             return(str + Array(n-str.length).join(" "));
         }else{ return(str); }
     };
-    _.remove = function(array, from, to) {
+    _.remove = function(array, from, to){
         var rest = array.slice((to || from) + 1 || array.length);
         array.length = from < 0 ? array.length + from : from;
         return array.push.apply(array, rest);
@@ -3791,7 +3808,7 @@ function (_){
             });
         });
     };
-    _.trim = function trim(str) {
+    _.trim = function trim(str){
         if(String.prototype.trim){
             return(String.prototype.trim.call(str)); 
         }else{
@@ -3803,47 +3820,91 @@ function (_){
         }
     };
 
-    _.getter = function (variable_name){
-        return(function(){
-            return(this[variable_name]);
-        });
+    _.getter = function(hash_name, variable_name){
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(){
+                return(this[hash_name][variable_name]);
+            });
+        }else{
+            return(function(){
+                return(this[hash_name]);
+            });
+        }
     };
 
-    _.getterKey = _.getter_key = function (variable_name){
-        return(function(key){
-            if(key === undefined){ return(this[variable_name]); }
-            else{ return(this[variable_name][key]); }
-        });
+    _.getterKey = _.getter_key = function(hash_name, variable_name){
+
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(key){
+                if(key === undefined){ return(this[hash_name][variable_name]); }
+                return(this[hash_name][variable_name][key]);
+            });
+        }else{
+            return(function(key){
+                if(key === undefined){ return(this[hash_name]); }
+                else{ return(this[hash_name][key]); }
+            });
+        }
     };
 
 
-    _.getterSetter = _.getter_setter = function (variable_name){
-        return(function(val){
-            if(val === undefined){ return(this[variable_name]); }
-            else{
-                this[variable_name] = val;
-                return(this);
-            }
-        });
-    };
-
-    _.getterSetterKey = _.getter_setter_key = function(variable_name, locked){
-        return(function(key, val){
-            if(key === undefined){ return(this[variable_name]); }
-            else{
-                if(val === undefined){
-                    if(!locked && (_.isObject(key) || _.isArray(key))){
-                        return(this[variable_name] = key);
-                        return(this);
-                    }else{
-                        return(this[variable_name][key]);
-                    }
-                }else{
-                    this[variable_name][key] = val;
+    _.getterSetter = _.getter_setter = function(hash_name, variable_name){
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(val){
+                if(val === undefined){ return(this[hash_name][variable_name]); }
+                else{
+                    this[hash_name][variable_name] = val;
                     return(this);
                 }
-            }
-        });
+            });
+        }else{
+            return(function(val){
+                if(val === undefined){ return(this[hash_name]); }
+                else{
+                    this[hash_name] = val;
+                    return(this);
+                }
+            });
+        }
+    };
+
+    _.getterSetterKey = _.getter_setter_key = function(hash_name, variable_name, locked){
+        if(_.isBoolean(variable_name)){ locked = variable_name; variable_name = undefined; }
+        if(hash_name !== undefined && variable_name !== undefined){
+            return(function(key, val){
+                if(key === undefined){ return(this[hash_name][variable_name]); }
+                else{
+                    if(val === undefined){
+                        if(!locked && (_.isObject(key) || _.isArray(key))){
+                            this[hash_name][variable_name] = key;
+                            return(this);
+                        }else{
+                            return(this[hash_name][variable_name][key]);
+                        }
+                    }else{
+                        this[hash_name][variable_name][key] = val;
+                        return(this);
+                    }
+                }
+            });
+        }else{
+            return(function(key, val){
+                if(key === undefined){ return(this[hash_name]); }
+                else{
+                    if(val === undefined){
+                        if(!locked && (_.isObject(key) || _.isArray(key))){
+                            return(this[hash_name] = key);
+                            return(this);
+                        }else{
+                            return(this[hash_name][key]);
+                        }
+                    }else{
+                        this[hash_name][key] = val;
+                        return(this);
+                    }
+                }
+            });
+        }
     };
 
     _.r = _.getter;
@@ -6113,7 +6174,7 @@ function library(_){
 
     function getXHR() {
         if (window.XMLHttpRequest && ('file:' != window.location.protocol || !window.ActiveXObject)) {
-            return new XMLHttpRequest;
+            return(new XMLHttpRequest());
         } else {
             try { return new ActiveXObject('Microsoft.XMLHTTP'); } catch(e) {}
             try { return new ActiveXObject('Msxml2.XMLHTTP.6.0'); } catch(e) {}

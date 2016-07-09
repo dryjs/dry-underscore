@@ -1,6 +1,6 @@
 "use strict";
 
-var _ = require('../');
+var _ = require('../index/node.index.js');
 var root = _.path.fun(__dirname);
 
 var test_server = require('../test_server/server.tjs');
