@@ -1,6 +1,6 @@
 {
     "name": "dry-underscore-react-native",
-    "version": "0.21.1",
+    "version": "0.21.2",
     "main": "./index/react_native.index.js",
     "description": "The DRY Undescore Library",
     "author": {
