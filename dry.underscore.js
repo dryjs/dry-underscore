@@ -3649,7 +3649,7 @@ function (_){
                 return;
             }else{
                 running = true;
-                f.apply(this, _.concat(function(){ running = false; }, _.a(arguments)));
+                return f.apply(this, _.concat(function(){ running = false; }, _.a(arguments)));
             }
         }
         return(lock);
