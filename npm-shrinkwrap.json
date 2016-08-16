@@ -1,5 +1,5 @@
 {
-  "name": "dry-underscore",
+  "name": "dry-underscore-react-native",
   "version": "0.21.1",
   "dependencies": {
     "deep-diff": {
