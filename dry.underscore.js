@@ -3649,7 +3649,10 @@ function (_){
                 return;
             }else{
                 running = true;
-                return f.apply(this, _.concat(function(){ running = false; }, _.a(arguments)));
+                var release = function(){ running = false; };
+                release.before = function(f){ return(function(){ release(); var ret = f.apply(this, arguments); return(ret); }); };
+                release.after = function(f){ return(function(){ var ret = f.apply(this, arguments); release(); return(ret); }); };
+                return f.apply(this, _.concat(release, _.a(arguments)));
             }
         }
         return(lock);
