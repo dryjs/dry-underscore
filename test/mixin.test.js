@@ -38,58 +38,6 @@ exports.testUnionize = function(){
     assert.eql(o.x, 3);
 };
 
-exports.testAsyncLockSimple = function(beforeExit){
-
-    var runs = 0;
-
-    function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
-    var f = _.lock.async(inc);
-    f();
-    f();
-    process.nextTick(f);
-
-    beforeExit(function(){ assert.eql(runs, 2); });
-}
-
-exports.testAsyncLockExtraTest = function(beforeExit){
-
-    var runs = 0;
-
-    function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
-    var disabled = false;
-
-    var f = _.lock.async(inc, function(def){ return(def || disabled); });
-    f();
-    f();
-    disabled = true;
-    process.nextTick(f);
-    process.nextTick(f);
-    disabled = false;
-    process.nextTick(f);
-
-    beforeExit(function(){ assert.eql(runs, 2); });
-}
-
-exports.testAsyncLockComplex = function(beforeExit){
-
-    var runs = 0;
-
-    function inc(releaseLock){ runs++; process.nextTick(releaseLock); }
-    var disabled = false;
-    var locked = false;
-
-    var f = _.lock.async(inc, function(){ return(disabled || locked); }, function(){ locked = true; }, function(){ locked = false; } );
-    f();
-    f();
-    disabled = true;
-    process.nextTick(f);
-    process.nextTick(f);
-    disabled = false;
-    process.nextTick(f);
-
-    beforeExit(function(){ assert.eql(runs, 2); });
-}
-
 exports.testIsObject = function(){
 
     assert.ok(!_.isObject(null));
