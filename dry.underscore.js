@@ -3666,8 +3666,9 @@ function (_){
     };
     _.walk = function(o, iterator, context){
         _.each(o, function(val, key, o){
-            iterator.call(context, val, key, o);
-            if(val && typeof(val) === 'object'){
+            var follow_branch = iterator.call(context, val, key, o);
+            if(follow_branch === false){ return; }
+            if(val && (_.isObject(val) || _.isArray(val))){
                 _.walk(val, iterator, context);
             }
         });
