@@ -6180,10 +6180,12 @@ function library(_){
 
         xhr.onreadystatechange = function(){
             if (xhr.readyState !== 4){ return; }
+
+            var raw_headers = xhr.getAllResponseHeaders();
     
             var client_response = {
                 status: xhr.status,
-                headers: self._parse_headers(xhr.getAllResponseHeaders()),
+                headers: self._parse_headers(raw_headers || ""),
                 body: xhr.responseText
             };
 
