@@ -1,6 +1,6 @@
 {
   "name": "dry-underscore-react-native",
-  "version": "0.21.2",
+  "version": "0.21.4",
   "dependencies": {
     "deep-diff": {
       "version": "0.3.3",

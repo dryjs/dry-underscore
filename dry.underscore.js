@@ -3666,8 +3666,9 @@ function (_){
     };
     _.walk = function(o, iterator, context){
         _.each(o, function(val, key, o){
-            iterator.call(context, val, key, o);
-            if(val && typeof(val) === 'object'){
+            var follow_branch = iterator.call(context, val, key, o);
+            if(follow_branch === false){ return; }
+            if(val && (_.isObject(val) || _.isArray(val))){
                 _.walk(val, iterator, context);
             }
         });
@@ -6179,10 +6180,12 @@ function library(_){
 
         xhr.onreadystatechange = function(){
             if (xhr.readyState !== 4){ return; }
+
+            var raw_headers = xhr.getAllResponseHeaders();
     
             var client_response = {
                 status: xhr.status,
-                headers: self._parse_headers(xhr.getAllResponseHeaders()),
+                headers: self._parse_headers(raw_headers || ""),
                 body: xhr.responseText
             };
 
