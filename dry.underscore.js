@@ -3284,11 +3284,8 @@ function (_){
 
     _.omap = function(o, f){
         var result = {};
-        _.each(o, function(val, key, callback){
-            f(function(v, k){
-                if(!k){ throw(_.exception("omap: key must be specified.")); }
-                result[k] = v;
-            }, val, key, o)
+        _.each(o, function(val, key){
+            f(function(v, k){ result[k || key] = v; }, val, key, o)
         });
         return(result);
     };
