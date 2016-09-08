@@ -2,6 +2,6 @@
 shopt -s nullglob
 ./node_modules/tamejs/lib/main.js ./test/async.test.tjs > ./test/async.test.js &&
 ./node_modules/expresso/bin/expresso && 
-./node_modules/dry-test/bin/dry-test ./lib/*.test.js ./lib/*.test.tjs && node ./test_client/run.js
+./node_modules/dry-test/bin/dry-test ./lib/*.test.js ./lib/*.test.tjs ./lib/*/*.test.js ./lib/*/*.test.tjs && node ./test_client/run.js
 
 

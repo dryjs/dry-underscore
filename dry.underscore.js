@@ -3050,18 +3050,21 @@ function (_){
         return(s.toLowerCase());
     };
 
-    _.isoDate = _.iso_date = function(d){ 
+    _.isoDate = _.iso_date = function(d, tz){ 
         if(d === undefined){ d = _.date(); }
+        var iso_format = "YYYY-MM-DD";
+
+        if(d && tz){ return(_.moment.tz(d, iso_format, true, tz)); }
+
         if(_.isString(d)){
-            if(_.moment.tz && _.moment.tz.zone(d)){
-                return(_.moment.tz(d).format("YYYY-MM-DD"));
-            }else{
-                var m = _.moment(d, "YYYY-MM-DD", true);
+            if(_.moment.tz && _.moment.tz.zone(d)){ return(_.moment.tz(d).format(iso_format)); }
+            else{
+                var m = _.moment(d, iso_format, true);
                 if(m.isValid()){ return(m); }
                 else{ return(null); }
             }
         }
-        return(_.moment(d).format("YYYY-MM-DD"));
+        return(_.moment(d).format(iso_format));
     };
 
     function decimalAdjust(type, value, exp) {
