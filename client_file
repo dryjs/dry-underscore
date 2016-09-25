@@ -45,6 +45,10 @@ echo "_.log = ("
 node -e "console.log(require('./lib/log.js').mixin.toString())" 
 echo ")(_);" 
 
+echo "_.inspect = (" 
+node -e "console.log(require('./lib/inspect.js').library.toString())" 
+echo ")(_);" 
+
 echo "_.format = (" 
 node -e "console.log(require('./lib/format.js').library.toString())" 
 echo ")(_);" 
