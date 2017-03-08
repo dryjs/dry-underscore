@@ -13,6 +13,7 @@ _.uuid = require('../lib/uuid.js').library(_);
 _.sha256 = require('../lib/sha256.js').library(_);
 _.inspect = require('../lib/inspect.js').library(_);
 _.format = require('../lib/format.js').library(_);
+_.gis = require('../lib/gis.js').library(_);
 _.test = require('../lib/test.js').library(_);
 _.string_builder = require('../lib/string_builder.js').library(_);
 _.url = require('../lib/url.js').library(_);

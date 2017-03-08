@@ -53,6 +53,10 @@ echo "_.format = ("
 node -e "console.log(require('./lib/format.js').library.toString())" 
 echo ")(_);" 
 
+echo "_.gis = (" 
+node -e "console.log(require('./lib/gis.js').library.toString())" 
+echo ")(_);" 
+
 echo "_.uuid = (" 
 node -e "console.log(require('./lib/uuid.js').library.toString())" 
 echo ")(_);" 

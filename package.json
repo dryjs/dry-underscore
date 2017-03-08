@@ -1,8 +1,8 @@
 {
     "name": "dry-underscore",
-    "version": "0.21.8",
+    "version": "0.21.9",
     "main": "./index/node.index.js",
-    "description": "The DRY Undescore Library",
+    "description": "The DRY Underscore Library",
     "author": {
         "name": "Kendrick Taylor",
         "email": "kendrick@circuitsix.com"
