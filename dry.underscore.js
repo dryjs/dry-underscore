@@ -2960,10 +2960,15 @@ function (_){
         return(error_message.string());
     };
 
-    _.deprecated = function(lib, f_name){
-        if(_.isString(lib)){ f_name = lib; lib = {}; }
-        var f = function(){ _.fatal(f_name + " is deprecated"); }
-        lib[f_name] = f;
+    _.deprecated = function(f_name, f){
+        return(function(){
+            console.log("WARNING: _." + f_name + "has been deprecated and will be removed in the next major version.");
+            return(f.apply(this, arguments));
+        });
+    };
+
+    _.removed = function(f_name){
+        var f = function(){ _.fatal(f_name + " was removed in the last major release of the library."); }
         return(f);
     };
 
@@ -3665,8 +3670,8 @@ function (_){
         }
         return(lock);
     };
-    _.deprecated(_, "lock.ui");
-    _.deprecated(_, "lock.async");
+    _.lock.ui = _.removed("lock.ui");
+    _.lock.async = _.removed("lock.async");
 
     _.addProperties = _.add_properties = function(o, propArray, val){
         _.each(propArray, function(prop){ o[prop] = val; });
@@ -3783,10 +3788,11 @@ function (_){
     _.unionize = function(){
         var args = arguments;
         return(function(){
+            var self = this;
             var uargs = arguments;
             _.each(args, function(f){
                 if(_.isFunction(f)){
-                    f.apply(undefined, uargs);
+                    f.apply(self, uargs);
                 }
             });
         });
@@ -4706,7 +4712,7 @@ function library(_){
             var args = arguments;
             var len = args.length;
             var str = String(f).replace(formatRegExp, function(x) {
-                if (x === '%%') return '%';
+                if (x === '%') return '%';
                 if (i >= len) return x;
                 switch (x) {
                     case '%s': return String(args[i++]);
@@ -4801,12 +4807,20 @@ function library(_){
 
     gis.point = function(p){
         if(!p){ return(null); }
-        var lon = (p.lon !== undefined ? p.lon : p.lng);
+
+        var lon = p.lon
+        if(lon === undefined){ lon = p.lng; }
+        if(lon === undefined){ lon = p.longitude; }
+
         var lat = p.lat;
+        if(lat === undefined){ lat = p.latitude; }
+
         if(_.isFunction(lon)){ lon = _.bind(lon, p)(); }
         if(_.isFunction(lat)){ lat = _.bind(lat, p)(); }
+
         lat = _.n(lat);
         lon = _.n(lon);
+
         if(lat === null || lon === null){ return(null); }
         else{ return({ lat: lat, lon: lon }); }
     };
@@ -6337,46 +6351,9 @@ function (_){
     })();
 
     _.client = {};
+    _.client.labelOverInput = _.removed("_.client.labelOverInput");
 
-    _.client.labelOverInput = function(inputSelector, labelSelector){
-
-        if(inputSelector === undefined){ _.fatal("need at least one selector for this to work."); }
-
-        var parentSelector = "";
-        if(labelSelector === undefined){
-            parentSelector = inputSelector;
-            inputSelector = "";
-        }
-
-        labelSelector = labelSelector || (parentSelector + " label");
-
-        if(parentSelector){
-            if($(parentSelector + " textarea").first()){
-                inputSelector = parentSelector + " textarea";
-            }
-
-            if($(parentSelector + " input").first()){
-                inputSelector = parentSelector + " input";
-            }
-        }
-
-        $(labelSelector).click(function(e){
-            $(inputSelector).focus();
-        });
-
-        $(inputSelector).focus(function(){
-            $(labelSelector).hide();
-        });
-
-        $(inputSelector).blur(function(){
-            if(!$(this).val()){ 
-                $(labelSelector).show();
-            }
-        });
-    };
-
-
-    _.container = function(root){
+    _.container = _.deprecated("_.container", function(root){
 
         root.container = function(selector, change_callback){ 
             this._container_selector = selector;
@@ -6407,7 +6384,7 @@ function (_){
         root.$ = function(selector, no_space){
             return($(this._container_selector + (no_space ? "" : " ") + (selector ? selector : "")));
         };
-    };
+    });
 
     return(_);
 
