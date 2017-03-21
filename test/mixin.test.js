@@ -26,18 +26,6 @@ exports.testStripQuotes = function(){
     assert.eql(_.stripQuotes('"asdf"'), "asdf");
 };
 
-exports.testUnionize = function(){
-    var o = { x : 0 };
-
-    function a(b){ b.x++; }
-    function b(b){ b.x++; }
-    function c(b){ b.x++; }
-
-    _.unionize(a, b, c)(o);
-
-    assert.eql(o.x, 3);
-};
-
 exports.testIsObject = function(){
 
     assert.ok(!_.isObject(null));

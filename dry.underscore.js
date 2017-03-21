@@ -3009,6 +3009,10 @@ function (_){
 
     _.id = _.identity;
 
+    // TODO: var match_user_or_admin = _.prop_eq("type", ["user, "admin"]);
+    // this is getting pretty crazy, like to the limit of my understanding, I think we should simplify
+    // and if I want _.code to be super complicated, just make it a one off, this is too generic, i have to look at the source to figure out what it does
+
     _.propEq = _.prop_eq = _.property_eq = _.propertyEq = _.property_compare(_.eq);
     _.propNe = _.prop_ne = _.property_ne = _.propertyNe = _.property_compare(_.ne);
 
@@ -3049,10 +3053,6 @@ function (_){
 
         if(d === undefined){ d = _.date(); }
         return(d.valueOf());
-    };
-
-    _.lc = function(s){
-        return(s.toLowerCase());
     };
 
     _.isoDate = _.iso_date = function(d, tz){ 
@@ -3198,6 +3198,7 @@ function (_){
         var am_pm = (hours < 12 ? "AM" : "PM");
 
         if(hours > 12){ hours -= 12; }
+        if(hours === 0){ hours = 12; }
 
         return(hours + ":" + minutes + " " + am_pm);
     };
@@ -3770,7 +3771,8 @@ function (_){
 
     _.exists = function(col, target, insensitive){
         if(insensitive){
-            return(_.any(col, function(a){ return(a.toLowerCase() === target.toLowerCase()); }));
+            target = _.lc(target);
+            return(_.any(col, function(a){ return(_.lc(a) === target); }));
         }else{
             return(_.any(col, function(a){ return(a === target); }));
         }
@@ -3808,6 +3810,9 @@ function (_){
             return str.slice(0, i + 1);
         }
     };
+
+    _.lc = function(s){ return(s.toLowerCase()); };
+    _.lct = _.compose(_.lc, _.trim);
 
     _.getter = function(hash_name, variable_name){
         if(hash_name !== undefined && variable_name !== undefined){
@@ -6444,25 +6449,38 @@ function (_){
 
         if(f === undefined){ f = {}; }
             
-        f.hook_parent = _.rw("_hook_parent");
-
         f.hook = function(event, callback, is_error_handler){
             var self = this;
-            if(!event || !callback){ _.fatal("You must provide an event name and a function."); }
-            event = event.toLowerCase();
+
             if(self._hooks === undefined){ self._hooks = {}; }
+
+            // this is unconventional, but I want to pollute the host object as little as possible.
+            if(_.isObject(event) && _.isFunction(event.hooks)){
+                self._hooks["__parent"] = event;
+                return;
+            }
+
+            if(!_.isString(event) || !_.isFunction(callback)){ _.fatal("You must provide an event name and a function."); }
+            event = _.lct(event);
+
+            if(event === "__parent"){ _.fatal('You can\'t use "__parent" as an event name'); }
+
             if(self._hooks[event] === undefined){ self._hooks[event] = []; }
 
             self._hooks[event].push({ handler: callback, is_error_handler: is_error_handler });
         };
 
+        f.hook_parent = _.removed("hook_parent");
+
         f.hooks = function(event){
+            var self = this;
+
             var hooks = [];
-            var parent = this.hook_parent();
+            var parent = self._hooks && self._hooks["__parent"];
             if(parent){ hooks = parent.hooks(event); }
 
-            if(this._hooks && this._hooks[event]){
-                hooks = _.concat(hooks, this._hooks[event]);
+            if(self._hooks && self._hooks[event]){
+                hooks = _.concat(hooks, self._hooks[event]);
             }
 
             return(hooks);
@@ -6473,8 +6491,8 @@ function (_){
             
             if(!self._hooks){ return; }
             
-            if(!event || !callback){ _.fatal("You must provide an event name and a function."); }
-            event = event.toLowerCase();
+            if(!_.isString(event) || !_.isFunction(callback)){ _.fatal("You must provide an event name and a function."); }
+            event = _.lct(event);
 
             if(self._hooks && self._hooks[event]){
                 self._hooks[event] = _.filter(self._hooks[event], function(val){
@@ -6493,10 +6511,8 @@ function (_){
                 args = [];
             }
 
-            if(!_.isString(event) || !_.isFunction(callback)){
-                _.fatal("You must provide an event name and a function.");
-            }
-            event = event.toLowerCase();
+            if(!_.isString(event) || !_.isFunction(callback)){ _.fatal("You must provide an event name and a function."); }
+            event = _.lct(event);
             
             var hooks = self.hooks(event);
 
