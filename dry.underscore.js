@@ -2976,6 +2976,7 @@ function (_){
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
 
     _.undef = function(x){ return(x === undefined); };
+    _.defined = function(x){ return(x !== undefined); };
     _.date = function(ts){
         if(_.isNumber(ts)){
             return(new Date(ts));
