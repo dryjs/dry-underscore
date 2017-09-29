@@ -2905,8 +2905,8 @@ function (_){
 
     _.errors = function(h){ return(new errors_obj(h)); };
 
-    _.error.message = function(err, add_context, exit_on_error){
-        if(!_.isArray(err)){ return(_.error._message(err, add_context, exit_on_error)); }
+    _.error.message = function(err, add_context, exit_code){
+        if(!_.isArray(err)){ return(_.error._message(err, add_context, exit_code)); }
 
         var error_messages = "";
 
@@ -2917,22 +2917,39 @@ function (_){
             if(!_.isObject(e)){ return; }
             err_count++;
             error_messages += "\n";
-            error_messages += _.error._message(e, add_context, false);
+            error_messages += _.error._message(e, add_context);
             error_messages += "\n";
         });
 
         var message = "start error stack: " + uuid;
         if(err_count === 0){
-            message += "\nthere was an error array passed to _.error.message, but it didn't contain any errors: " + _.format(err);
+            message += "\nthere was an error array passed to _.error.message, but it didn't contain any errors: " + _.format(err) + "\n";
         }else{
             message += ", " + err_count + " errors encountered.\n" + error_messages;
         }
-        message += "end error stack: " + uuid + (exit_on_error ? ", process exiting." : "")
+        message += "end error stack: " + uuid + (exit_code !== undefined ? ", process exiting with code: " + exit_code : "");
 
         return(message);
     };
+
+    _.error.print = function(err, exit_code, printer, add_context){
+
+        var message = _.error.message(err, add_context, exit_code);
+
+        if(!_.isFunction(printer)){ printer = _.stderr; }
+
+         printer(message);
+
+        if(exit_code !== undefined){
+            if(typeof process !== 'undefined') {
+                process.exit(exit_code);
+            }else{
+                printer("can't exit. process.exit doesn't exist.");
+            }
+        }
+    };
         
-    _.error._message = function(err, add_context, exit_on_error){
+    _.error._message = function(err, add_context, exit_code){
 
         var error_message = _.string_builder();
 
@@ -2955,14 +2972,14 @@ function (_){
             error_message.add_line("object (no stack): ", err);
         }
 
-        error_message.add_line("end error: ", uuid, (exit_on_error ? ", process exiting." : ""));
+        error_message.add_line("end error: ", uuid, (exit_code !== undefined ? ", process exiting with code: " + exit_code : ""));
 
         return(error_message.string());
     };
 
-    _.deprecated = function(f_name, f){
+    _.deprecated = function(f_name, f, message){
         return(function(){
-            console.log("WARNING: _." + f_name + "has been deprecated and will be removed in the next major version.");
+            console.log("WARNING: _." + f_name + "has been deprecated and will be removed in the next major version." + (message ? " " + message : "") );
             return(f.apply(this, arguments));
         });
     };
@@ -4729,7 +4746,7 @@ function library(_){
             var args = arguments;
             var len = args.length;
             var str = String(f).replace(formatRegExp, function(x) {
-                if (x === '%') return '%';
+                if (x === '%%') return '%';
                 if (i >= len) return x;
                 switch (x) {
                     case '%s': return String(args[i++]);

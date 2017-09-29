@@ -10,7 +10,7 @@ function main(){
     _.shell(root("..", "build"), function(code){
         if(code){ throw(_.error("build_error", "Build error code: " + code)); }
         test_server.start_server(function(){
-            _.shell("./node_modules/mocha-phantomjs/bin/mocha-phantomjs --reporter dot http://localhost:9999/index.html", function(code){
+            _.shell("./node_modules/phantomjs-prebuilt/bin/phantomjs ./node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js http://localhost:9999/index.html dot", function(code){
                 test_server.stop_server(function(){
                     if(code){ process.exit(code); }
                 });
