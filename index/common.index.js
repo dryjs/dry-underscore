@@ -1,6 +1,6 @@
 
-var _ = require('../deps/underscore');
-_.str = require('../deps/underscore.string');
+var _ = require('../deps/underscore/underscore.js');
+_.str = require('../deps/underscore.string/dist/underscore.string.min.js');
 
 
 require('../lib/lodash.js').mixin(_);
