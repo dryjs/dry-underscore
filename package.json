@@ -1,6 +1,6 @@
 {
     "name": "dry-underscore",
-    "version": "0.23.4",
+    "version": "0.23.5",
     "main": "./index/node.index.js",
     "description": "The DRY Underscore Library",
     "author": {
@@ -30,7 +30,7 @@
         "mocha-phantomjs-core": "2.1.2"
     },
     "dependencies": {
-        "deep-diff": "^0.3.8",
+        "deep-diff": "^0.3.3",
         "formidable": "",
         "handlebars": "",
         "keypress": "",

@@ -1,6 +1,6 @@
 {
     "name": "dry-underscore",
-    "version": "0.23.3",
+    "version": "0.23.5",
     "lockfileVersion": 1,
     "requires": true,
     "dependencies": {
@@ -209,9 +209,9 @@
             "optional": true
         },
         "deep-diff": {
-            "version": "0.3.8",
-            "resolved": "https://registry.npmjs.org/deep-diff/-/deep-diff-0.3.8.tgz",
-            "integrity": "sha1-wB3mPvsO7JeYgB1Ax+Da4ltYLIQ="
+            "version": "0.3.3",
+            "resolved": "https://registry.npmjs.org/deep-diff/-/deep-diff-0.3.3.tgz",
+            "integrity": "sha1-ZJBxAgRh0srDrAwK3Ud0pHO3eZ4="
         },
         "delayed-stream": {
             "version": "https://registry.npmjs.org/delayed-stream/-/delayed-stream-1.0.0.tgz",
