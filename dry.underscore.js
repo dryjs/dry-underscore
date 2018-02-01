@@ -3729,7 +3729,7 @@ function (_){
 
         var keys = _.keys(o);
 
-        var callComplete = function(){ _.nextTick(complete) };
+        var callComplete = function(){ _.nextTick(function(){ complete(null); }) };
         if(!complete){ callComplete = function(){}; }
 
         (function doWork(i){
