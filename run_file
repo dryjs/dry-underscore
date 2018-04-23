@@ -13,9 +13,6 @@ def _shell(cmd):
 def _call(cmd):
     return call(cmd.split())
 
-#def test(args):
-#   return _call('./node_modules/dry-test/bin/dry-test ' + " ".join(args))
-
 def test(args):
     return _call('bash ./run_tests')
 

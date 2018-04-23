@@ -2991,10 +2991,7 @@ function (_){
 
     _.a = function(a){ return(_.toArray(a)); };
     _.ea = function(a){ if(!_.is_array(a)){ return([a]); }else{ return(a); } };
-    _.mea = function(a){ 
-        a = _.ea(a);
-        return(_.map(a, _.ea)); 
-    };
+    _.mea = function(a){ a = _.ea(a); return(_.map(a, _.ea)); };
 
     _.concat = function(){ return(Array.prototype.concat.apply([], arguments)); };
 
@@ -4752,7 +4749,7 @@ function library(_){
             var args = arguments;
             var len = args.length;
             var str = String(f).replace(formatRegExp, function(x) {
-                if (x === '%') return '%';
+                if (x === '%%') return '%';
                 if (i >= len) return x;
                 switch (x) {
                     case '%s': return String(args[i++]);

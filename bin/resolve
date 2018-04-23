@@ -1,0 +1,2 @@
+#!/bin/bash
+node -e "try{ process.stdout.write(require.resolve('$1')); process.stdout.write('\n'); }catch(e){ process.stderr.write('error resolving: $1'); process.stderr.write('\n'); process.exit(1); }"
