@@ -1,6 +1,6 @@
 {
     "name": "dry-underscore",
-    "version": "0.23.8",
+    "version": "0.24.0",
     "lockfileVersion": 1,
     "requires": true,
     "dependencies": {
@@ -3132,7 +3132,6 @@
             "version": "https://registry.npmjs.org/tamejs/-/tamejs-0.4.14.tgz",
             "integrity": "sha1-YRSCvOxXAjs8CMAPZX9m1ZqMJag="
         },
-        "test": {},
         "throttleit": {
             "version": "1.0.0",
             "resolved": "https://registry.npmjs.org/throttleit/-/throttleit-1.0.0.tgz",
