@@ -3621,7 +3621,7 @@ function (_){
     // effectively as cheap as a for loop
     _.f = _.for = function(times, f){
         for(var i = 0; i < times; i++){ 
-            if(f(i) === false){ break; }
+            if(f(i, (i === 0), ((i+1) === times)) === false){ break; }
         }
     };
 
