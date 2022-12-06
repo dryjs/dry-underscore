@@ -25,7 +25,7 @@
     "devDependencies": {
         "expresso": "0.9.2",
         "dry-test": "0.1.6",
-        "express": "4.13.3",
+        "express": "4.17.3",
         "phantomjs-prebuilt": "2.1.15",
         "mocha-phantomjs-core": "2.1.2"
     },
